@@ -1,0 +1,25 @@
+{
+	"dependencies": [
+		{
+			"id": "com.aayushatharva.brotli4j:native-osx-aarch64:jar:1.16.0",
+			"artifactId": "native-osx-aarch64",
+			"groupId": "com.aayushatharva.brotli4j",
+			"version": "1.16.0",
+			"sha256": "ZwSoHwKsqDvf9N6IJPNp9kvWMSs8efr3KdFN8F4LJR4="
+		},
+		{
+			"id": "com.aayushatharva.brotli4j:native-windows-x86_64:jar:1.16.0",
+			"artifactId": "native-windows-x86_64",
+			"groupId": "com.aayushatharva.brotli4j",
+			"version": "1.16.0",
+			"sha256": "MwHGGIY_iznHx7M6E9R1aKS2UYMvNmFYm8RQ5qr_DxU="
+		},
+		{
+			"id": "com.aayushatharva.brotli4j:native-linux-x86_64:jar:1.16.0",
+			"artifactId": "native-linux-x86_64",
+			"groupId": "com.aayushatharva.brotli4j",
+			"version": "1.16.0",
+			"sha256": "tpM8OJhX4af0AEVQls7AHudr5z1RqfsRZNJwDT0xBU0="
+		}
+	]
+}
