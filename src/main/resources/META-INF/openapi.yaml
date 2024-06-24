@@ -1,4 +1,4 @@
-openapi: 3.1.0
+openapi: 3.0.3
 
 info:
   title: PA POS Microservice
@@ -278,6 +278,9 @@ paths:
         "404":
           #description: Not found
           $ref: '#/components/responses/Error'
+        "406":
+          #description: Not acceptable. Did you require application/json?
+          $ref: '#/components/responses/Error'
         "415":
           #description: Unsupported media type. Did you provide application/json?
           $ref: '#/components/responses/Error'
@@ -317,6 +320,9 @@ paths:
         "404":
           #description: Not found
           $ref: '#/components/responses/Error'
+        "406":
+          #description: Not acceptable. Did you require application/json?
+          $ref: '#/components/responses/Error'
         "415":
           #description: Unsupported media type. Did you provide application/json?
           $ref: '#/components/responses/Error'
@@ -349,8 +355,8 @@ paths:
         "404":
           #description: Not found
           $ref: '#/components/responses/Error'
-        "415":
-          #description: Unsupported media type. Did you provide application/json?
+        "406":
+          #description: Not acceptable. Did you require application/json?
           $ref: '#/components/responses/Error'
         "429":
           #description: Too many requests
@@ -537,8 +543,43 @@ paths:
         "404":
           #description: Not found
           $ref: '#/components/responses/Error'
+        "406":
+          #description: Not acceptable. Did you require application/json?
+          $ref: '#/components/responses/Error'
         "415":
           #description: Unsupported media type. Did you provide application/json?
+          $ref: '#/components/responses/Error'
+        "429":
+          #description: Too many requests
+          $ref: '#/components/responses/Error'
+        "500":
+          #description: Server error
+          $ref: '#/components/responses/Error'
+        default:
+          description: Unexpected error
+
+    get:
+      operationId: getTransaction
+      description: Returns transaction data
+      tags: [ transactions, pa, psp ]
+      responses:
+        "200":
+          #description: Ok
+          $ref: '#/components/responses/Transaction'
+        "400":
+          #description: Bad request
+          $ref: '#/components/responses/Error'
+        "401":
+          #description: Access token is missing or invalid
+          $ref: '#/components/responses/Error'
+        "403":
+          #description: Forbidden
+          $ref: '#/components/responses/Error'
+        "404":
+          #description: Not found
+          $ref: '#/components/responses/Error'
+        "406":
+          #description: Not acceptable. Did you require application/json?
           $ref: '#/components/responses/Error'
         "429":
           #description: Too many requests
