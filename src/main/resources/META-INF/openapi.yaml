@@ -366,7 +366,7 @@ paths:
           $ref: '#/components/responses/Error'
         default:
           description: Unexpected error
-    
+
   /transactions:
     post:
       operationId: create
@@ -374,7 +374,7 @@ paths:
       description: Create a transaction from Public Admnitration (the payee) Portal
       tags: [ transactions, pa ]
       parameters:
-        - $ref: '#/components/parameters/RequestId' 
+        - $ref: '#/components/parameters/RequestId'
       requestBody:
         $ref: '#/components/requestBodies/CreateTransaction'
       responses:
@@ -1240,7 +1240,7 @@ components:
         workstations:
           $ref: '#/components/schemas/WorkstationsArray'
       required:
-          - workstations
+        - workstations
       example:
         workstations:
           - "cassa-1-ufficio-3"
@@ -1272,7 +1272,7 @@ components:
                 type: string
                 format: binary
                 maxLength: 134217728 # 256MB
-        
+
     CreateOrUpdateTerminal:
       description: Request to create a new terminal or update an existing one
       content:
@@ -1417,7 +1417,7 @@ components:
       description: ID of the transaction target of the invoked operation
       required: true
       schema:
-        $ref: '#/components/schemas/TransactionId' 
+        $ref: '#/components/schemas/TransactionId'
 
     Workstation:
       name: workstation
