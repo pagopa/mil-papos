@@ -38,6 +38,53 @@ public class TerminalService {
                 .transform(terminalSaved -> terminalSaved);
     }
 
+    /**
+     * Update terminal starting from a terminalDto.
+     *
+     * @param terminalDto       dto of modified terminal
+     * @param terminalUuid      terminalUuid of old terminal to be modified
+     * @return terminal updated
+     */
+    public Uni<TerminalEntity> updateTerminal(String terminalUuid, TerminalDto terminalDto, TerminalEntity oldTerminal) {
+
+        TerminalEntity entity = createTerminalEntity(terminalDto, terminalUuid);
+        entity.id = oldTerminal.id;
+
+        return terminalRepository.update(entity)
+                .onFailure()
+                .transform(error -> error)
+                .onItem()
+                .transform(terminalUpdated -> terminalUpdated);
+    }
+
+    /**
+     * Find first terminal equals to terminalUuid given in input.
+     *
+     * @param terminalUuid      uuid of terminal
+     * @return terminal founded
+     */
+    public Uni<TerminalEntity> findTerminal(String terminalUuid) {
+
+        return terminalRepository
+                .find("terminalUuid = ?1", terminalUuid)
+                .firstResult();
+    }
+
+    /**
+     * Delete terminal starting from a terminalEntity.
+     *
+     * @param terminal      terminal to be deleted
+     * @return void
+     */
+    public Uni<Void> deleteTerminal(TerminalEntity terminal) {
+
+        return terminalRepository.delete(terminal)
+                .onFailure()
+                .transform(error -> error)
+                .onItem()
+                .transform(terminalDeleted -> terminalDeleted);
+    }
+
     private TerminalEntity createTerminalEntity(TerminalDto terminalDto, String terminalUuid) {
         Log.debugf("TerminalService -> createTerminalEntity: storing terminal [%s] on DB", terminalDto);
 
@@ -46,16 +93,10 @@ public class TerminalService {
         terminal.setTerminalId(terminalDto.terminalId());
         terminal.setEnabled(terminalDto.enabled());
         terminal.setPayeeCode(terminalDto.payeeCode());
-//        terminal.setSlave(terminalDto.slave());
-//        terminal.setPagoPaConf(terminalDto.pagoPaConf());
-//        terminal.setIdpay(terminalDto.idpay());
-//        terminal.setWorkstations(terminalDto.workstations());
 
         TerminalEntity terminalEntity = new TerminalEntity();
         terminalEntity.setTerminalUuid(terminalUuid);
         terminalEntity.setTerminal(terminal);
-//        terminalEntity.setTerminalHandler(terminalDto.terminalHandlerId());
-//        terminalEntity.setServiceProviderId(serviceProviderId);
 
         return terminalEntity;
     }

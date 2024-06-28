@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@MongoEntity(database = "mil", collection = "terminalRegistry")
+@MongoEntity(database = "mil", collection = "terminal")
 public class TerminalEntity extends PanacheMongoEntity {
 
     private String terminalUuid;
