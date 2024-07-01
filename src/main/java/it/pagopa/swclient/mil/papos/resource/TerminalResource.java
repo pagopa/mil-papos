@@ -2,6 +2,8 @@ package it.pagopa.swclient.mil.papos.resource;
 
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
+import it.pagopa.swclient.mil.papos.dao.PageMetadata;
+import it.pagopa.swclient.mil.papos.dao.TerminalPageResponse;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
 import it.pagopa.swclient.mil.papos.service.TerminalService;
 import it.pagopa.swclient.mil.papos.util.ErrorCodes;
@@ -56,6 +58,54 @@ public class TerminalResource {
 
                     return Response.status(Response.Status.CREATED).build();
                 });
+    }
+
+    @GET
+    @Path("/findByPayeeCode")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    // @RolesAllowed({ "pos_service_provider" })
+    public Uni<Response> findByPayeeCode(
+            @HeaderParam("RequestId")
+            @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
+            @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
+            @QueryParam("payeeCode") String payeeCode,
+            @QueryParam("page") int pageNumber,
+            @QueryParam("size") int pageSize) {
+
+        return findByAttribute(requestId, "payeeCode", payeeCode, pageNumber, pageSize);
+    }
+
+    @GET
+    @Path("/findByPspId")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    // @RolesAllowed({ "pos_service_provider" })
+    public Uni<Response> findByPspId(
+            @HeaderParam("RequestId")
+            @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
+            @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
+            @QueryParam("pspId") String pspId,
+            @QueryParam("page") int pageNumber,
+            @QueryParam("size") int pageSize) {
+
+        return findByAttribute(requestId, "pspId", pspId, pageNumber, pageSize);
+    }
+
+    @GET
+    @Path("/findByWorkstation")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    // @RolesAllowed({ "pos_service_provider" })
+    public Uni<Response> findByWorkstation(
+            @HeaderParam("RequestId")
+            @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
+            @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
+            @QueryParam("workstation") String workstation,
+            @QueryParam("page") int pageNumber,
+            @QueryParam("size") int pageSize) {
+
+        return findByAttribute(requestId, "workstation", workstation, pageNumber, pageSize);
     }
 
     @PATCH
@@ -182,6 +232,43 @@ public class TerminalResource {
 
                                 return Response
                                         .status(Response.Status.NO_CONTENT)
+                                        .build();
+                            });
+                });
+    }
+
+    private Uni<Response> findByAttribute(String requestId, String attributeName, String attributeValue, int pageNumber, int pageSize) {
+        Log.debugf("TerminalResource -> getTerminals - Input requestId, %s, pageNumber, size: %s, %s, %s", attributeName, requestId, attributeValue, pageNumber, pageSize);
+
+        return terminalService.getTerminalCountByAttribute(attributeName, attributeValue)
+                .onFailure()
+                .transform(err -> {
+                    Log.errorf(err, "TerminalResource -> getTerminals: error while counting terminals for %s [%s]", attributeName, attributeValue);
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(ErrorCodes.ERROR_COUNTING_TERMINALS, ErrorCodes.ERROR_COUNTING_TERMINALS_MSG))
+                            .build());
+                })
+                .onItem()
+                .transformToUni(numberOfTerminals -> {
+                    Log.debugf("TerminalResource -> getTerminals: found a total count of [%s] terminals", numberOfTerminals);
+                    return terminalService.getTerminalListPagedByAttribute(attributeName, attributeValue, pageNumber, pageSize)
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err, "TerminalResource -> getTerminals: Error while retrieving list of terminals for %s, index and size [%s, %s, %s]", attributeName, attributeValue, pageNumber, pageSize);
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(ErrorCodes.ERROR_LIST_TERMINALS, ErrorCodes.ERROR_LIST_TERMINALS_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transform(terminalsPaged -> {
+                                Log.debugf("TerminalResource -> getTerminals: size of list of terminals paginated found: [%s]", terminalsPaged.size());
+                                int totalPages = (int) Math.ceil((double) numberOfTerminals / pageSize);
+                                PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfTerminals, totalPages);
+                                return Response
+                                        .status(Response.Status.OK)
+                                        .entity(new TerminalPageResponse(terminalsPaged, pageMetadata))
                                         .build();
                             });
                 });

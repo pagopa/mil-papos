@@ -9,6 +9,8 @@ import it.pagopa.swclient.mil.papos.model.TerminalDto;
 import it.pagopa.swclient.mil.papos.util.Utility;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import java.util.List;
+
 @ApplicationScoped
 public class TerminalService {
 
@@ -39,6 +41,46 @@ public class TerminalService {
     }
 
     /**
+     * Returns a number corresponding to the total number of terminal found.
+     *
+     * @param attributeName name of the attribute
+     * @param attributeValue value of the attribute
+     * @return a number
+     */
+    public Uni<Long> getTerminalCountByAttribute(String attributeName, String attributeValue) {
+        return terminalRepository.count(attributeName, attributeValue);
+    }
+
+    /**
+     * Returns a list of terminals paginated. The query filters on attributeName.
+     *
+     * @param attributeName string representing the name of attribute to be filtered
+     * @param attributeValue value of attribute
+     * @param pageIndex 0-based page index
+     * @param pageSize page size
+     * @return a list of terminals
+     */
+    public Uni<List<TerminalEntity>> getTerminalListPagedByAttribute(String attributeName, String attributeValue, int pageIndex, int pageSize) {
+        return terminalRepository
+                .find(attributeName, attributeValue)
+                .page(pageIndex, pageSize)
+                .list();
+    }
+
+    /**
+     * Find first terminal equals to terminalUuid given in input.
+     *
+     * @param terminalUuid      uuid of terminal
+     * @return terminal founded
+     */
+    public Uni<TerminalEntity> findTerminal(String terminalUuid) {
+
+        return terminalRepository
+                .find("terminalUuid = ?1", terminalUuid)
+                .firstResult();
+    }
+
+    /**
      * Update terminal starting from a terminalDto.
      *
      * @param terminalDto       dto of modified terminal
@@ -55,19 +97,6 @@ public class TerminalService {
                 .transform(error -> error)
                 .onItem()
                 .transform(terminalUpdated -> terminalUpdated);
-    }
-
-    /**
-     * Find first terminal equals to terminalUuid given in input.
-     *
-     * @param terminalUuid      uuid of terminal
-     * @return terminal founded
-     */
-    public Uni<TerminalEntity> findTerminal(String terminalUuid) {
-
-        return terminalRepository
-                .find("terminalUuid = ?1", terminalUuid)
-                .firstResult();
     }
 
     /**

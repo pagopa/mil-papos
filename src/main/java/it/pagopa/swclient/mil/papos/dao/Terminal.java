@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,4 +20,5 @@ public class Terminal {
     private String terminalId;
     private Boolean enabled;
     private String payeeCode;
+    private List<String> workstations;
 }
