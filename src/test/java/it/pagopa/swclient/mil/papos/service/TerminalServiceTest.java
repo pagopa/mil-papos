@@ -8,6 +8,7 @@ import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
 import it.pagopa.swclient.mil.papos.dao.TerminalEntity;
 import it.pagopa.swclient.mil.papos.dao.TerminalRepository;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
+import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
 import it.pagopa.swclient.mil.papos.util.TerminalTestData;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.WebApplicationException;
@@ -31,6 +32,8 @@ class TerminalServiceTest {
 
     static TerminalDto terminalDto;
 
+    static WorkstationsDto workstationsDto;
+
     static TerminalEntity terminalEntity;
 
     static TerminalService terminalService;
@@ -38,6 +41,7 @@ class TerminalServiceTest {
     @BeforeAll
     static void createTestObjects() {
         terminalDto = TerminalTestData.getCorrectTerminalDto();
+        workstationsDto = TerminalTestData.getCorrectWorkstationDto();
         terminalEntity = TerminalTestData.getCorrectTerminalEntity();
         terminalService = new TerminalService(terminalRepository);
     }
@@ -103,6 +107,29 @@ class TerminalServiceTest {
                 .subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
                 .assertItem(terminalEntity);
+    }
+
+    @Test
+    void testUpdateWorkstations_Success() {
+        Mockito.when(terminalRepository.update(any(TerminalEntity.class)))
+                .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Uni<TerminalEntity> result = terminalService.updateWorkstations(workstationsDto, terminalEntity);
+
+        result.subscribe()
+                .with(entity -> Assertions.assertEquals(terminalEntity, entity));
+    }
+
+    @Test
+    void testUpdateWorkstations_Failure() {
+        Mockito.when(terminalRepository.update(any(TerminalEntity.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Uni<TerminalEntity> result = terminalService.updateWorkstations(workstationsDto, terminalEntity);
+
+        result.subscribe()
+                .withSubscriber(UniAssertSubscriber.create())
+                .assertFailedWith(WebApplicationException.class);
     }
 
     @Test

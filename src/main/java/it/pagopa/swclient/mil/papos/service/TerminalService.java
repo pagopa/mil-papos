@@ -6,10 +6,14 @@ import it.pagopa.swclient.mil.papos.dao.Terminal;
 import it.pagopa.swclient.mil.papos.dao.TerminalEntity;
 import it.pagopa.swclient.mil.papos.dao.TerminalRepository;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
+import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
 import it.pagopa.swclient.mil.papos.util.Utility;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @ApplicationScoped
 public class TerminalService {
@@ -78,6 +82,31 @@ public class TerminalService {
         return terminalRepository
                 .find("terminalUuid = ?1", terminalUuid)
                 .firstResult();
+    }
+
+    /**
+     * Update terminal adding workstations from a workstationDto.
+     *
+     * @param workstations dto of workstations to be added
+     * @param oldTerminal old terminal to be modified
+     * @return terminal updated
+     */
+    public Uni<TerminalEntity> updateWorkstations(WorkstationsDto workstations, TerminalEntity oldTerminal) {
+
+        Terminal terminal = oldTerminal.getTerminal();
+        List<String> existingWorkstations = terminal.getWorkstations() != null ? terminal.getWorkstations() : new ArrayList<>();
+
+        Set<String> updatedWorkstationsSet = new HashSet<>(existingWorkstations);
+        updatedWorkstationsSet.addAll(workstations.workstations());
+        List<String> updatedWorkstations = new ArrayList<>(updatedWorkstationsSet);
+
+        terminal.setWorkstations(updatedWorkstations);
+
+        return terminalRepository.update(oldTerminal)
+                .onFailure()
+                .transform(error -> error)
+                .onItem()
+                .transform(terminalUpdated -> terminalUpdated);
     }
 
     /**

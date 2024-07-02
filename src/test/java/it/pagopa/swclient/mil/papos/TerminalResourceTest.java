@@ -8,6 +8,7 @@ import io.restassured.response.Response;
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.papos.dao.TerminalEntity;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
+import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
 import it.pagopa.swclient.mil.papos.resource.TerminalResource;
 import it.pagopa.swclient.mil.papos.service.TerminalService;
 import it.pagopa.swclient.mil.papos.util.TerminalTestData;
@@ -33,11 +34,14 @@ class TerminalResourceTest {
 
     static TerminalDto terminalDto;
 
+    static WorkstationsDto workstationsDto;
+
     static TerminalEntity terminalEntity;
 
     @BeforeAll
     static void createTestObjects() {
         terminalDto = TerminalTestData.getCorrectTerminalDto();
+        workstationsDto = TerminalTestData.getCorrectWorkstationDto();
         terminalEntity = TerminalTestData.getCorrectTerminalEntity();
     }
 
@@ -178,6 +182,86 @@ class TerminalResourceTest {
                 .queryParam("size", 10)
                 .when()
                 .get("/findByPayeeCode")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    void testUpdateWorkstations_204() {
+        Mockito.when(terminalService.findTerminal(any(String.class)))
+                .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Mockito.when(terminalService.updateWorkstations(any(WorkstationsDto.class), any(TerminalEntity.class)))
+                .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(workstationsDto)
+                .when()
+                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa/updateWorkstations")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(204, response.statusCode());
+    }
+
+    @Test
+    void testUpdateWorkstations_404() {
+        terminalEntity = null;
+        Mockito.when(terminalService.findTerminal(any(String.class)))
+                .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(workstationsDto)
+                .when()
+                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa/updateWorkstations")
+                .then()
+                .extract().response();
+
+        terminalEntity = TerminalTestData.getCorrectTerminalEntity();
+        Assertions.assertEquals(404, response.statusCode());
+    }
+
+    @Test
+    void testUpdateWorkstations_500FT() {
+        Mockito.when(terminalService.findTerminal(any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(workstationsDto)
+                .when()
+                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa/updateWorkstations")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    void testUpdateWorkstations_500UT() {
+        Mockito.when(terminalService.findTerminal(any(String.class)))
+                .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Mockito.when(terminalService.updateWorkstations(any(WorkstationsDto.class), any(TerminalEntity.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(workstationsDto)
+                .when()
+                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa/updateWorkstations")
                 .then()
                 .extract().response();
 

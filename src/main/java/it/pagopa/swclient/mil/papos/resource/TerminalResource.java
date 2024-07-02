@@ -5,6 +5,7 @@ import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.papos.dao.PageMetadata;
 import it.pagopa.swclient.mil.papos.dao.TerminalPageResponse;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
+import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
 import it.pagopa.swclient.mil.papos.service.TerminalService;
 import it.pagopa.swclient.mil.papos.util.ErrorCodes;
 import it.pagopa.swclient.mil.papos.util.Errors;
@@ -106,6 +107,68 @@ public class TerminalResource {
             @QueryParam("size") int pageSize) {
 
         return findByAttribute(requestId, "workstation", workstation, pageNumber, pageSize);
+    }
+
+    @PATCH
+    @Path("/{terminalUuid}/updateWorkstations")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    // @RolesAllowed({ "pos_service_provider" })
+    public Uni<Response> updateWorkstations(
+            @HeaderParam("RequestId")
+            @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
+            @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
+            @Valid @NotNull(message = ErrorCodes.ERROR_TERMINALDTO_MUST_NOT_BE_NULL_MSG) WorkstationsDto workstations,
+            @PathParam(value = "terminalUuid") String terminalUuid) {
+
+        Log.debugf("TerminalResource -> updateWorkstations - Input requestId, workstations: %s, %s", requestId, workstations);
+
+        return terminalService.findTerminal(terminalUuid)
+                .onFailure()
+                .transform(err -> {
+                    Log.errorf(err,
+                            "TerminalResource -> updateWorkstations: error during search terminal with terminalUuid: [%s]",
+                            terminalUuid);
+
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                            .build());
+                })
+                .onItem()
+                .transformToUni(terminalEntity -> {
+                    if (terminalEntity == null) {
+                        Log.errorf(
+                                "TerminalResource -> updateWorkstations: error 404 during searching terminal with terminalUuid: [%s]",
+                                terminalUuid);
+
+                        return Uni.createFrom().failure(new NotFoundException(Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity(new Errors(ErrorCodes.ERROR_TERMINAL_NOT_FOUND, ErrorCodes.ERROR_TERMINAL_NOT_FOUND_MSG))
+                                .build()));
+                    }
+
+                    return terminalService.updateWorkstations(workstations, terminalEntity)
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err, "TerminalResource -> updateWorkstations: error during update workstations of terminalUuid: [%s]",
+                                        terminalUuid);
+
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transform(terminalUpdated -> {
+                                Log.debugf("TerminalResource -> updateWorkstations: workstations updated correctly on DB [%s]",
+                                        terminalUpdated);
+
+                                return Response
+                                        .status(Response.Status.NO_CONTENT)
+                                        .build();
+                            });
+                });
     }
 
     @PATCH
@@ -234,12 +297,12 @@ public class TerminalResource {
     }
 
     private Uni<Response> findByAttribute(String requestId, String attributeName, String attributeValue, int pageNumber, int pageSize) {
-        Log.debugf("TerminalResource -> getTerminals - Input requestId, %s, pageNumber, size: %s, %s, %s", attributeName, requestId, attributeValue, pageNumber, pageSize);
+        Log.debugf("TerminalResource -> findBy - Input requestId: %s, attributeName: %s, attributeValue: %s, pageNumber: %s, size: %s", requestId, attributeName, attributeValue, pageNumber, pageSize);
 
         return terminalService.getTerminalCountByAttribute(attributeName, attributeValue)
                 .onFailure()
                 .transform(err -> {
-                    Log.errorf(err, "TerminalResource -> getTerminals: error while counting terminals for %s [%s]", attributeName, attributeValue);
+                    Log.errorf(err, "TerminalResource -> findBy: error while counting terminals for [%s, %s]", attributeName, attributeValue);
 
                     return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -248,12 +311,12 @@ public class TerminalResource {
                 })
                 .onItem()
                 .transformToUni(numberOfTerminals -> {
-                    Log.debugf("TerminalResource -> getTerminals: found a total count of [%s] terminals", numberOfTerminals);
+                    Log.debugf("TerminalResource -> findBy: found a total count of [%s] terminals", numberOfTerminals);
 
                     return terminalService.getTerminalListPagedByAttribute(attributeName, attributeValue, pageNumber, pageSize)
                             .onFailure()
                             .transform(err -> {
-                                Log.errorf(err, "TerminalResource -> getTerminals: Error while retrieving list of terminals for %s, index and size [%s, %s, %s]", attributeName, attributeValue, pageNumber, pageSize);
+                                Log.errorf(err, "TerminalResource -> findBy: Error while retrieving list of terminals for [%s, %s], index and size [%s, %s]", attributeName, attributeValue, pageNumber, pageSize);
 
                                 return new InternalServerErrorException(Response
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -262,7 +325,7 @@ public class TerminalResource {
                             })
                             .onItem()
                             .transform(terminalsPaged -> {
-                                Log.debugf("TerminalResource -> getTerminals: size of list of terminals paginated found: [%s]", terminalsPaged.size());
+                                Log.debugf("TerminalResource -> findBy: size of list of terminals paginated found: [%s]", terminalsPaged.size());
 
                                 int totalPages = (int) Math.ceil((double) numberOfTerminals / pageSize);
                                 PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfTerminals, totalPages);
