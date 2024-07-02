@@ -17,7 +17,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -60,6 +63,32 @@ class TerminalServiceTest {
         result.subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
                 .assertFailedWith(InternalServerErrorException.class);
+    }
+
+    @Test
+    void testGetTerminalCount_Success() {
+        Mockito.when(terminalRepository.count("pspId", "pspId"))
+                .thenReturn(Uni.createFrom().item(10L));
+
+        var terminalCount = terminalService.getTerminalCountByAttribute("pspId", "pspId");
+
+        terminalCount
+                .subscribe()
+                .withSubscriber(UniAssertSubscriber.create())
+                .assertItem(10L);
+    }
+
+    @Test
+    void testGetTerminalList_Success() {
+        ReactivePanacheQuery<TerminalEntity> query = Mockito.mock(ReactivePanacheQuery.class);
+        Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
+        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedList()));
+        Mockito.when(terminalRepository.find("pspId", "pspId")).thenReturn(query);
+
+        Uni<List<TerminalEntity>> result = terminalService.getTerminalListPagedByAttribute("pspId", "pspId", 0, 10);
+
+        result.subscribe()
+                .with(list -> Assertions.assertEquals(mockedList(), list));
     }
 
     @Test
@@ -120,5 +149,14 @@ class TerminalServiceTest {
         result.subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
                 .assertFailedWith(WebApplicationException.class);
+    }
+
+    private List<TerminalEntity> mockedList() {
+        TerminalEntity te1 = new TerminalEntity();
+        te1.setTerminalUuid("uuid1");
+        TerminalEntity te2 = new TerminalEntity();
+        te2.setTerminalUuid("uuid2");
+
+        return List.of(te1, te2);
     }
 }

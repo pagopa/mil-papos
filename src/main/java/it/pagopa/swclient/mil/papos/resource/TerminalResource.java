@@ -143,8 +143,7 @@ public class TerminalResource {
 
                         return Uni.createFrom().failure(new NotFoundException(Response
                                 .status(Response.Status.NOT_FOUND)
-                                .entity(new Errors(ErrorCodes.ERROR_TERMINAL_NOT_FOUND,
-                                        ErrorCodes.ERROR_TERMINAL_NOT_FOUND_MSG))
+                                .entity(new Errors(ErrorCodes.ERROR_TERMINAL_NOT_FOUND, ErrorCodes.ERROR_TERMINAL_NOT_FOUND_MSG))
                                 .build()));
                     }
 
@@ -156,8 +155,7 @@ public class TerminalResource {
 
                                 return new InternalServerErrorException(Response
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB,
-                                                ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
                                         .build());
                             })
                             .onItem()
@@ -207,8 +205,7 @@ public class TerminalResource {
 
                         return Uni.createFrom().failure(new NotFoundException(Response
                                 .status(Response.Status.NOT_FOUND)
-                                .entity(new Errors(ErrorCodes.ERROR_TERMINAL_NOT_FOUND,
-                                        ErrorCodes.ERROR_TERMINAL_NOT_FOUND_MSG))
+                                .entity(new Errors(ErrorCodes.ERROR_TERMINAL_NOT_FOUND, ErrorCodes.ERROR_TERMINAL_NOT_FOUND_MSG))
                                 .build()));
                     }
 
@@ -221,8 +218,7 @@ public class TerminalResource {
 
                                 return new InternalServerErrorException(Response
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB,
-                                                ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
                                         .build());
                             })
                             .onItem()
@@ -244,6 +240,7 @@ public class TerminalResource {
                 .onFailure()
                 .transform(err -> {
                     Log.errorf(err, "TerminalResource -> getTerminals: error while counting terminals for %s [%s]", attributeName, attributeValue);
+
                     return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
                             .entity(new Errors(ErrorCodes.ERROR_COUNTING_TERMINALS, ErrorCodes.ERROR_COUNTING_TERMINALS_MSG))
@@ -252,10 +249,12 @@ public class TerminalResource {
                 .onItem()
                 .transformToUni(numberOfTerminals -> {
                     Log.debugf("TerminalResource -> getTerminals: found a total count of [%s] terminals", numberOfTerminals);
+
                     return terminalService.getTerminalListPagedByAttribute(attributeName, attributeValue, pageNumber, pageSize)
                             .onFailure()
                             .transform(err -> {
                                 Log.errorf(err, "TerminalResource -> getTerminals: Error while retrieving list of terminals for %s, index and size [%s, %s, %s]", attributeName, attributeValue, pageNumber, pageSize);
+
                                 return new InternalServerErrorException(Response
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
                                         .entity(new Errors(ErrorCodes.ERROR_LIST_TERMINALS, ErrorCodes.ERROR_LIST_TERMINALS_MSG))
@@ -264,8 +263,10 @@ public class TerminalResource {
                             .onItem()
                             .transform(terminalsPaged -> {
                                 Log.debugf("TerminalResource -> getTerminals: size of list of terminals paginated found: [%s]", terminalsPaged.size());
+
                                 int totalPages = (int) Math.ceil((double) numberOfTerminals / pageSize);
                                 PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfTerminals, totalPages);
+
                                 return Response
                                         .status(Response.Status.OK)
                                         .entity(new TerminalPageResponse(terminalsPaged, pageMetadata))

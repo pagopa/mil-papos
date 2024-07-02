@@ -23,7 +23,7 @@ public class TerminalService {
     /**
      * Create a new terminal starting from a terminalDto.
      *
-     * @param terminalDto       dto of terminal to be generated
+     * @param terminalDto dto of terminal to be generated
      * @return terminal created
      */
     public Uni<TerminalEntity> createTerminal(TerminalDto terminalDto) {
@@ -43,7 +43,7 @@ public class TerminalService {
     /**
      * Returns a number corresponding to the total number of terminal found.
      *
-     * @param attributeName name of the attribute
+     * @param attributeName  name of the attribute
      * @param attributeValue value of the attribute
      * @return a number
      */
@@ -54,10 +54,10 @@ public class TerminalService {
     /**
      * Returns a list of terminals paginated. The query filters on attributeName.
      *
-     * @param attributeName string representing the name of attribute to be filtered
+     * @param attributeName  string representing the name of attribute to be filtered
      * @param attributeValue value of attribute
-     * @param pageIndex 0-based page index
-     * @param pageSize page size
+     * @param pageIndex      0-based page index
+     * @param pageSize       page size
      * @return a list of terminals
      */
     public Uni<List<TerminalEntity>> getTerminalListPagedByAttribute(String attributeName, String attributeValue, int pageIndex, int pageSize) {
@@ -70,7 +70,7 @@ public class TerminalService {
     /**
      * Find first terminal equals to terminalUuid given in input.
      *
-     * @param terminalUuid      uuid of terminal
+     * @param terminalUuid uuid of terminal
      * @return terminal founded
      */
     public Uni<TerminalEntity> findTerminal(String terminalUuid) {
@@ -83,8 +83,8 @@ public class TerminalService {
     /**
      * Update terminal starting from a terminalDto.
      *
-     * @param terminalDto       dto of modified terminal
-     * @param terminalUuid      terminalUuid of old terminal to be modified
+     * @param terminalDto  dto of modified terminal
+     * @param terminalUuid terminalUuid of old terminal to be modified
      * @return terminal updated
      */
     public Uni<TerminalEntity> updateTerminal(String terminalUuid, TerminalDto terminalDto, TerminalEntity oldTerminal) {
@@ -102,7 +102,7 @@ public class TerminalService {
     /**
      * Delete terminal starting from a terminalEntity.
      *
-     * @param terminal      terminal to be deleted
+     * @param terminal terminal to be deleted
      * @return void
      */
     public Uni<Void> deleteTerminal(TerminalEntity terminal) {
