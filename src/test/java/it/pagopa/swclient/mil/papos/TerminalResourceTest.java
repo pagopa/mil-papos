@@ -6,6 +6,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.smallrye.mutiny.Uni;
+import it.pagopa.swclient.mil.papos.dao.BulkLoadStatusEntity;
 import it.pagopa.swclient.mil.papos.dao.TerminalEntity;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
 import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
@@ -13,12 +14,15 @@ import it.pagopa.swclient.mil.papos.resource.TerminalResource;
 import it.pagopa.swclient.mil.papos.service.TerminalService;
 import it.pagopa.swclient.mil.papos.util.TerminalTestData;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 
 import static io.restassured.RestAssured.given;
@@ -75,6 +79,72 @@ class TerminalResourceTest {
                 .body(terminalDto)
                 .when()
                 .post("/")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    void testBulkLoadTerminals_Success() {
+        byte[] fileContent = "test content".getBytes();
+        InputStream fileInputStream = new ByteArrayInputStream(fileContent);
+
+        Mockito.when(terminalService.processBulkLoad(any(byte[].class)))
+                .thenReturn(Uni.createFrom().item(new BulkLoadStatusEntity()));
+
+        Response response = given()
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .multiPart("file", "file.json", fileInputStream, MediaType.APPLICATION_OCTET_STREAM)
+                .when()
+                .post("/bulkload")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(202, response.statusCode());
+    }
+
+    @Test
+    void testBulkLoadTerminals_FileNull() {
+        Response response = given()
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .contentType("multipart/form-data")
+                .when()
+                .post("/bulkload")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(400, response.statusCode());
+    }
+
+    @Test
+    void testBulkLoadTerminals_FileEmpty() {
+        InputStream fileInputStream = new ByteArrayInputStream(new byte[0]);
+
+        Response response = given()
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .multiPart("file", "file.json", fileInputStream, MediaType.APPLICATION_OCTET_STREAM)
+                .when()
+                .post("/bulkload")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(400, response.statusCode());
+    }
+
+    @Test
+    void testBulkLoadTerminals_ServiceError() {
+        byte[] fileContent = "test content".getBytes();
+        InputStream fileInputStream = new ByteArrayInputStream(fileContent);
+
+        Mockito.when(terminalService.processBulkLoad(any(byte[].class)))
+                .thenReturn(Uni.createFrom().failure(new RuntimeException("Service error")));
+
+        Response response = given()
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .multiPart("file", "file.json", fileInputStream, MediaType.APPLICATION_OCTET_STREAM)
+                .when()
+                .post("/bulkload")
                 .then()
                 .extract().response();
 

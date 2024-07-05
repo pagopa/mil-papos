@@ -1,10 +1,13 @@
 package it.pagopa.swclient.mil.papos.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.mongodb.panache.reactive.ReactivePanacheQuery;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
+import it.pagopa.swclient.mil.papos.dao.BulkLoadStatusEntity;
+import it.pagopa.swclient.mil.papos.dao.BulkLoadStatusRepository;
 import it.pagopa.swclient.mil.papos.dao.TerminalEntity;
 import it.pagopa.swclient.mil.papos.dao.TerminalRepository;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
@@ -17,7 +20,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
-
+import java.io.IOException;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -29,6 +32,11 @@ class TerminalServiceTest {
 
     @InjectMock
     static TerminalRepository terminalRepository;
+
+    @InjectMock
+    static BulkLoadStatusRepository bulkLoadStatusRepository;
+
+    static ObjectMapper objectMapper;
 
     static TerminalDto terminalDto;
 
@@ -43,7 +51,8 @@ class TerminalServiceTest {
         terminalDto = TerminalTestData.getCorrectTerminalDto();
         workstationsDto = TerminalTestData.getCorrectWorkstationDto();
         terminalEntity = TerminalTestData.getCorrectTerminalEntity();
-        terminalService = new TerminalService(terminalRepository);
+        objectMapper = new ObjectMapper();
+        terminalService = new TerminalService(terminalRepository, bulkLoadStatusRepository, objectMapper);
     }
 
     @Test
@@ -70,6 +79,68 @@ class TerminalServiceTest {
     }
 
     @Test
+    void testProcessBulkLoad_Success() throws IOException {
+        List<TerminalDto> terminalDtos = List.of(terminalDto, terminalDto);
+        byte[] fileContent = objectMapper.writeValueAsBytes(terminalDtos);
+
+        Mockito.when(terminalRepository.persist(any(TerminalEntity.class)))
+                .thenReturn(Uni.createFrom().item(new TerminalEntity()));
+        Mockito.when(bulkLoadStatusRepository.persist(any(BulkLoadStatusEntity.class)))
+                .thenReturn(Uni.createFrom().item(new BulkLoadStatusEntity()));
+
+        Uni<BulkLoadStatusEntity> result = terminalService.processBulkLoad(fileContent);
+
+        result.subscribe()
+                .withSubscriber(UniAssertSubscriber.create())
+                .assertCompleted();
+    }
+
+    @Test
+    void testProcessBulkLoad_CreateTerminalFailure() throws IOException {
+        List<TerminalDto> terminalDtos = List.of(terminalDto, terminalDto);
+        byte[] fileContent = objectMapper.writeValueAsBytes(terminalDtos);
+
+        Mockito.when(terminalRepository.persist(any(TerminalEntity.class)))
+                .thenReturn(Uni.createFrom().failure(new RuntimeException("Error creating terminal")));
+        Mockito.when(bulkLoadStatusRepository.persist(any(BulkLoadStatusEntity.class)))
+                .thenReturn(Uni.createFrom().item(new BulkLoadStatusEntity()));
+
+        Uni<BulkLoadStatusEntity> result = terminalService.processBulkLoad(fileContent);
+
+        result.subscribe()
+                .withSubscriber(UniAssertSubscriber.create())
+                .assertCompleted();
+    }
+
+    @Test
+    void testProcessBulkLoad_FileReadError() {
+        byte[] fileContent = "malformed content".getBytes();
+
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class, () -> terminalService.processBulkLoad(fileContent).await().indefinitely());
+
+        Assertions.assertTrue(exception.getMessage().contains("Error processing file"));
+    }
+
+    @Test
+    void testProcessBulkLoad_PersistenceError() throws IOException {
+        List<TerminalDto> terminalDtos = List.of(terminalDto, terminalDto);
+        byte[] fileContent = objectMapper.writeValueAsBytes(terminalDtos);
+
+        Mockito.when(terminalRepository.persist(any(TerminalEntity.class)))
+                .thenReturn(Uni.createFrom().item(new TerminalEntity()));
+        Mockito.when(bulkLoadStatusRepository.persist(any(BulkLoadStatusEntity.class)))
+                .thenReturn(Uni.createFrom().failure(new RuntimeException("Error persisting bulk load status")));
+
+        Uni<BulkLoadStatusEntity> result = terminalService.processBulkLoad(fileContent);
+
+        result.subscribe()
+                .withSubscriber(UniAssertSubscriber.create())
+                .assertFailedWith(RuntimeException.class, "Error persisting bulk load status");
+    }
+
+
+
+    @Test
     void testGetTerminalCount_Success() {
         Mockito.when(terminalRepository.count("pspId", "pspId"))
                 .thenReturn(Uni.createFrom().item(10L));
@@ -83,13 +154,39 @@ class TerminalServiceTest {
     }
 
     @Test
+    void testGetTerminalCountWorkstation_Success() {
+        Mockito.when(terminalRepository.count("{ 'workstations': ?1 }", "workstation"))
+                .thenReturn(Uni.createFrom().item(10L));
+
+        var terminalCount = terminalService.getTerminalCountByAttribute("workstation", "workstation");
+
+        terminalCount
+                .subscribe()
+                .withSubscriber(UniAssertSubscriber.create())
+                .assertItem(10L);
+    }
+
+    @Test
     void testGetTerminalList_Success() {
         ReactivePanacheQuery<TerminalEntity> query = Mockito.mock(ReactivePanacheQuery.class);
         Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
         Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedList()));
-        Mockito.when(terminalRepository.find("pspId", "pspId")).thenReturn(query);
+        Mockito.when(terminalRepository.find(String.format("%s = ?1", "pspId"), "pspId")).thenReturn(query);
 
         Uni<List<TerminalEntity>> result = terminalService.getTerminalListPagedByAttribute("pspId", "pspId", 0, 10);
+
+        result.subscribe()
+                .with(list -> Assertions.assertEquals(mockedList(), list));
+    }
+
+    @Test
+    void testGetTerminalListWorkstation_Success() {
+        ReactivePanacheQuery<TerminalEntity> query = Mockito.mock(ReactivePanacheQuery.class);
+        Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
+        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedList()));
+        Mockito.when(terminalRepository.find("{ 'workstations': ?1 }", "workstation")).thenReturn(query);
+
+        Uni<List<TerminalEntity>> result = terminalService.getTerminalListPagedByAttribute("workstation", "workstation", 0, 10);
 
         result.subscribe()
                 .with(list -> Assertions.assertEquals(mockedList(), list));

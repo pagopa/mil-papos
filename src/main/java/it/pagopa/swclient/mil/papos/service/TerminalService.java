@@ -1,27 +1,34 @@
 package it.pagopa.swclient.mil.papos.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
-import it.pagopa.swclient.mil.papos.dao.Terminal;
+import it.pagopa.swclient.mil.papos.dao.BulkLoadStatusEntity;
+import it.pagopa.swclient.mil.papos.dao.BulkLoadStatusRepository;
 import it.pagopa.swclient.mil.papos.dao.TerminalEntity;
 import it.pagopa.swclient.mil.papos.dao.TerminalRepository;
+import it.pagopa.swclient.mil.papos.model.BulkLoadStatus;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
 import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
 import it.pagopa.swclient.mil.papos.util.Utility;
 import jakarta.enterprise.context.ApplicationScoped;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
 
 @ApplicationScoped
 public class TerminalService {
 
     private final TerminalRepository terminalRepository;
 
-    public TerminalService(TerminalRepository terminalRepository) {
+    private final BulkLoadStatusRepository bulkLoadStatusRepository;
+
+    private final ObjectMapper objectMapper;
+
+    public TerminalService(TerminalRepository terminalRepository, BulkLoadStatusRepository bulkLoadStatusRepository, ObjectMapper objectMapper) {
         this.terminalRepository = terminalRepository;
+        this.bulkLoadStatusRepository = bulkLoadStatusRepository;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -45,6 +52,48 @@ public class TerminalService {
     }
 
     /**
+     * Allows the bulk loading of a set of terminals starting from a fileContent.
+     *
+     * @param fileContent file json containing a set of terminals
+     * @return list of terminal created
+     */
+    public Uni<BulkLoadStatusEntity> processBulkLoad(byte[] fileContent) {
+
+        Log.debugf("TerminalService -> processBulkLoad - Input parameters: file content length: %d bytes", fileContent.length);
+
+        String bulkLoadingId = UUID.randomUUID().toString();
+        BulkLoadStatus bulkLoadStatus = new BulkLoadStatus(bulkLoadingId, 0);
+
+        try {
+            List<TerminalDto> terminalRequests = objectMapper.readValue(fileContent, objectMapper.getTypeFactory().constructCollectionType(List.class, TerminalDto.class));
+            bulkLoadStatus.setTotalRecords(terminalRequests.size());
+
+            for (TerminalDto terminal : terminalRequests) {
+                createTerminal(terminal)
+                        .subscribe().with(
+                                success -> bulkLoadStatus.recordSuccess(),
+                                failure -> bulkLoadStatus.recordFailure(failure.getMessage())
+                        );
+            }
+
+            return bulkLoadStatusRepository.persist(createBulkLoadStatusEntity(bulkLoadStatus))
+                    .onFailure()
+                    .transform(error -> {
+                        Log.error("TerminalService -> processBulkLoad: error persisting bulkLoadStatus", error);
+
+                        return error;
+                    })
+                    .onItem()
+                    .transform(terminalSaved -> terminalSaved);
+
+        } catch (IOException e) {
+            Log.error("TerminalService -> processBulkLoad: Error processing file", e);
+
+            throw new RuntimeException("Error processing file", e);
+        }
+    }
+
+    /**
      * Returns a number corresponding to the total number of terminal found.
      *
      * @param attributeName  name of the attribute
@@ -52,6 +101,9 @@ public class TerminalService {
      * @return a number
      */
     public Uni<Long> getTerminalCountByAttribute(String attributeName, String attributeValue) {
+        if (attributeName.equals("workstation")) {
+            return terminalRepository.count("{ 'workstations': ?1 }", attributeValue);
+        }
         return terminalRepository.count(attributeName, attributeValue);
     }
 
@@ -65,8 +117,14 @@ public class TerminalService {
      * @return a list of terminals
      */
     public Uni<List<TerminalEntity>> getTerminalListPagedByAttribute(String attributeName, String attributeValue, int pageIndex, int pageSize) {
+        if (attributeName.equals("workstation")) {
+            return terminalRepository
+                    .find("{ 'workstations': ?1 }", attributeValue)
+                    .page(pageIndex, pageSize)
+                    .list();
+        }
         return terminalRepository
-                .find(attributeName, attributeValue)
+                .find(String.format("%s = ?1", attributeName), attributeValue)
                 .page(pageIndex, pageSize)
                 .list();
     }
@@ -88,19 +146,18 @@ public class TerminalService {
      * Update terminal adding workstations from a workstationDto.
      *
      * @param workstations dto of workstations to be added
-     * @param oldTerminal old terminal to be modified
+     * @param oldTerminal  old terminal to be modified
      * @return terminal updated
      */
     public Uni<TerminalEntity> updateWorkstations(WorkstationsDto workstations, TerminalEntity oldTerminal) {
 
-        Terminal terminal = oldTerminal.getTerminal();
-        List<String> existingWorkstations = terminal.getWorkstations() != null ? terminal.getWorkstations() : new ArrayList<>();
+        List<String> existingWorkstations = oldTerminal.getWorkstations() != null ? oldTerminal.getWorkstations() : new ArrayList<>();
 
         Set<String> updatedWorkstationsSet = new HashSet<>(existingWorkstations);
         updatedWorkstationsSet.addAll(workstations.workstations());
         List<String> updatedWorkstations = new ArrayList<>(updatedWorkstationsSet);
 
-        terminal.setWorkstations(updatedWorkstations);
+        oldTerminal.setWorkstations(updatedWorkstations);
 
         return terminalRepository.update(oldTerminal)
                 .onFailure()
@@ -120,6 +177,7 @@ public class TerminalService {
 
         TerminalEntity entity = createTerminalEntity(terminalDto, terminalUuid);
         entity.id = oldTerminal.id;
+        entity.setWorkstations(oldTerminal.getWorkstations());
 
         return terminalRepository.update(entity)
                 .onFailure()
@@ -146,16 +204,27 @@ public class TerminalService {
     private TerminalEntity createTerminalEntity(TerminalDto terminalDto, String terminalUuid) {
         Log.debugf("TerminalService -> createTerminalEntity: storing terminal [%s] on DB", terminalDto);
 
-        Terminal terminal = new Terminal();
-        terminal.setPspId(terminalDto.pspId());
-        terminal.setTerminalId(terminalDto.terminalId());
-        terminal.setEnabled(terminalDto.enabled());
-        terminal.setPayeeCode(terminalDto.payeeCode());
-
         TerminalEntity terminalEntity = new TerminalEntity();
         terminalEntity.setTerminalUuid(terminalUuid);
-        terminalEntity.setTerminal(terminal);
+        terminalEntity.setPspId(terminalDto.pspId());
+        terminalEntity.setTerminalId(terminalDto.terminalId());
+        terminalEntity.setEnabled(terminalDto.enabled());
+        terminalEntity.setPayeeCode(terminalDto.payeeCode());
+        terminalEntity.setWorkstations(terminalDto.workstations());
 
         return terminalEntity;
+    }
+
+    private BulkLoadStatusEntity createBulkLoadStatusEntity(BulkLoadStatus bulkLoadStatus) {
+        Log.debugf("TerminalService -> createBulkLoadStatusEntity: storing bulkLoadStatus [%s] on DB", bulkLoadStatus);
+
+        BulkLoadStatusEntity bulkLoadStatusEntity = new BulkLoadStatusEntity();
+        bulkLoadStatusEntity.setBulkLoadingId(bulkLoadStatus.getBulkLoadingId());
+        bulkLoadStatusEntity.setTotalRecords(bulkLoadStatusEntity.getTotalRecords());
+        bulkLoadStatusEntity.setSuccessRecords(bulkLoadStatusEntity.getSuccessRecords());
+        bulkLoadStatusEntity.setFailedRecords(bulkLoadStatusEntity.getFailedRecords());
+        bulkLoadStatusEntity.setErrorMessages(bulkLoadStatus.getErrorMessages());
+
+        return bulkLoadStatusEntity;
     }
 }
