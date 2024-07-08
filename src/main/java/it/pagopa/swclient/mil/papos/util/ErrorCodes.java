@@ -35,6 +35,7 @@ public final class ErrorCodes {
     public static final String ERROR_COUNTING_TERMINALS                                          = MODULE_ID + "000201";
     public static final String ERROR_LIST_TERMINALS                                              = MODULE_ID + "000202";
     public static final String ERROR_TERMINAL_NOT_FOUND                                          = MODULE_ID + "000203";
+    public static final String ERROR_BULKLOADSTATUS_NOT_FOUND                                    = MODULE_ID + "000204";
 
     /*
      * Error descriptions
@@ -59,6 +60,7 @@ public final class ErrorCodes {
     private static final String ERROR_COUNTING_TERMINALS_DESCR = "error occurred while counting terminal";
     private static final String ERROR_LIST_TERMINALS_DESCR = "error occurred while retrieving list of paginated terminals";
     private static final String ERROR_TERMINAL_NOT_FOUND_DESCR = "terminal not found on db";
+    private static final String ERROR_BULKLOADSTATUS_NOT_FOUND_DESCR = "bulkLoadStatus not found on db";
 
     /*
      * Error complete message
@@ -83,5 +85,6 @@ public final class ErrorCodes {
     public static final String ERROR_COUNTING_TERMINALS_MSG = "[" + ERROR_COUNTING_TERMINALS + "] " + ERROR_COUNTING_TERMINALS_DESCR;
     public static final String ERROR_LIST_TERMINALS_MSG = "[" + ERROR_LIST_TERMINALS + "] " + ERROR_LIST_TERMINALS_DESCR;
     public static final String ERROR_TERMINAL_NOT_FOUND_MSG = "[" + ERROR_TERMINAL_NOT_FOUND + "] " + ERROR_TERMINAL_NOT_FOUND_DESCR;
+    public static final String ERROR_BULKLOADSTATUS_NOT_FOUND_MSG = "[" + ERROR_BULKLOADSTATUS_NOT_FOUND + "] " + ERROR_BULKLOADSTATUS_NOT_FOUND_DESCR;
 
 }

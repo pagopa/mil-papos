@@ -41,7 +41,7 @@ public class TerminalService {
 
         Log.debugf("TerminalService -> createTerminal - Input parameters: %s", terminalDto);
 
-        String terminalUuid = Utility.generateTerminalUuid();
+        String terminalUuid = Utility.generateRandomUuid();
         TerminalEntity entity = createTerminalEntity(terminalDto, terminalUuid);
 
         return terminalRepository.persist(entity)
@@ -58,29 +58,43 @@ public class TerminalService {
      * @return list of terminal created
      */
     public Uni<BulkLoadStatusEntity> processBulkLoad(byte[] fileContent) {
-
         Log.debugf("TerminalService -> processBulkLoad - Input parameters: file content length: %d bytes", fileContent.length);
 
-        String bulkLoadingId = UUID.randomUUID().toString();
+        String bulkLoadingId = Utility.generateRandomUuid();
         BulkLoadStatus bulkLoadStatus = new BulkLoadStatus(bulkLoadingId, 0);
 
         try {
             List<TerminalDto> terminalRequests = objectMapper.readValue(fileContent, objectMapper.getTypeFactory().constructCollectionType(List.class, TerminalDto.class));
             bulkLoadStatus.setTotalRecords(terminalRequests.size());
+            List<Uni<Void>> terminalCreationUnis = new ArrayList<>();
 
             for (TerminalDto terminal : terminalRequests) {
-                createTerminal(terminal)
-                        .subscribe().with(
-                                success -> bulkLoadStatus.recordSuccess(),
-                                failure -> bulkLoadStatus.recordFailure(failure.getMessage())
-                        );
+                Uni<Void> terminalCreationUni = createTerminal(terminal)
+                        .onFailure()
+                        .transform(failure -> {
+                            bulkLoadStatus.recordFailure(failure.getMessage());
+
+                            return failure;
+                        })
+                        .onItem()
+                        .transform(success -> {
+                            bulkLoadStatus.recordSuccess();
+
+                            return null;
+                        });
+
+                terminalCreationUnis.add(terminalCreationUni);
             }
 
-            return bulkLoadStatusRepository.persist(createBulkLoadStatusEntity(bulkLoadStatus))
+            Uni<Void> allTerminalCreations = Uni.combine().all().unis(terminalCreationUnis).discardItems();
+
+            return allTerminalCreations
+                    .onItem()
+                    .transformToUni(ignored -> bulkLoadStatusRepository.persist(createBulkLoadStatusEntity(bulkLoadStatus)))
                     .onFailure()
                     .transform(error -> {
                         Log.error("TerminalService -> processBulkLoad: error persisting bulkLoadStatus", error);
-
+                        
                         return error;
                     })
                     .onItem()
@@ -91,6 +105,19 @@ public class TerminalService {
 
             throw new RuntimeException("Error processing file", e);
         }
+    }
+
+    /**
+     * Find first bulkLoad status equals to terminalUuid given in input.
+     *
+     * @param bulkLoadingId id of bulkLoadStatus
+     * @return bulkLoadStatus found
+     */
+    public Uni<BulkLoadStatusEntity> findBulkLoadStatus(String bulkLoadingId) {
+
+        return bulkLoadStatusRepository
+                .find("bulkLoadingId = ?1", bulkLoadingId)
+                .firstResult();
     }
 
     /**
@@ -133,7 +160,7 @@ public class TerminalService {
      * Find first terminal equals to terminalUuid given in input.
      *
      * @param terminalUuid uuid of terminal
-     * @return terminal founded
+     * @return terminal found
      */
     public Uni<TerminalEntity> findTerminal(String terminalUuid) {
 
@@ -220,9 +247,9 @@ public class TerminalService {
 
         BulkLoadStatusEntity bulkLoadStatusEntity = new BulkLoadStatusEntity();
         bulkLoadStatusEntity.setBulkLoadingId(bulkLoadStatus.getBulkLoadingId());
-        bulkLoadStatusEntity.setTotalRecords(bulkLoadStatusEntity.getTotalRecords());
-        bulkLoadStatusEntity.setSuccessRecords(bulkLoadStatusEntity.getSuccessRecords());
-        bulkLoadStatusEntity.setFailedRecords(bulkLoadStatusEntity.getFailedRecords());
+        bulkLoadStatusEntity.setTotalRecords(bulkLoadStatus.getTotalRecords());
+        bulkLoadStatusEntity.setSuccessRecords(bulkLoadStatus.getSuccessRecords());
+        bulkLoadStatusEntity.setFailedRecords(bulkLoadStatus.getFailedRecords());
         bulkLoadStatusEntity.setErrorMessages(bulkLoadStatus.getErrorMessages());
 
         return bulkLoadStatusEntity;

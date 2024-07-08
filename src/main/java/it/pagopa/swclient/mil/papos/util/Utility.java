@@ -6,7 +6,7 @@ public class Utility {
     private Utility() {
     }
 
-    public static String generateTerminalUuid() {
+    public static String generateRandomUuid() {
         UUID uuid = UUID.randomUUID();
         return uuid.toString();
     }

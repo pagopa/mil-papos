@@ -42,11 +42,14 @@ class TerminalResourceTest {
 
     static TerminalEntity terminalEntity;
 
+    static BulkLoadStatusEntity bulkLoadStatusEntity;
+
     @BeforeAll
     static void createTestObjects() {
         terminalDto = TerminalTestData.getCorrectTerminalDto();
         workstationsDto = TerminalTestData.getCorrectWorkstationDto();
         terminalEntity = TerminalTestData.getCorrectTerminalEntity();
+        bulkLoadStatusEntity = TerminalTestData.getCorrectBulkLoadStatusEntity();
     }
 
     @Test
@@ -149,6 +152,56 @@ class TerminalResourceTest {
                 .extract().response();
 
         Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    void testGetBulkLoadingStatusFile_200() {
+        Mockito.when(terminalService.findBulkLoadStatus(any(String.class)))
+                .thenReturn(Uni.createFrom().item(TerminalTestData.getCorrectBulkLoadStatusEntity()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .when()
+                .get("/bulkload/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(200, response.statusCode());
+    }
+
+    @Test
+    void testGetBulkLoadingStatusFile_500() {
+        Mockito.when(terminalService.findBulkLoadStatus(any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .when()
+                .get("/bulkload/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    void testGetBulkLoadingStatusFile_404() {
+        bulkLoadStatusEntity = null;
+        Mockito.when(terminalService.findBulkLoadStatus(any(String.class)))
+                .thenReturn(Uni.createFrom().item(bulkLoadStatusEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .when()
+                .get("/bulkload/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .then()
+                .extract().response();
+
+        bulkLoadStatusEntity = TerminalTestData.getCorrectBulkLoadStatusEntity();
+        Assertions.assertEquals(404, response.statusCode());
     }
 
     @Test

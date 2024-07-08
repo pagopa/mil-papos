@@ -18,6 +18,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.jboss.resteasy.reactive.RestForm;
+
 import java.io.InputStream;
 
 
@@ -114,8 +115,53 @@ public class TerminalResource {
 
                                 return Response
                                         .status(Response.Status.ACCEPTED)
+                                        .entity(bulkLoadStatus)
                                         .build();
                             });
+                });
+    }
+
+    @GET
+    @Path("/bulkload/{bulkLoadingId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Uni<Response> getBulkLoadingStatusFile(
+            @HeaderParam("RequestId")
+            @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
+            @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
+            @PathParam(value = "bulkLoadingId") String bulkLoadingId) {
+
+        Log.debugf("TerminalResource -> getBulkLoadingStatusFile: Input requestId, bulkLoadingId: %s, %s", requestId, bulkLoadingId);
+
+        return terminalService.findBulkLoadStatus(bulkLoadingId)
+                .onFailure()
+                .transform(err -> {
+                    Log.errorf(err,
+                            "TerminalResource -> getBulkLoadingStatusFile: error during search bulkLoadStatus with bulkLoadingId: [%s]",
+                            bulkLoadingId);
+
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                            .build());
+                })
+                .onItem()
+                .transformToUni(bulkLoadStatus -> {
+                    if (bulkLoadStatus == null) {
+                        Log.errorf(
+                                "TerminalResource -> getBulkLoadingStatusFile: error 404 during searching bulkLoadStatus with bulkLoadingId: [%s, %s]",
+                                bulkLoadingId);
+
+                        return Uni.createFrom().failure(new NotFoundException(Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity(new Errors(ErrorCodes.ERROR_BULKLOADSTATUS_NOT_FOUND, ErrorCodes.ERROR_BULKLOADSTATUS_NOT_FOUND_MSG))
+                                .build()));
+                    }
+
+                    return Uni.createFrom().item(Response
+                            .status(Response.Status.OK)
+                            .entity(bulkLoadStatus)
+                            .build());
                 });
     }
 

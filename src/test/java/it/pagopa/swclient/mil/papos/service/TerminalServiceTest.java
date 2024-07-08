@@ -44,6 +44,8 @@ class TerminalServiceTest {
 
     static TerminalEntity terminalEntity;
 
+    static BulkLoadStatusEntity bulkLoadStatusEntity;
+
     static TerminalService terminalService;
 
     @BeforeAll
@@ -51,6 +53,7 @@ class TerminalServiceTest {
         terminalDto = TerminalTestData.getCorrectTerminalDto();
         workstationsDto = TerminalTestData.getCorrectWorkstationDto();
         terminalEntity = TerminalTestData.getCorrectTerminalEntity();
+        bulkLoadStatusEntity = TerminalTestData.getCorrectBulkLoadStatusEntity();
         objectMapper = new ObjectMapper();
         terminalService = new TerminalService(terminalRepository, bulkLoadStatusRepository, objectMapper);
     }
@@ -101,7 +104,7 @@ class TerminalServiceTest {
         byte[] fileContent = objectMapper.writeValueAsBytes(terminalDtos);
 
         Mockito.when(terminalRepository.persist(any(TerminalEntity.class)))
-                .thenReturn(Uni.createFrom().failure(new RuntimeException("Error creating terminal")));
+                .thenReturn(Uni.createFrom().failure(new RuntimeException()));
         Mockito.when(bulkLoadStatusRepository.persist(any(BulkLoadStatusEntity.class)))
                 .thenReturn(Uni.createFrom().item(new BulkLoadStatusEntity()));
 
@@ -109,7 +112,21 @@ class TerminalServiceTest {
 
         result.subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
-                .assertCompleted();
+                .assertFailedWith(RuntimeException.class);
+    }
+
+    @Test
+    void testFindBulkLoadStatus_Success() {
+        ReactivePanacheQuery<BulkLoadStatusEntity> query = Mockito.mock(ReactivePanacheQuery.class);
+        Mockito.when(query.firstResult()).thenReturn(Uni.createFrom().item(bulkLoadStatusEntity));
+        Mockito.when(bulkLoadStatusRepository.find("bulkLoadingId = ?1", "bulkLoadingId")).thenReturn(query);
+
+        Uni<BulkLoadStatusEntity> terminalEntityUni = terminalService.findBulkLoadStatus("bulkLoadingId");
+
+        terminalEntityUni
+                .subscribe()
+                .withSubscriber(UniAssertSubscriber.create())
+                .assertItem(bulkLoadStatusEntity);
     }
 
     @Test
