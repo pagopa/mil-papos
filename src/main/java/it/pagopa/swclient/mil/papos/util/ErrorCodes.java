@@ -26,6 +26,7 @@ public final class ErrorCodes {
     public static final String ERROR_IDPAY_MUST_NOT_BE_NULL                                      = MODULE_ID + "000012";
     public static final String ERROR_TERMINALDTO_MUST_NOT_BE_NULL                                = MODULE_ID + "000013";
     public static final String ERROR_WORKSTATIONS_MUST_NOT_BE_NULL                               = MODULE_ID + "000014";
+    public static final String ERROR_BULKLOAD_FILE_MUST_NOT_BE_NULL                              = MODULE_ID + "000015";
 
     /*
      * Service errors code from 000200 to 000500
@@ -34,6 +35,8 @@ public final class ErrorCodes {
     public static final String ERROR_COUNTING_TERMINALS                                          = MODULE_ID + "000201";
     public static final String ERROR_LIST_TERMINALS                                              = MODULE_ID + "000202";
     public static final String ERROR_TERMINAL_NOT_FOUND                                          = MODULE_ID + "000203";
+    public static final String ERROR_BULKLOADSTATUS_NOT_FOUND                                    = MODULE_ID + "000204";
+    public static final String ERROR_PROCESSING_FILE                                             = MODULE_ID + "000205";
 
     /*
      * Error descriptions
@@ -52,11 +55,14 @@ public final class ErrorCodes {
     private static final String ERROR_IDPAY_MUST_NOT_BE_NULL_DESCR = "idpay must not be null";
     private static final String ERROR_TERMINALDTO_MUST_NOT_BE_NULL_DESCR = "request body must not be null";
     private static final String ERROR_WORKSTATIONS_MUST_NOT_BE_NULL_DESCR = "workstations must not be null";
+    private static final String ERROR_BULKLOAD_FILE_MUST_NOT_BE_NULL_DESCR = "file uploaded must not be null";
 
     private static final String ERROR_GENERIC_FROM_DB_DESCR = "unexpected error from db";
     private static final String ERROR_COUNTING_TERMINALS_DESCR = "error occurred while counting terminal";
     private static final String ERROR_LIST_TERMINALS_DESCR = "error occurred while retrieving list of paginated terminals";
     private static final String ERROR_TERMINAL_NOT_FOUND_DESCR = "terminal not found on db";
+    private static final String ERROR_BULKLOADSTATUS_NOT_FOUND_DESCR = "bulkLoadStatus not found on db";
+    private static final String ERROR_PROCESSING_FILE_DESCR = "error occurred during processing file";
 
     /*
      * Error complete message
@@ -75,10 +81,13 @@ public final class ErrorCodes {
     public static final String ERROR_IDPAY_MUST_NOT_BE_NULL_MSG = "[" + ERROR_IDPAY_MUST_NOT_BE_NULL + "] " + ERROR_IDPAY_MUST_NOT_BE_NULL_DESCR;
     public static final String ERROR_TERMINALDTO_MUST_NOT_BE_NULL_MSG = "[" + ERROR_TERMINALDTO_MUST_NOT_BE_NULL + "] " + ERROR_TERMINALDTO_MUST_NOT_BE_NULL_DESCR;
     public static final String ERROR_WORKSTATIONS_MUST_NOT_BE_NULL_MSG = "[" + ERROR_WORKSTATIONS_MUST_NOT_BE_NULL + "] " + ERROR_WORKSTATIONS_MUST_NOT_BE_NULL_DESCR;
+    public static final String ERROR_BULKLOAD_FILE_MUST_NOT_BE_NULL_MSG = "[" + ERROR_BULKLOAD_FILE_MUST_NOT_BE_NULL + "] " + ERROR_BULKLOAD_FILE_MUST_NOT_BE_NULL_DESCR;
 
     public static final String ERROR_GENERIC_FROM_DB_MSG = "[" + ERROR_GENERIC_FROM_DB + "] " + ERROR_GENERIC_FROM_DB_DESCR;
     public static final String ERROR_COUNTING_TERMINALS_MSG = "[" + ERROR_COUNTING_TERMINALS + "] " + ERROR_COUNTING_TERMINALS_DESCR;
     public static final String ERROR_LIST_TERMINALS_MSG = "[" + ERROR_LIST_TERMINALS + "] " + ERROR_LIST_TERMINALS_DESCR;
     public static final String ERROR_TERMINAL_NOT_FOUND_MSG = "[" + ERROR_TERMINAL_NOT_FOUND + "] " + ERROR_TERMINAL_NOT_FOUND_DESCR;
+    public static final String ERROR_BULKLOADSTATUS_NOT_FOUND_MSG = "[" + ERROR_BULKLOADSTATUS_NOT_FOUND + "] " + ERROR_BULKLOADSTATUS_NOT_FOUND_DESCR;
+    public static final String ERROR_PROCESSING_FILE_MSG = "[" + ERROR_PROCESSING_FILE + "] " + ERROR_PROCESSING_FILE_DESCR;
 
 }

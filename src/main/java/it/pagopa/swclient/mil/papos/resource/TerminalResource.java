@@ -2,9 +2,10 @@ package it.pagopa.swclient.mil.papos.resource;
 
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
-import it.pagopa.swclient.mil.papos.dao.PageMetadata;
-import it.pagopa.swclient.mil.papos.dao.TerminalPageResponse;
+import io.smallrye.mutiny.unchecked.Unchecked;
+import it.pagopa.swclient.mil.papos.model.PageMetadata;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
+import it.pagopa.swclient.mil.papos.model.TerminalPageResponse;
 import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
 import it.pagopa.swclient.mil.papos.service.TerminalService;
 import it.pagopa.swclient.mil.papos.util.ErrorCodes;
@@ -16,6 +17,9 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.jboss.resteasy.reactive.RestForm;
+
+import java.io.InputStream;
 
 
 @Path("/terminals")
@@ -58,6 +62,108 @@ public class TerminalResource {
                             terminalSaved);
 
                     return Response.status(Response.Status.CREATED).build();
+                });
+    }
+
+    @POST
+    @Path("/bulkload")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    // @RolesAllowed({ "pos_service_provider" })
+    public Uni<Response> bulkLoadTerminals(
+            @HeaderParam("RequestId")
+            @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
+            @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
+            @RestForm("file") InputStream fileInputStream) {
+
+        Log.debugf("TerminalResource -> bulkLoadTerminals: Input requestId, fileInputStream: %s, %s", requestId, fileInputStream);
+
+        if (fileInputStream == null) {
+            Log.error("TerminalResource -> bulkLoadTerminals: error fileInputStream is null");
+
+            return Uni.createFrom().item(() ->
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity(new Errors(ErrorCodes.ERROR_BULKLOAD_FILE_MUST_NOT_BE_NULL, ErrorCodes.ERROR_BULKLOAD_FILE_MUST_NOT_BE_NULL_MSG))
+                            .build()
+            );
+        }
+
+        return Uni.createFrom().item(Unchecked.supplier(fileInputStream::readAllBytes)).onItem()
+                .transformToUni(file -> {
+                    if (file.length == 0) {
+                        Log.error("TerminalResource -> bulkLoadTerminals: error uploaded file is empty");
+
+                        return Uni.createFrom().item(() ->
+                                Response.status(Response.Status.BAD_REQUEST)
+                                        .entity(new Errors(ErrorCodes.ERROR_BULKLOAD_FILE_MUST_NOT_BE_NULL, ErrorCodes.ERROR_BULKLOAD_FILE_MUST_NOT_BE_NULL_MSG))
+                                        .build()
+                        );
+                    }
+
+                    return terminalService.processBulkLoad(file)
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err, "TerminalResource -> bulkLoadTerminals: error during bulkLoad process with file: length [%d] bytes", file.length);
+
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transform(bulkLoadStatus -> {
+                                Log.debugf("TerminalResource -> bulkLoadTerminals: bulkLoad terminals completed [%s]", bulkLoadStatus);
+
+                                return Response
+                                        .status(Response.Status.ACCEPTED)
+                                        .entity(bulkLoadStatus)
+                                        .build();
+                            });
+                });
+    }
+
+    @GET
+    @Path("/bulkload/{bulkLoadingId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    // @RolesAllowed({ "pos_service_provider" })
+    public Uni<Response> getBulkLoadingStatusFile(
+            @HeaderParam("RequestId")
+            @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
+            @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
+            @PathParam(value = "bulkLoadingId") String bulkLoadingId) {
+
+        Log.debugf("TerminalResource -> getBulkLoadingStatusFile: Input requestId, bulkLoadingId: %s, %s", requestId, bulkLoadingId);
+
+        return terminalService.findBulkLoadStatus(bulkLoadingId)
+                .onFailure()
+                .transform(err -> {
+                    Log.errorf(err,
+                            "TerminalResource -> getBulkLoadingStatusFile: error during search bulkLoadStatus with bulkLoadingId: [%s]",
+                            bulkLoadingId);
+
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                            .build());
+                })
+                .onItem()
+                .transformToUni(bulkLoadStatus -> {
+                    if (bulkLoadStatus == null) {
+                        Log.errorf(
+                                "TerminalResource -> getBulkLoadingStatusFile: error 404 during searching bulkLoadStatus with bulkLoadingId: [%s, %s]",
+                                bulkLoadingId);
+
+                        return Uni.createFrom().failure(new NotFoundException(Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity(new Errors(ErrorCodes.ERROR_BULKLOADSTATUS_NOT_FOUND, ErrorCodes.ERROR_BULKLOADSTATUS_NOT_FOUND_MSG))
+                                .build()));
+                    }
+
+                    return Uni.createFrom().item(Response
+                            .status(Response.Status.OK)
+                            .entity(bulkLoadStatus)
+                            .build());
                 });
     }
 
