@@ -10,11 +10,16 @@ import it.pagopa.swclient.mil.papos.dao.TerminalRepository;
 import it.pagopa.swclient.mil.papos.model.BulkLoadStatus;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
 import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
+import it.pagopa.swclient.mil.papos.util.ErrorCodes;
+import it.pagopa.swclient.mil.papos.util.Errors;
 import it.pagopa.swclient.mil.papos.util.Utility;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.core.Response;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @ApplicationScoped
 public class TerminalService {
@@ -103,7 +108,10 @@ public class TerminalService {
         } catch (IOException e) {
             Log.error("TerminalService -> processBulkLoad: Error processing file", e);
 
-            throw new RuntimeException("Error processing file", e);
+            return Uni.createFrom().failure(new InternalServerErrorException(Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new Errors(ErrorCodes.ERROR_PROCESSING_FILE, ErrorCodes.ERROR_PROCESSING_FILE_MSG))
+                    .build()));
         }
     }
 

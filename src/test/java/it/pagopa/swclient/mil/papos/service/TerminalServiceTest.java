@@ -20,6 +20,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -133,9 +134,13 @@ class TerminalServiceTest {
     void testProcessBulkLoad_FileReadError() {
         byte[] fileContent = "malformed content".getBytes();
 
-        RuntimeException exception = Assertions.assertThrows(RuntimeException.class, () -> terminalService.processBulkLoad(fileContent).await().indefinitely());
+        Uni<BulkLoadStatusEntity> result = terminalService.processBulkLoad(fileContent);
 
-        Assertions.assertTrue(exception.getMessage().contains("Error processing file"));
+        UniAssertSubscriber<BulkLoadStatusEntity> subscriber = result
+                .subscribe()
+                .withSubscriber(UniAssertSubscriber.create());
+
+        subscriber.awaitFailure().assertFailedWith(WebApplicationException.class);
     }
 
     @Test
@@ -154,8 +159,6 @@ class TerminalServiceTest {
                 .withSubscriber(UniAssertSubscriber.create())
                 .assertFailedWith(RuntimeException.class, "Error persisting bulk load status");
     }
-
-
 
     @Test
     void testGetTerminalCount_Success() {
