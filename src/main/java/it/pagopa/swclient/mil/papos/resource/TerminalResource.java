@@ -69,6 +69,7 @@ public class TerminalResource {
     @Path("/bulkload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
+    // @RolesAllowed({ "pos_service_provider" })
     public Uni<Response> bulkLoadTerminals(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -125,6 +126,7 @@ public class TerminalResource {
     @Path("/bulkload/{bulkLoadingId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    // @RolesAllowed({ "pos_service_provider" })
     public Uni<Response> getBulkLoadingStatusFile(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)

@@ -178,13 +178,7 @@ public class TerminalService {
      */
     public Uni<TerminalEntity> updateWorkstations(WorkstationsDto workstations, TerminalEntity oldTerminal) {
 
-        List<String> existingWorkstations = oldTerminal.getWorkstations() != null ? oldTerminal.getWorkstations() : new ArrayList<>();
-
-        Set<String> updatedWorkstationsSet = new HashSet<>(existingWorkstations);
-        updatedWorkstationsSet.addAll(workstations.workstations());
-        List<String> updatedWorkstations = new ArrayList<>(updatedWorkstationsSet);
-
-        oldTerminal.setWorkstations(updatedWorkstations);
+        oldTerminal.setWorkstations(workstations.workstations());
 
         return terminalRepository.update(oldTerminal)
                 .onFailure()
