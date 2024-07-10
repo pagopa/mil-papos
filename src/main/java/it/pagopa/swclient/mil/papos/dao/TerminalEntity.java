@@ -5,12 +5,17 @@ import io.quarkus.mongodb.panache.common.MongoEntity;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @MongoEntity(database = "mil", collection = "terminal")
 public class TerminalEntity extends PanacheMongoEntity {
 
+    private String pspId;
+    private String terminalId;
+    private Boolean enabled;
+    private String payeeCode;
     private String terminalUuid;
-
-    private Terminal terminal;
+    private List<String> workstations;
 }

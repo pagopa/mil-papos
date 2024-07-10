@@ -1,4 +1,4 @@
-package it.pagopa.swclient.mil.papos.dao;
+package it.pagopa.swclient.mil.papos.model;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
