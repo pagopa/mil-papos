@@ -4,8 +4,7 @@
 		"name": "Papos Microservice",
 		"description": "Papos Microservice for Multi-channel Integration Layer of SW Client Project\n\nContact Support:\n Name: Antonio Tarricone\n Email: antonio.tarricone@pagopa.it",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "29646859",
-		"_collection_link": "https://crimson-zodiac-456704.postman.co/workspace/Personal-Workspace~7804a326-503c-4623-9152-3f4c38f2d060/collection/29646859-2e8b1dd3-ff67-4e68-890e-7a8314062541?action=share&source=collection_link&creator=29646859"
+		"_exporter_id": "29646859"
 	},
 	"item": [
 		{
@@ -146,6 +145,102 @@
 			"response": []
 		},
 		{
+			"name": "Bulkload",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 202\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.response.to.have.status(202);",
+							"    pm.environment.set(\"bulkLoadingId\", jsonData.bulkLoadingId);",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "RequestId",
+						"value": "{{requestId}}",
+						"description": "(Required) Request Id that will be logged by services"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "{{MIL_TR_BULKLOAD_FILE_PATH}}"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{MIL_TR_BASE_URL}}/terminals/bulkload",
+					"host": [
+						"{{MIL_TR_BASE_URL}}"
+					],
+					"path": [
+						"terminals",
+						"bulkload"
+					]
+				},
+				"description": "Creates a new bulkload"
+			},
+			"response": []
+		},
+		{
+			"name": "Get BulkLoad Status",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "RequestId",
+						"value": "{{requestId}}",
+						"description": "(Required) Request Id that will be logged by services"
+					}
+				],
+				"url": {
+					"raw": "{{MIL_TR_BASE_URL}}/terminals/bulkload/{{bulkLoadingId}}",
+					"host": [
+						"{{MIL_TR_BASE_URL}}"
+					],
+					"path": [
+						"terminals",
+						"bulkload",
+						"{{bulkLoadingId}}"
+					]
+				},
+				"description": "Returns a bulkload status"
+			},
+			"response": []
+		},
+		{
 			"name": "Find By Payee Code",
 			"event": [
 				{
@@ -212,8 +307,6 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"var jsonData = JSON.parse(pm.response.text());",
-							"",
 							"pm.test(\"Status code is 200\", function () {",
 							"    pm.response.to.have.status(200);",
 							"});",
@@ -271,8 +364,6 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"var jsonData = JSON.parse(pm.response.text());",
-							"",
 							"pm.test(\"Status code is 200\", function () {",
 							"    pm.response.to.have.status(200);",
 							"});",
@@ -568,6 +659,11 @@
 		{
 			"key": "workstation",
 			"value": "cassa-1-ufficio-1",
+			"type": "string"
+		},
+		{
+			"key": "bulkLoadingId",
+			"value": "",
 			"type": "string"
 		}
 	]
