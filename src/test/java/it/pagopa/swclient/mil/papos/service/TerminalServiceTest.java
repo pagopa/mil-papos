@@ -12,7 +12,7 @@ import it.pagopa.swclient.mil.papos.dao.TerminalEntity;
 import it.pagopa.swclient.mil.papos.dao.TerminalRepository;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
 import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
-import it.pagopa.swclient.mil.papos.util.TerminalTestData;
+import it.pagopa.swclient.mil.papos.util.TestData;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.Assertions;
@@ -51,10 +51,10 @@ class TerminalServiceTest {
 
     @BeforeAll
     static void createTestObjects() {
-        terminalDto = TerminalTestData.getCorrectTerminalDto();
-        workstationsDto = TerminalTestData.getCorrectWorkstationDto();
-        terminalEntity = TerminalTestData.getCorrectTerminalEntity();
-        bulkLoadStatusEntity = TerminalTestData.getCorrectBulkLoadStatusEntity();
+        terminalDto = TestData.getCorrectTerminalDto();
+        workstationsDto = TestData.getCorrectWorkstationDto();
+        terminalEntity = TestData.getCorrectTerminalEntity();
+        bulkLoadStatusEntity = TestData.getCorrectBulkLoadStatusEntity();
         objectMapper = new ObjectMapper();
         terminalService = new TerminalService(terminalRepository, bulkLoadStatusRepository, objectMapper);
     }
