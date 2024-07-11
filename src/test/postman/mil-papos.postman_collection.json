@@ -8,550 +8,628 @@
 	},
 	"item": [
 		{
-			"name": "Get Papos Access Token",
-			"event": [
+			"name": "1. Terminal",
+			"item": [
 				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {\r",
-							"    pm.response.to.have.status(200);\r",
-							"});\r",
-							"pm.test(\"Body matches string\", function () {\r",
-							"    pm.expect(pm.response.text()).to.include(\"access_token\");\r",
-							"    pm.expect(pm.response.text()).to.include(\"token_type\");\r",
-							"    pm.expect(pm.response.text()).to.include(\"expires_in\");\r",
-							"\r",
-							"    pm.test(\"Token type\", function () {\r",
-							"        var jsonData = pm.response.json();\r",
-							"        pm.expect(jsonData.token_type).to.eql(\"Bearer\");\r",
-							"         pm.environment.set(\"access_token_tr\", jsonData.access_token);\r",
-							"\r",
-							"    });\r",
-							"\r",
-							"   \r",
-							"});\r",
-							""
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"protocolProfileBehavior": {
-				"disabledSystemHeaders": {}
-			},
-			"request": {
-				"auth": {
-					"type": "noauth"
-				},
-				"method": "POST",
-				"header": [
-					{
-						"key": "RequestId",
-						"value": "{{requestId}}"
-					},
-					{
-						"key": "Version",
-						"value": "{{mil_auth_api_version}}"
-					}
-				],
-				"body": {
-					"mode": "urlencoded",
-					"urlencoded": [
+					"name": "0. Get Token",
+					"item": [
 						{
-							"key": "grant_type",
-							"value": "client_credentials",
-							"type": "text"
-						},
-						{
-							"key": "client_id",
-							"value": "{{tr_token_client_id}}",
-							"type": "text"
-						},
-						{
-							"key": "client_secret",
-							"value": "{{tr_token_client_secret}}",
-							"type": "default"
+							"name": "Get Papos Access Token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"pm.test(\"Body matches string\", function () {\r",
+											"    pm.expect(pm.response.text()).to.include(\"access_token\");\r",
+											"    pm.expect(pm.response.text()).to.include(\"token_type\");\r",
+											"    pm.expect(pm.response.text()).to.include(\"expires_in\");\r",
+											"\r",
+											"    pm.test(\"Token type\", function () {\r",
+											"        var jsonData = pm.response.json();\r",
+											"        pm.expect(jsonData.token_type).to.eql(\"Bearer\");\r",
+											"         pm.environment.set(\"access_token_tr\", jsonData.access_token);\r",
+											"\r",
+											"    });\r",
+											"\r",
+											"   \r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {}
+							},
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}"
+									},
+									{
+										"key": "Version",
+										"value": "{{mil_auth_api_version}}"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "client_credentials",
+											"type": "text"
+										},
+										{
+											"key": "client_id",
+											"value": "{{tr_token_client_id}}",
+											"type": "text"
+										},
+										{
+											"key": "client_secret",
+											"value": "{{tr_token_client_secret}}",
+											"type": "default"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{MIL_AUTH_BASE_URL}}/token",
+									"host": [
+										"{{MIL_AUTH_BASE_URL}}"
+									],
+									"path": [
+										"token"
+									]
+								}
+							},
+							"response": []
 						}
 					]
 				},
-				"url": {
-					"raw": "{{MIL_AUTH_BASE_URL}}/token",
-					"host": [
-						"{{MIL_AUTH_BASE_URL}}"
-					],
-					"path": [
-						"token"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Create New Terminal",
-			"event": [
 				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"Status code is 201\", function () {",
-							"    pm.response.to.have.status(201);",
-							"});",
-							""
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "RequestId",
-						"value": "{{requestId}}",
-						"description": "(Required) Request Id that will be logged by services"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"pspId\": \"{{pspId}}\",\n  \"terminalId\": \"{{terminalId}}\",\n  \"enabled\": \"{{enabled}}\",\n  \"payeeCode\": \"{{payeeCode}}\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{MIL_TR_BASE_URL}}/terminals",
-					"host": [
-						"{{MIL_TR_BASE_URL}}"
-					],
-					"path": [
-						"terminals"
-					]
-				},
-				"description": "Creates a new terminal"
-			},
-			"response": []
-		},
-		{
-			"name": "Bulkload",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"Status code is 202\", function () {",
-							"    var jsonData = pm.response.json();",
-							"    pm.response.to.have.status(202);",
-							"    pm.environment.set(\"bulkLoadingId\", jsonData.bulkLoadingId);",
-							"});",
-							""
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"protocolProfileBehavior": {
-				"disabledSystemHeaders": {}
-			},
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "RequestId",
-						"value": "{{requestId}}",
-						"description": "(Required) Request Id that will be logged by services"
-					}
-				],
-				"body": {
-					"mode": "formdata",
-					"formdata": [
+					"name": "1. Create Terminal",
+					"item": [
 						{
-							"key": "file",
-							"type": "file",
-							"src": "{{MIL_TR_BULKLOAD_FILE_PATH}}"
+							"name": "Create New Terminal",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"pspId\": \"{{pspId}}\",\n  \"terminalId\": \"{{terminalId}}\",\n  \"enabled\": \"{{enabled}}\",\n  \"payeeCode\": \"{{payeeCode}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals"
+									]
+								},
+								"description": "Creates a new terminal"
+							},
+							"response": []
 						}
 					]
 				},
-				"url": {
-					"raw": "{{MIL_TR_BASE_URL}}/terminals/bulkload",
-					"host": [
-						"{{MIL_TR_BASE_URL}}"
-					],
-					"path": [
-						"terminals",
-						"bulkload"
-					]
-				},
-				"description": "Creates a new bulkload"
-			},
-			"response": []
-		},
-		{
-			"name": "Get BulkLoad Status",
-			"event": [
 				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});",
-							""
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "RequestId",
-						"value": "{{requestId}}",
-						"description": "(Required) Request Id that will be logged by services"
-					}
-				],
-				"url": {
-					"raw": "{{MIL_TR_BASE_URL}}/terminals/bulkload/{{bulkLoadingId}}",
-					"host": [
-						"{{MIL_TR_BASE_URL}}"
-					],
-					"path": [
-						"terminals",
-						"bulkload",
-						"{{bulkLoadingId}}"
-					]
-				},
-				"description": "Returns a bulkload status"
-			},
-			"response": []
-		},
-		{
-			"name": "Find By Payee Code",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"var jsonData = JSON.parse(pm.response.text());",
-							"pm.collectionVariables.set(\"terminalUuid\", jsonData.terminals[0].terminalUuid);",
-							"",
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});",
-							""
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "RequestId",
-						"value": "{{requestId}}",
-						"description": "(Required) Request Id that will be logged by services"
-					}
-				],
-				"url": {
-					"raw": "{{MIL_TR_BASE_URL}}/terminals/findByPayeeCode?payeeCode={{payeeCode}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
-					"host": [
-						"{{MIL_TR_BASE_URL}}"
-					],
-					"path": [
-						"terminals",
-						"findByPayeeCode"
-					],
-					"query": [
+					"name": "2. Bulkload",
+					"item": [
 						{
-							"key": "payeeCode",
-							"value": "{{payeeCode}}",
-							"description": "(Required) Fiscal code of the subject that receives the payment"
+							"name": "Bulkload",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 202\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.response.to.have.status(202);",
+											"    pm.environment.set(\"bulkLoadingId\", jsonData.bulkLoadingId);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {}
+							},
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "file",
+											"type": "file",
+											"src": "{{MIL_TR_BULKLOAD_FILE_PATH}}"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals/bulkload",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals",
+										"bulkload"
+									]
+								},
+								"description": "Creates a new terminal"
+							},
+							"response": []
 						},
 						{
-							"key": "page",
-							"value": "{{getTerminalPage}}",
-							"description": "(Required) Number of the requested page of data"
-						},
-						{
-							"key": "size",
-							"value": "{{getTerminalPageSize}}",
-							"description": "(Required) Size of the requested page of data"
+							"name": "Get BulkLoad Status",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals/bulkload/{{bulkLoadingId}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals",
+										"bulkload",
+										"{{bulkLoadingId}}"
+									]
+								},
+								"description": "Returns a page of terminals"
+							},
+							"response": []
 						}
 					]
 				},
-				"description": "Returns a page of terminals"
-			},
-			"response": []
-		},
-		{
-			"name": "Find By Psp Id",
-			"event": [
 				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});",
-							""
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "RequestId",
-						"value": "{{requestId}}",
-						"description": "(Required) Request Id that will be logged by services"
-					}
-				],
-				"url": {
-					"raw": "{{MIL_TR_BASE_URL}}/terminals/findByPspId?pspId={{pspId}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
-					"host": [
-						"{{MIL_TR_BASE_URL}}"
-					],
-					"path": [
-						"terminals",
-						"findByPspId"
-					],
-					"query": [
+					"name": "3. Find Terminal",
+					"item": [
 						{
-							"key": "pspId",
-							"value": "{{pspId}}",
-							"description": "(Required) ID of the POS service provider"
+							"name": "Find By Payee Code",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = JSON.parse(pm.response.text());",
+											"pm.collectionVariables.set(\"terminalUuid\", jsonData.terminals[0].terminalUuid);",
+											"",
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals/findByPayeeCode?payeeCode={{payeeCode}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals",
+										"findByPayeeCode"
+									],
+									"query": [
+										{
+											"key": "payeeCode",
+											"value": "{{payeeCode}}",
+											"description": "(Required) Fiscal code of the subject that receives the payment"
+										},
+										{
+											"key": "page",
+											"value": "{{getTerminalPage}}",
+											"description": "(Required) Number of the requested page of data"
+										},
+										{
+											"key": "size",
+											"value": "{{getTerminalPageSize}}",
+											"description": "(Required) Size of the requested page of data"
+										}
+									]
+								},
+								"description": "Returns a page of terminals"
+							},
+							"response": []
 						},
 						{
-							"key": "page",
-							"value": "{{getTerminalPage}}",
-							"description": "(Required) Number of the requested page of data"
+							"name": "Find By Psp Id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals/findByPspId?pspId={{pspId}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals",
+										"findByPspId"
+									],
+									"query": [
+										{
+											"key": "pspId",
+											"value": "{{pspId}}",
+											"description": "(Required) ID of the POS service provider"
+										},
+										{
+											"key": "page",
+											"value": "{{getTerminalPage}}",
+											"description": "(Required) Number of the requested page of data"
+										},
+										{
+											"key": "size",
+											"value": "{{getTerminalPageSize}}",
+											"description": "(Required) Size of the requested page of data"
+										}
+									]
+								},
+								"description": "Returns a page of terminals"
+							},
+							"response": []
 						},
 						{
-							"key": "size",
-							"value": "{{getTerminalPageSize}}",
-							"description": "(Required) Size of the requested page of data"
+							"name": "Find By Workstation",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals/findByWorkstation?workstation={{workstation}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals",
+										"findByWorkstation"
+									],
+									"query": [
+										{
+											"key": "workstation",
+											"value": "{{workstation}}",
+											"description": "(Required) Fiscal code of the subject that receives the payment"
+										},
+										{
+											"key": "page",
+											"value": "{{getTerminalPage}}",
+											"description": "(Required) Number of the requested page of data"
+										},
+										{
+											"key": "size",
+											"value": "{{getTerminalPageSize}}",
+											"description": "(Required) Size of the requested page of data"
+										}
+									]
+								},
+								"description": "Returns a page of terminals"
+							},
+							"response": []
 						}
 					]
 				},
-				"description": "Returns a page of terminals"
-			},
-			"response": []
-		},
-		{
-			"name": "Find By Workstation",
-			"event": [
 				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"Status code is 200\", function () {",
-							"    pm.response.to.have.status(200);",
-							"});",
-							""
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "RequestId",
-						"value": "{{requestId}}",
-						"description": "(Required) Request Id that will be logged by services"
-					}
-				],
-				"url": {
-					"raw": "{{MIL_TR_BASE_URL}}/terminals/findByWorkstation?workstation={{workstation}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
-					"host": [
-						"{{MIL_TR_BASE_URL}}"
-					],
-					"path": [
-						"terminals",
-						"findByWorkstation"
-					],
-					"query": [
+					"name": "4. Update Terminal",
+					"item": [
 						{
-							"key": "workstation",
-							"value": "{{workstation}}",
-							"description": "(Required) Fiscal code of the subject that receives the payment"
+							"name": "Update Workstations",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"workstations\": [\"cassa-1-ufficio-1\",\"cassa-3-ufficio-1\"]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals/{{terminalUuid}}/updateWorkstations",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals",
+										"{{terminalUuid}}",
+										"updateWorkstations"
+									]
+								},
+								"description": "Returns a page of terminals"
+							},
+							"response": []
 						},
 						{
-							"key": "page",
-							"value": "{{getTerminalPage}}",
-							"description": "(Required) Number of the requested page of data"
-						},
+							"name": "Update Terminal",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"terminalId\": \"67899876\",\r\n    \"enabled\": false,\r\n    \"payeeCode\": \"06534340721\",\r\n    \"pspId\": \"pspspId\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals/{{terminalUuid}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals",
+										"{{terminalUuid}}"
+									]
+								},
+								"description": "Returns a page of terminals"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "5. Delete Terminal",
+					"item": [
 						{
-							"key": "size",
-							"value": "{{getTerminalPageSize}}",
-							"description": "(Required) Size of the requested page of data"
+							"name": "Delete Terminal",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals/{{terminalUuid}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals",
+										"{{terminalUuid}}"
+									]
+								},
+								"description": "Returns a page of terminals"
+							},
+							"response": []
 						}
 					]
-				},
-				"description": "Returns a page of terminals"
-			},
-			"response": []
+				}
+			]
 		},
 		{
-			"name": "Update Workstations",
-			"event": [
+			"name": "2. Transaction",
+			"item": [
 				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"Status code is 204\", function () {",
-							"    pm.response.to.have.status(204);",
-							"});",
-							""
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"request": {
-				"method": "PATCH",
-				"header": [
-					{
-						"key": "RequestId",
-						"value": "{{requestId}}",
-						"description": "(Required) Request Id that will be logged by services"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"workstations\": [\"cassa-1-ufficio-1\",\"cassa-3-ufficio-1\"]\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+					"name": "0. Create Transaction",
+					"item": [
+						{
+							"name": "Create New Transaction",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pspId\": \"{{pspId}}\",\r\n  \"terminalId\": \"{{terminalId}}\",\r\n  \"noticeNumber\": \"{{noticeNumber}}\",\r\n  \"payeeCode\": \"{{payeeCode}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/transactions",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"transactions"
+									]
+								}
+							},
+							"response": []
 						}
-					}
-				},
-				"url": {
-					"raw": "{{MIL_TR_BASE_URL}}/terminals/{{terminalUuid}}/updateWorkstations",
-					"host": [
-						"{{MIL_TR_BASE_URL}}"
-					],
-					"path": [
-						"terminals",
-						"{{terminalUuid}}",
-						"updateWorkstations"
 					]
-				},
-				"description": "Returns a page of terminals"
-			},
-			"response": []
-		},
-		{
-			"name": "Update Terminal",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"Status code is 204\", function () {",
-							"    pm.response.to.have.status(204);",
-							"});",
-							""
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
 				}
-			],
-			"request": {
-				"method": "PATCH",
-				"header": [
-					{
-						"key": "RequestId",
-						"value": "{{requestId}}",
-						"description": "(Required) Request Id that will be logged by services"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"terminalId\": \"67899876\",\r\n    \"enabled\": false,\r\n    \"payeeCode\": \"06534340721\",\r\n    \"pspId\": \"pspspId\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{MIL_TR_BASE_URL}}/terminals/{{terminalUuid}}",
-					"host": [
-						"{{MIL_TR_BASE_URL}}"
-					],
-					"path": [
-						"terminals",
-						"{{terminalUuid}}"
-					]
-				},
-				"description": "Returns a page of terminals"
-			},
-			"response": []
-		},
-		{
-			"name": "Delete Terminal",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"Status code is 204\", function () {",
-							"    pm.response.to.have.status(204);",
-							"});",
-							""
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"request": {
-				"method": "DELETE",
-				"header": [
-					{
-						"key": "RequestId",
-						"value": "{{requestId}}",
-						"description": "(Required) Request Id that will be logged by services"
-					}
-				],
-				"url": {
-					"raw": "{{MIL_TR_BASE_URL}}/terminals/{{terminalUuid}}",
-					"host": [
-						"{{MIL_TR_BASE_URL}}"
-					],
-					"path": [
-						"terminals",
-						"{{terminalUuid}}"
-					]
-				},
-				"description": "Returns a page of terminals"
-			},
-			"response": []
+			]
 		}
 	],
 	"auth": {
@@ -664,6 +742,11 @@
 		{
 			"key": "bulkLoadingId",
 			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "noticeNumber",
+			"value": "123456789123456789",
 			"type": "string"
 		}
 	]
