@@ -9,7 +9,7 @@ import java.util.List;
 
 @Getter
 @Setter
-@MongoEntity(database = "mil", collection = "bulkLoadStatus")
+@MongoEntity(database = "mil", collection = "bulkLoadStatuses")
 public class BulkLoadStatusEntity extends PanacheMongoEntity {
 
     private String bulkLoadingId;

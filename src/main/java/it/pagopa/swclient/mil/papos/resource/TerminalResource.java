@@ -21,7 +21,6 @@ import org.jboss.resteasy.reactive.RestForm;
 
 import java.io.InputStream;
 
-
 @Path("/terminals")
 public class TerminalResource {
     private final TerminalService terminalService;
@@ -39,7 +38,7 @@ public class TerminalResource {
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
             @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
-            @Valid @NotNull(message = ErrorCodes.ERROR_TERMINALDTO_MUST_NOT_BE_NULL_MSG) TerminalDto terminal) {
+            @Valid @NotNull(message = ErrorCodes.ERROR_DTO_MUST_NOT_BE_NULL_MSG) TerminalDto terminal) {
 
         Log.debugf("TerminalResource -> createTerminal - Input requestId, createTerminal: %s, %s", requestId, terminal);
 
@@ -224,7 +223,7 @@ public class TerminalResource {
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
             @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
-            @Valid @NotNull(message = ErrorCodes.ERROR_TERMINALDTO_MUST_NOT_BE_NULL_MSG) WorkstationsDto workstations,
+            @Valid @NotNull(message = ErrorCodes.ERROR_DTO_MUST_NOT_BE_NULL_MSG) WorkstationsDto workstations,
             @PathParam(value = "terminalUuid") String terminalUuid) {
 
         Log.debugf("TerminalResource -> updateWorkstations - Input requestId, workstations: %s, %s", requestId, workstations);
@@ -286,7 +285,7 @@ public class TerminalResource {
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
             @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
-            @Valid @NotNull(message = ErrorCodes.ERROR_TERMINALDTO_MUST_NOT_BE_NULL_MSG) TerminalDto terminal,
+            @Valid @NotNull(message = ErrorCodes.ERROR_DTO_MUST_NOT_BE_NULL_MSG) TerminalDto terminal,
             @PathParam(value = "terminalUuid") String terminalUuid) {
 
         Log.debugf("TerminalResource -> updateTerminal - Input requestId, updateTerminal: %s, %s", requestId, terminal);

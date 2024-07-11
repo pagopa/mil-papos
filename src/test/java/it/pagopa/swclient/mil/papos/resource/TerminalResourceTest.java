@@ -1,4 +1,4 @@
-package it.pagopa.swclient.mil.papos;
+package it.pagopa.swclient.mil.papos.resource;
 
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
@@ -10,9 +10,8 @@ import it.pagopa.swclient.mil.papos.dao.BulkLoadStatusEntity;
 import it.pagopa.swclient.mil.papos.dao.TerminalEntity;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
 import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
-import it.pagopa.swclient.mil.papos.resource.TerminalResource;
 import it.pagopa.swclient.mil.papos.service.TerminalService;
-import it.pagopa.swclient.mil.papos.util.TerminalTestData;
+import it.pagopa.swclient.mil.papos.util.TestData;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import org.junit.jupiter.api.Assertions;
@@ -46,10 +45,10 @@ class TerminalResourceTest {
 
     @BeforeAll
     static void createTestObjects() {
-        terminalDto = TerminalTestData.getCorrectTerminalDto();
-        workstationsDto = TerminalTestData.getCorrectWorkstationDto();
-        terminalEntity = TerminalTestData.getCorrectTerminalEntity();
-        bulkLoadStatusEntity = TerminalTestData.getCorrectBulkLoadStatusEntity();
+        terminalDto = TestData.getCorrectTerminalDto();
+        workstationsDto = TestData.getCorrectWorkstationDto();
+        terminalEntity = TestData.getCorrectTerminalEntity();
+        bulkLoadStatusEntity = TestData.getCorrectBulkLoadStatusEntity();
     }
 
     @Test
@@ -157,7 +156,7 @@ class TerminalResourceTest {
     @Test
     void testGetBulkLoadingStatusFile_200() {
         Mockito.when(terminalService.findBulkLoadStatus(any(String.class)))
-                .thenReturn(Uni.createFrom().item(TerminalTestData.getCorrectBulkLoadStatusEntity()));
+                .thenReturn(Uni.createFrom().item(TestData.getCorrectBulkLoadStatusEntity()));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -200,7 +199,7 @@ class TerminalResourceTest {
                 .then()
                 .extract().response();
 
-        bulkLoadStatusEntity = TerminalTestData.getCorrectBulkLoadStatusEntity();
+        bulkLoadStatusEntity = TestData.getCorrectBulkLoadStatusEntity();
         Assertions.assertEquals(404, response.statusCode());
     }
 
@@ -348,7 +347,7 @@ class TerminalResourceTest {
                 .then()
                 .extract().response();
 
-        terminalEntity = TerminalTestData.getCorrectTerminalEntity();
+        terminalEntity = TestData.getCorrectTerminalEntity();
         Assertions.assertEquals(404, response.statusCode());
     }
 
@@ -428,7 +427,7 @@ class TerminalResourceTest {
                 .then()
                 .extract().response();
 
-        terminalEntity = TerminalTestData.getCorrectTerminalEntity();
+        terminalEntity = TestData.getCorrectTerminalEntity();
         Assertions.assertEquals(404, response.statusCode());
     }
 
@@ -507,7 +506,7 @@ class TerminalResourceTest {
                 .then()
                 .extract().response();
 
-        terminalEntity = TerminalTestData.getCorrectTerminalEntity();
+        terminalEntity = TestData.getCorrectTerminalEntity();
         Assertions.assertEquals(404, response.statusCode());
     }
 
