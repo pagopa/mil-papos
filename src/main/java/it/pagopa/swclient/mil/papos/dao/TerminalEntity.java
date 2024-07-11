@@ -9,7 +9,7 @@ import java.util.List;
 
 @Getter
 @Setter
-@MongoEntity(database = "mil", collection = "terminal")
+@MongoEntity(database = "mil", collection = "terminals")
 public class TerminalEntity extends PanacheMongoEntity {
 
     private String pspId;

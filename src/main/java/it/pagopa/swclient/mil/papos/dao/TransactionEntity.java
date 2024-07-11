@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@MongoEntity(database = "mil", collection = "transaction")
+@MongoEntity(database = "mil", collection = "transactions")
 public class TransactionEntity extends PanacheMongoEntity {
 
     private String pspId;
