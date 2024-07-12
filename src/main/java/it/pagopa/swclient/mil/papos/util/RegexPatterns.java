@@ -6,6 +6,7 @@ public class RegexPatterns {
     public static final String REQUEST_ID_PATTERN = "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$";
     public static final String EXACT_EIGHTEEN_NUM_PATTERN = "^\\d{18}$";
     public static final String EXACT_ELEVEN_NUM_PATTERN = "^\\d{11}$";
+    public static final String SORT_STRATEGY_PATTERN = "asc|desc";
 
     private RegexPatterns() {
     }

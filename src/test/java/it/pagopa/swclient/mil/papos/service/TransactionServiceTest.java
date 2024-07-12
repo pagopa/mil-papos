@@ -16,6 +16,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -59,4 +60,16 @@ class TransactionServiceTest {
                 .withSubscriber(UniAssertSubscriber.create())
                 .assertFailedWith(InternalServerErrorException.class);
     }
+
+    @Test
+    void testGetTransactionCountByAttribute_Success() {
+        Mockito.when(transactionRepository.count(anyString(), anyString()))
+                .thenReturn(Uni.createFrom().item(10L));
+
+        Uni<Long> result = transactionService.getTransactionCountByAttribute("pspId", "psp1");
+
+        result.subscribe()
+                .with(count -> Assertions.assertEquals(10L, count));
+    }
+
 }

@@ -10,12 +10,15 @@ import it.pagopa.swclient.mil.papos.dao.TransactionEntity;
 import it.pagopa.swclient.mil.papos.model.TransactionDto;
 import it.pagopa.swclient.mil.papos.service.TransactionService;
 import it.pagopa.swclient.mil.papos.util.TestData;
+import it.pagopa.swclient.mil.papos.util.Utility;
 import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
+
+import java.util.ArrayList;
 
 import static io.restassured.RestAssured.given;
 import static org.mockito.ArgumentMatchers.any;
@@ -68,6 +71,184 @@ class TransactionResourceTest {
                 .body(transactionDto)
                 .when()
                 .post("/")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    void testFindByPayeeCode_200() {
+        Mockito.when(transactionService.getTransactionCountByAttribute("payeeCode", "payeeCode"))
+                .thenReturn(Uni.createFrom().item(10L));
+
+        Mockito.when(transactionService.getTransactionListPagedByAttribute("payeeCode", "payeeCode",
+                        Utility.convertStringToDate("2023-01-01", true),
+                        Utility.convertStringToDate("2023-12-31", false),
+                        "asc", 0, 10))
+                .thenReturn(Uni.createFrom().item(new ArrayList<>()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("payeeCode", "payeeCode")
+                .queryParam("startDate", "2023-01-01")
+                .queryParam("endDate", "2023-12-31")
+                .queryParam("sortStrategy", "asc")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/findByPayeeCode")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(200, response.statusCode());
+    }
+
+    @Test
+    void testFindByPayeeCode_500TC() {
+        Mockito.when(transactionService.getTransactionCountByAttribute("payeeCode", "payeeCode"))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("payeeCode", "payeeCode")
+                .queryParam("startDate", "2023-01-01")
+                .queryParam("endDate", "2023-12-31")
+                .queryParam("sortStrategy", "asc")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/findByPayeeCode")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    void testFindByPayeeCode_500TLP() {
+        Mockito.when(transactionService.getTransactionCountByAttribute("payeeCode", "payeeCode"))
+                .thenReturn(Uni.createFrom().item(10L));
+
+        Mockito.when(transactionService.getTransactionListPagedByAttribute("payeeCode", "payeeCode",
+                        Utility.convertStringToDate("2023-01-01", true),
+                        Utility.convertStringToDate("2023-12-31", false),
+                        "asc", 0, 10))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("payeeCode", "payeeCode")
+                .queryParam("startDate", "2023-01-01")
+                .queryParam("endDate", "2023-12-31")
+                .queryParam("sortStrategy", "asc")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/findByPayeeCode")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    void testFindByPayeeCode_DateParsingError() {
+        Mockito.when(transactionService.getTransactionCountByAttribute("payeeCode", "payeeCode"))
+                .thenReturn(Uni.createFrom().item(10L));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("payeeCode", "payeeCode")
+                .queryParam("startDate", "invalid-date")
+                .queryParam("endDate", "2023-12-31")
+                .queryParam("sortStrategy", "asc")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/findByPayeeCode")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    void testFindByPspId_200() {
+        Mockito.when(transactionService.getTransactionCountByAttribute("pspId", "pspId"))
+                .thenReturn(Uni.createFrom().item(10L));
+
+        Mockito.when(transactionService.getTransactionListPagedByAttribute("pspId", "pspId",
+                        Utility.convertStringToDate("2023-01-01", true),
+                        Utility.convertStringToDate("2023-12-31", false),
+                        "asc", 0, 10))
+                .thenReturn(Uni.createFrom().item(new ArrayList<>()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("pspId", "pspId")
+                .queryParam("startDate", "2023-01-01")
+                .queryParam("endDate", "2023-12-31")
+                .queryParam("sortStrategy", "asc")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/findByPspId")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(200, response.statusCode());
+    }
+
+    @Test
+    void testFindByPspId_500TC() {
+        Mockito.when(transactionService.getTransactionCountByAttribute("pspId", "pspId"))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("pspId", "pspId")
+                .queryParam("startDate", "2023-01-01")
+                .queryParam("endDate", "2023-12-31")
+                .queryParam("sortStrategy", "asc")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/findByPspId")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    void testFindByPspId_500TLP() {
+        Mockito.when(transactionService.getTransactionCountByAttribute("pspId", "pspId"))
+                .thenReturn(Uni.createFrom().item(10L));
+
+        Mockito.when(transactionService.getTransactionListPagedByAttribute("pspId", "pspId",
+                        Utility.convertStringToDate("2023-01-01", true),
+                        Utility.convertStringToDate("2023-12-31", false),
+                        "asc", 0, 10))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("pspId", "pspId")
+                .queryParam("startDate", "2023-01-01")
+                .queryParam("endDate", "2023-12-31")
+                .queryParam("sortStrategy", "asc")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/findByPspId")
                 .then()
                 .extract().response();
 
