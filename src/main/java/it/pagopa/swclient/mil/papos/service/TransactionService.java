@@ -14,10 +14,10 @@ import java.util.List;
 
 @ApplicationScoped
 public class TransactionService {
-    private final TransactionRepository transactionRespository;
+    private final TransactionRepository transactionRepository;
 
-    public TransactionService(TransactionRepository transactionRespository) {
-        this.transactionRespository = transactionRespository;
+    public TransactionService(TransactionRepository transactionRepository) {
+        this.transactionRepository = transactionRepository;
     }
 
     /**
@@ -33,7 +33,7 @@ public class TransactionService {
         String transactionUuid = Utility.generateRandomUuid();
         TransactionEntity entity = createTransactionEntity(transactionDto, transactionUuid);
 
-        return transactionRespository.persist(entity)
+        return transactionRepository.persist(entity)
                 .onFailure()
                 .transform(error -> error)
                 .onItem()
@@ -48,7 +48,7 @@ public class TransactionService {
      * @return a number
      */
     public Uni<Long> getTransactionCountByAttribute(String attributeName, String attributeValue) {
-        return transactionRespository.count(attributeName, attributeValue);
+        return transactionRepository.count(attributeName, attributeValue);
     }
 
     /**
@@ -64,7 +64,7 @@ public class TransactionService {
         String query = String.format("{ %s: ?1, creationTimestamp: { $gte: ?2, $lte: ?3 } }", attributeName);
         Sort sort = Sort.by("creationTimestamp", "asc".equalsIgnoreCase(sortStrategy) ? Sort.Direction.Ascending : Sort.Direction.Descending);
 
-        return transactionRespository
+        return transactionRepository
                 .find(query, sort, attributeValue, startDate, endDate)
                 .page(pageIndex, pageSize)
                 .list();

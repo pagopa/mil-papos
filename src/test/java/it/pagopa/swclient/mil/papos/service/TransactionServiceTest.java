@@ -1,5 +1,7 @@
 package it.pagopa.swclient.mil.papos.service;
 
+import io.quarkus.mongodb.panache.reactive.ReactivePanacheQuery;
+import io.quarkus.panache.common.Sort;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.Uni;
@@ -15,8 +17,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.*;
 
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -72,4 +78,39 @@ class TransactionServiceTest {
                 .with(count -> Assertions.assertEquals(10L, count));
     }
 
+    @Test
+    void testGetTransactionListPagedByAttribute_Success() throws ParseException {
+        ReactivePanacheQuery<TransactionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
+        Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
+        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedList()));
+
+        String queryStr = "{ transactionId: ?1, creationTimestamp: { $gte: ?2, $lte: ?3 } }";
+        Sort sort = Sort.by("creationTimestamp", Sort.Direction.Ascending);
+
+        Date startDate = new SimpleDateFormat("yyyy-MM-dd").parse("2024-01-01");
+        Date endDate = new SimpleDateFormat("yyyy-MM-dd").parse("2024-12-31");
+
+        Mockito.when(transactionRepository.find(queryStr, sort,"transactionId", startDate, endDate))
+                .thenReturn(query);
+
+        Uni<List<TransactionEntity>> result = transactionService.getTransactionListPagedByAttribute(
+                "transactionId",
+                "transactionId",
+                startDate,
+                endDate,
+                "asc",
+                0,
+                10);
+
+        result.subscribe().with(list -> Assertions.assertEquals(mockedList(), list));
+    }
+
+    private List<TransactionEntity> mockedList() {
+        TransactionEntity te1 = new TransactionEntity();
+        te1.setTransactionId("transactionId");
+        TransactionEntity te2 = new TransactionEntity();
+        te2.setTransactionId("transactionId");
+
+        return List.of(te1, te2);
+    }
 }
