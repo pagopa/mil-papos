@@ -1,5 +1,6 @@
 package it.pagopa.swclient.mil.papos.resource;
 
+import io.quarkus.panache.common.Sort;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import static io.restassured.RestAssured.given;
 import static org.mockito.ArgumentMatchers.any;
@@ -81,11 +83,12 @@ class TransactionResourceTest {
     void testFindByPayeeCode_200() {
         Mockito.when(transactionService.getTransactionCountByAttribute("payeeCode", "payeeCode"))
                 .thenReturn(Uni.createFrom().item(10L));
+        Sort sort = Sort.by("creationTimestamp", Sort.Direction.Descending);
 
         Mockito.when(transactionService.getTransactionListPagedByAttribute("payeeCode", "payeeCode",
                         Utility.convertStringToDate("2023-01-01", true),
                         Utility.convertStringToDate("2023-12-31", false),
-                        "asc", 0, 10))
+                        sort, 0, 10))
                 .thenReturn(Uni.createFrom().item(new ArrayList<>()));
 
         Response response = given()
@@ -94,7 +97,7 @@ class TransactionResourceTest {
                 .queryParam("payeeCode", "payeeCode")
                 .queryParam("startDate", "2023-01-01")
                 .queryParam("endDate", "2023-12-31")
-                .queryParam("sortStrategy", "asc")
+                .queryParam("sortStrategy", "desc")
                 .queryParam("page", 0)
                 .queryParam("size", 10)
                 .when()
@@ -132,10 +135,8 @@ class TransactionResourceTest {
         Mockito.when(transactionService.getTransactionCountByAttribute("payeeCode", "payeeCode"))
                 .thenReturn(Uni.createFrom().item(10L));
 
-        Mockito.when(transactionService.getTransactionListPagedByAttribute("payeeCode", "payeeCode",
-                        Utility.convertStringToDate("2023-01-01", true),
-                        Utility.convertStringToDate("2023-12-31", false),
-                        "asc", 0, 10))
+        Mockito.when(transactionService.getTransactionListPagedByAttribute(any(String.class), any(String.class),
+                        any(Date.class), any(Date.class), any(Sort.class), any(Integer.class), any(Integer.class)))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
 
         Response response = given()
@@ -181,11 +182,12 @@ class TransactionResourceTest {
     void testFindByPspId_200() {
         Mockito.when(transactionService.getTransactionCountByAttribute("pspId", "pspId"))
                 .thenReturn(Uni.createFrom().item(10L));
+        Sort sort = Sort.by("creationTimestamp", Sort.Direction.Ascending);
 
         Mockito.when(transactionService.getTransactionListPagedByAttribute("pspId", "pspId",
                         Utility.convertStringToDate("2023-01-01", true),
                         Utility.convertStringToDate("2023-12-31", false),
-                        "asc", 0, 10))
+                        sort, 0, 10))
                 .thenReturn(Uni.createFrom().item(new ArrayList<>()));
 
         Response response = given()
@@ -232,10 +234,8 @@ class TransactionResourceTest {
         Mockito.when(transactionService.getTransactionCountByAttribute("pspId", "pspId"))
                 .thenReturn(Uni.createFrom().item(10L));
 
-        Mockito.when(transactionService.getTransactionListPagedByAttribute("pspId", "pspId",
-                        Utility.convertStringToDate("2023-01-01", true),
-                        Utility.convertStringToDate("2023-12-31", false),
-                        "asc", 0, 10))
+        Mockito.when(transactionService.getTransactionListPagedByAttribute(any(String.class), any(String.class),
+                        any(Date.class), any(Date.class), any(Sort.class), any(Integer.class), any(Integer.class)))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
 
         Response response = given()

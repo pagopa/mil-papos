@@ -60,12 +60,11 @@ public class TransactionService {
      * @param pageSize       page size
      * @return a list of transactions
      */
-    public Uni<List<TransactionEntity>> getTransactionListPagedByAttribute(String attributeName, String attributeValue, Date startDate, Date endDate, String sortStrategy, int pageIndex, int pageSize) {
+    public Uni<List<TransactionEntity>> getTransactionListPagedByAttribute(String attributeName, String attributeValue, Date startDate, Date endDate, Sort sortStrategy, int pageIndex, int pageSize) {
         String query = String.format("{ %s: ?1, creationTimestamp: { $gte: ?2, $lte: ?3 } }", attributeName);
-        Sort sort = Sort.by("creationTimestamp", "asc".equalsIgnoreCase(sortStrategy) ? Sort.Direction.Ascending : Sort.Direction.Descending);
 
         return transactionRepository
-                .find(query, sort, attributeValue, startDate, endDate)
+                .find(query, sortStrategy, attributeValue, startDate, endDate)
                 .page(pageIndex, pageSize)
                 .list();
     }

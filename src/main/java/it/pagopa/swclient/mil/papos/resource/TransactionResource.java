@@ -1,6 +1,7 @@
 package it.pagopa.swclient.mil.papos.resource;
 
 import io.quarkus.logging.Log;
+import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.papos.model.PageMetadata;
 import it.pagopa.swclient.mil.papos.model.TransactionDto;
@@ -106,6 +107,7 @@ public class TransactionResource {
     private Uni<Response> findByAttribute(String attributeName, String attributeValue, String startDate, String endDate, String sortStrategy, int pageNumber, int pageSize) {
         Date convertedStartDate;
         Date convertedEndDate;
+        Sort sort = Sort.by("creationTimestamp", "asc".equalsIgnoreCase(sortStrategy) ? Sort.Direction.Ascending : Sort.Direction.Descending);
 
         try {
             convertedStartDate = Utility.convertStringToDate(startDate, true);
@@ -131,7 +133,7 @@ public class TransactionResource {
                 })
                 .onItem()
                 .transformToUni(numberOfTransactions ->
-                        transactionService.getTransactionListPagedByAttribute(attributeName, attributeValue, convertedStartDate, convertedEndDate, sortStrategy, pageNumber, pageSize)
+                        transactionService.getTransactionListPagedByAttribute(attributeName, attributeValue, convertedStartDate, convertedEndDate, sort, pageNumber, pageSize)
                                 .onFailure()
                                 .transform(err -> {
                                     Log.errorf(err, "TransactionResource -> findBy: Error while retrieving list of transactions for [%s, %s], index and size [%s, %s]", attributeName, attributeValue, pageNumber, pageSize);

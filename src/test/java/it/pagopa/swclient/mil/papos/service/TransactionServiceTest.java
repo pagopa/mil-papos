@@ -98,7 +98,7 @@ class TransactionServiceTest {
                 "transactionId",
                 startDate,
                 endDate,
-                "asc",
+                sort,
                 0,
                 10);
 
