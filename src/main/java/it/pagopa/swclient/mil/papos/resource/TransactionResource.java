@@ -104,6 +104,69 @@ public class TransactionResource {
         return findByAttribute("pspId", pspId, startDate, endDate, sortStrategy, pageNumber, pageSize);
     }
 
+    @DELETE
+    @Path("/{transactionId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    // @RolesAllowed({ "pos_service_provider" })
+    public Uni<Response> deleteTransaction(
+            @HeaderParam("RequestId")
+            @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
+            @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
+            @PathParam(value = "transactionId") String transactionId) {
+
+        Log.debugf("TransactionResource -> deleteTransaction - Input requestId, transactionId: %s, %s", requestId,
+                transactionId);
+
+        return transactionService.findTransaction(transactionId)
+                .onFailure()
+                .transform(err -> {
+                    Log.errorf(err,
+                            "TransactionResource -> deleteTransaction: error during search transaction with transactionId: [%s]",
+                            transactionId);
+
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                            .build());
+                })
+                .onItem()
+                .transformToUni(transactionEntity -> {
+                    if (transactionEntity == null) {
+                        Log.errorf(
+                                "TransactionResource -> deleteTransaction: error 404 during searching transaction with transactionId: [%s, %s]",
+                                transactionId);
+
+                        return Uni.createFrom().failure(new NotFoundException(Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity(new Errors(ErrorCodes.ERROR_TRANSACTION_NOT_FOUND, ErrorCodes.ERROR_TRANSACTION_NOT_FOUND_MSG))
+                                .build()));
+                    }
+
+                    return transactionService.deleteTransaction(transactionEntity)
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err,
+                                        "TransactionResource -> deleteTransaction: error during deleting transaction [%s]",
+                                        transactionEntity);
+
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transform(transactionUpdated -> {
+                                Log.debugf("TransactionResource -> deleteTransaction: transaction deleted correctly on DB [%s]",
+                                        transactionUpdated);
+
+                                return Response
+                                        .status(Response.Status.NO_CONTENT)
+                                        .build();
+                            });
+                });
+    }
+
     private Uni<Response> findByAttribute(String attributeName, String attributeValue, String startDate, String endDate, String sortStrategy, int pageNumber, int pageSize) {
         Date convertedStartDate;
         Date convertedEndDate;

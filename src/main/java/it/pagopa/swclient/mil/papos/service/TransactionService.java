@@ -27,7 +27,6 @@ public class TransactionService {
      * @return transaction created
      */
     public Uni<TransactionEntity> createTransaction(TransactionDto transactionDto) {
-
         Log.debugf("TransactionService -> createTransaction - Input parameters: %s", transactionDto);
 
         String transactionUuid = Utility.generateRandomUuid();
@@ -48,6 +47,8 @@ public class TransactionService {
      * @return a number
      */
     public Uni<Long> getTransactionCountByAttribute(String attributeName, String attributeValue) {
+        Log.debugf("TransactionService -> getTransactionCountByAttribute - Input parameters: %s, %s", attributeName, attributeValue);
+
         return transactionRepository.count(attributeName, attributeValue);
     }
 
@@ -61,12 +62,44 @@ public class TransactionService {
      * @return a list of transactions
      */
     public Uni<List<TransactionEntity>> getTransactionListPagedByAttribute(String attributeName, String attributeValue, Date startDate, Date endDate, Sort sortStrategy, int pageIndex, int pageSize) {
+        Log.debugf("TransactionService -> getTransactionListPagedByAttribute - Input parameters: %s, %s, %s, %s, %s, %s, %s", attributeName, attributeValue, startDate, endDate, sortStrategy, pageIndex, pageSize);
+
         String query = String.format("{ %s: ?1, creationTimestamp: { $gte: ?2, $lte: ?3 } }", attributeName);
 
         return transactionRepository
                 .find(query, sortStrategy, attributeValue, startDate, endDate)
                 .page(pageIndex, pageSize)
                 .list();
+    }
+
+    /**
+     * Find first transaction equals to transactionId given in input.
+     *
+     * @param transactionId uuid of transaction
+     * @return transaction found
+     */
+    public Uni<TransactionEntity> findTransaction(String transactionId) {
+        Log.debugf("TransactionService -> findTransaction - Input parameters: %s", transactionId);
+
+        return transactionRepository
+                .find("transactionId = ?1", transactionId)
+                .firstResult();
+    }
+
+    /**
+     * Delete transaction starting from a transactionEntity.
+     *
+     * @param transaction transaction to be deleted
+     * @return void
+     */
+    public Uni<Void> deleteTransaction(TransactionEntity transaction) {
+        Log.debugf("TransactionService -> deleteTransaction - Input parameters: %s", transaction);
+
+        return transactionRepository.delete(transaction)
+                .onFailure()
+                .transform(error -> error)
+                .onItem()
+                .transform(transactionDeleted -> transactionDeleted);
     }
 
     private TransactionEntity createTransactionEntity(TransactionDto transactionDto, String uuid) {
