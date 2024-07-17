@@ -628,6 +628,257 @@
 							"response": []
 						}
 					]
+				},
+				{
+					"name": "1. Find Transaction",
+					"item": [
+						{
+							"name": "Find By Payee Code",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = JSON.parse(pm.response.text());",
+											"pm.collectionVariables.set(\"transactionId\", jsonData.transactions[0].transactionId);",
+											"",
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/transactions/findByPayeeCode?payeeCode={{payeeCode}}&startDate={{startDate}}&endDate={{endDate}}&sortStrategy={{sortStrategy}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"transactions",
+										"findByPayeeCode"
+									],
+									"query": [
+										{
+											"key": "payeeCode",
+											"value": "{{payeeCode}}",
+											"description": "(Required) Fiscal code of the subject that receives the payment"
+										},
+										{
+											"key": "startDate",
+											"value": "{{startDate}}",
+											"description": "(Required) Start date of the time range in which to search for transactions"
+										},
+										{
+											"key": "endDate",
+											"value": "{{endDate}}",
+											"description": "(Required) End date of the time range in which to search for transactions"
+										},
+										{
+											"key": "sortStrategy",
+											"value": "{{sortStrategy}}",
+											"description": "(Required) Strategy used to sort returned transactions by creation timestamp (asc, desc)"
+										},
+										{
+											"key": "page",
+											"value": "{{getTerminalPage}}",
+											"description": "(Required) Number of the requested page of data"
+										},
+										{
+											"key": "size",
+											"value": "{{getTerminalPageSize}}",
+											"description": "(Required) Size of the requested page of data"
+										}
+									]
+								},
+								"description": "Find transaction by payee code"
+							},
+							"response": []
+						},
+						{
+							"name": "Find By Psp Id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/transactions/findByPspId?pspId={{pspId}}&startDate={{startDate}}&endDate={{endDate}}&sortStrategy=desc&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"transactions",
+										"findByPspId"
+									],
+									"query": [
+										{
+											"key": "pspId",
+											"value": "{{pspId}}",
+											"description": "(Required) ID of the POS service provider"
+										},
+										{
+											"key": "startDate",
+											"value": "{{startDate}}",
+											"description": "(Required) Start date of the time range in which to search for transactions"
+										},
+										{
+											"key": "endDate",
+											"value": "{{endDate}}",
+											"description": "(Required) End date of the time range in which to search for transactions"
+										},
+										{
+											"key": "sortStrategy",
+											"value": "desc",
+											"description": "(Required) Strategy used to sort returned transactions by creation timestamp (asc, desc)"
+										},
+										{
+											"key": "page",
+											"value": "{{getTerminalPage}}",
+											"description": "(Required) Number of the requested page of data"
+										},
+										{
+											"key": "size",
+											"value": "{{getTerminalPageSize}}",
+											"description": "(Required) Size of the requested page of data"
+										}
+									]
+								},
+								"description": "Find transaction by psp id"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "2. Update Transaction",
+					"item": [
+						{
+							"name": "Update Transaction",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"amount\": {{transactionAmount}},\r\n    \"status\": \"{{transactionStatus}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/transactions/{{transactionId}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"transactions",
+										"{{transactionId}}"
+									]
+								},
+								"description": "Update a transaction"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "3. Delete Transaction",
+					"item": [
+						{
+							"name": "Delete Transaction",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/transactions/{{transactionId}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"transactions",
+										"{{transactionId}}"
+									]
+								},
+								"description": "Delete a transaction"
+							},
+							"response": []
+						}
+					]
 				}
 			]
 		}
@@ -747,6 +998,36 @@
 		{
 			"key": "noticeNumber",
 			"value": "123456789123456789",
+			"type": "string"
+		},
+		{
+			"key": "startDate",
+			"value": "2024-06-01",
+			"type": "string"
+		},
+		{
+			"key": "endDate",
+			"value": "2024-08-31",
+			"type": "string"
+		},
+		{
+			"key": "sortStrategy",
+			"value": "asc",
+			"type": "string"
+		},
+		{
+			"key": "transactionId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "transactionStatus",
+			"value": "CLOSED_OK",
+			"type": "string"
+		},
+		{
+			"key": "transactionAmount",
+			"value": "40",
 			"type": "string"
 		}
 	]
