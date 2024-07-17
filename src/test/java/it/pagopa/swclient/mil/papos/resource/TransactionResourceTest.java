@@ -9,6 +9,7 @@ import io.restassured.response.Response;
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.papos.dao.TransactionEntity;
 import it.pagopa.swclient.mil.papos.model.TransactionDto;
+import it.pagopa.swclient.mil.papos.model.UpdateTransactionDto;
 import it.pagopa.swclient.mil.papos.service.TransactionService;
 import it.pagopa.swclient.mil.papos.util.TestData;
 import it.pagopa.swclient.mil.papos.util.Utility;
@@ -37,10 +38,13 @@ class TransactionResourceTest {
 
     static TransactionDto transactionDto;
 
+    static UpdateTransactionDto updateTransactionDto;
+
     @BeforeAll
     static void createTestObjects() {
         transactionEntity = TestData.getCorrectTransactionEntity();
         transactionDto = TestData.getCorrectTransactionDto();
+        updateTransactionDto = TestData.getCorrectUpdateTransactionDto();
     }
 
     @Test
@@ -328,6 +332,86 @@ class TransactionResourceTest {
                 .body(transactionDto)
                 .when()
                 .delete("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    void testUpdateTransaction_204() {
+        Mockito.when(transactionService.findTransaction(any(String.class)))
+                .thenReturn(Uni.createFrom().item(transactionEntity));
+
+        Mockito.when(transactionService.updateTransaction(any(String.class), any(UpdateTransactionDto.class), any(TransactionEntity.class)))
+                .thenReturn(Uni.createFrom().item(transactionEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(updateTransactionDto)
+                .when()
+                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(204, response.statusCode());
+    }
+
+    @Test
+    void testUpdateTransaction_404() {
+        transactionEntity = null;
+        Mockito.when(transactionService.findTransaction(any(String.class)))
+                .thenReturn(Uni.createFrom().item(transactionEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(updateTransactionDto)
+                .when()
+                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .then()
+                .extract().response();
+
+        transactionEntity = TestData.getCorrectTransactionEntity();
+        Assertions.assertEquals(404, response.statusCode());
+    }
+
+    @Test
+    void testUpdateTransaction_500FT() {
+        Mockito.when(transactionService.findTransaction(any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(updateTransactionDto)
+                .when()
+                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    void testUpdateTransaction_500UT() {
+        Mockito.when(transactionService.findTransaction(any(String.class)))
+                .thenReturn(Uni.createFrom().item(transactionEntity));
+
+        Mockito.when(transactionService.updateTransaction(any(String.class), any(UpdateTransactionDto.class), any(TransactionEntity.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(updateTransactionDto)
+                .when()
+                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
                 .then()
                 .extract().response();
 

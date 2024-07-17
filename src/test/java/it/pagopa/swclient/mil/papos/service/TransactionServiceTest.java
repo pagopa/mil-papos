@@ -9,6 +9,7 @@ import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
 import it.pagopa.swclient.mil.papos.dao.TransactionEntity;
 import it.pagopa.swclient.mil.papos.dao.TransactionRepository;
 import it.pagopa.swclient.mil.papos.model.TransactionDto;
+import it.pagopa.swclient.mil.papos.model.UpdateTransactionDto;
 import it.pagopa.swclient.mil.papos.util.TestData;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.WebApplicationException;
@@ -36,12 +37,15 @@ class TransactionServiceTest {
 
     static TransactionDto transactionDto;
 
+    static UpdateTransactionDto updateTransactionDto;
+
     static TransactionService transactionService;
 
     @BeforeAll
     static void createTestObjects() {
         transactionEntity = TestData.getCorrectTransactionEntity();
         transactionDto = TestData.getCorrectTransactionDto();
+        updateTransactionDto = TestData.getCorrectUpdateTransactionDto();
         transactionService = new TransactionService(transactionRepository);
     }
 
@@ -137,6 +141,29 @@ class TransactionServiceTest {
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
 
         Uni<Void> result = transactionService.deleteTransaction(transactionEntity);
+
+        result.subscribe()
+                .withSubscriber(UniAssertSubscriber.create())
+                .assertFailedWith(WebApplicationException.class);
+    }
+
+    @Test
+    void testUpdateTransaction_Success() {
+        Mockito.when(transactionRepository.update(any(TransactionEntity.class)))
+                .thenReturn(Uni.createFrom().item(transactionEntity));
+
+        Uni<TransactionEntity> result = transactionService.updateTransaction("transactionId", updateTransactionDto, transactionEntity);
+
+        result.subscribe()
+                .with(entity -> Assertions.assertEquals(transactionEntity, entity));
+    }
+
+    @Test
+    void testUpdateTransaction_Failure() {
+        Mockito.when(transactionRepository.update(any(TransactionEntity.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Uni<TransactionEntity> result = transactionService.updateTransaction("transactionId", updateTransactionDto, transactionEntity);
 
         result.subscribe()
                 .withSubscriber(UniAssertSubscriber.create())

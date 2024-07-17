@@ -3,9 +3,7 @@ package it.pagopa.swclient.mil.papos.resource;
 import io.quarkus.logging.Log;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
-import it.pagopa.swclient.mil.papos.model.PageMetadata;
-import it.pagopa.swclient.mil.papos.model.TransactionDto;
-import it.pagopa.swclient.mil.papos.model.TransactionPageResponse;
+import it.pagopa.swclient.mil.papos.model.*;
 import it.pagopa.swclient.mil.papos.service.TransactionService;
 import it.pagopa.swclient.mil.papos.util.ErrorCodes;
 import it.pagopa.swclient.mil.papos.util.Errors;
@@ -158,6 +156,68 @@ public class TransactionResource {
                             .onItem()
                             .transform(transactionUpdated -> {
                                 Log.debugf("TransactionResource -> deleteTransaction: transaction deleted correctly on DB [%s]",
+                                        transactionUpdated);
+
+                                return Response
+                                        .status(Response.Status.NO_CONTENT)
+                                        .build();
+                            });
+                });
+    }
+
+    @PATCH
+    @Path("/{transactionId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    // @RolesAllowed({ "pos_service_provider" })
+    public Uni<Response> updateTransaction(
+            @HeaderParam("RequestId")
+            @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
+            @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
+            @Valid @NotNull(message = ErrorCodes.ERROR_DTO_MUST_NOT_BE_NULL_MSG) UpdateTransactionDto transaction,
+            @PathParam(value = "transactionId") String transactionId) {
+
+        Log.debugf("TransactionResource -> updateTransaction - Input requestId, updateTransaction: %s, %s", requestId, transaction);
+
+        return transactionService.findTransaction(transactionId)
+                .onFailure()
+                .transform(err -> {
+                    Log.errorf(err,
+                            "TransactionResource -> updateTransaction: error during search transaction with transactionId: [%s]",
+                            transactionId);
+
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                            .build());
+                })
+                .onItem()
+                .transformToUni(transactionEntity -> {
+                    if (transactionEntity == null) {
+                        Log.errorf(
+                                "TransactionResource -> updateTransaction: error 404 during searching transaction with transactionId: [%s]",
+                                transactionId);
+
+                        return Uni.createFrom().failure(new NotFoundException(Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity(new Errors(ErrorCodes.ERROR_TRANSACTION_NOT_FOUND, ErrorCodes.ERROR_TRANSACTION_NOT_FOUND_MSG))
+                                .build()));
+                    }
+
+                    return transactionService.updateTransaction(transactionId, transaction, transactionEntity)
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err, "TransactionResource -> updateTransaction: error during update transaction [%s]",
+                                        transaction);
+
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transform(transactionUpdated -> {
+                                Log.debugf("TransactionResource -> updateTransaction: transaction updated correctly on DB [%s]",
                                         transactionUpdated);
 
                                 return Response

@@ -6,6 +6,7 @@ import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.papos.dao.TransactionEntity;
 import it.pagopa.swclient.mil.papos.dao.TransactionRepository;
 import it.pagopa.swclient.mil.papos.model.TransactionDto;
+import it.pagopa.swclient.mil.papos.model.UpdateTransactionDto;
 import it.pagopa.swclient.mil.papos.util.Utility;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -100,6 +101,26 @@ public class TransactionService {
                 .transform(error -> error)
                 .onItem()
                 .transform(transactionDeleted -> transactionDeleted);
+    }
+
+    /**
+     * Update transaction starting from a terminalDto.
+     *
+     * @param transactionDto  dto of modified terminal
+     * @param transactionId transactionId of old transaction to be modified
+     * @return transaction updated
+     */
+    public Uni<TransactionEntity> updateTransaction(String transactionId, UpdateTransactionDto transactionDto, TransactionEntity oldTransaction) {
+        Log.debugf("TransactionService -> updateTransaction - Input parameters: %s, %s, %s", transactionId, transactionDto, oldTransaction);
+
+        oldTransaction.setStatus(transactionDto.status());
+        oldTransaction.setAmount(transactionDto.amount());
+
+        return transactionRepository.update(oldTransaction)
+                .onFailure()
+                .transform(error -> error)
+                .onItem()
+                .transform(transactionUpdated -> transactionUpdated);
     }
 
     private TransactionEntity createTransactionEntity(TransactionDto transactionDto, String uuid) {

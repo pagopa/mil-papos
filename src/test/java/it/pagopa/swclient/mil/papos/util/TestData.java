@@ -5,6 +5,7 @@ import it.pagopa.swclient.mil.papos.dao.TerminalEntity;
 import it.pagopa.swclient.mil.papos.dao.TransactionEntity;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
 import it.pagopa.swclient.mil.papos.model.TransactionDto;
+import it.pagopa.swclient.mil.papos.model.UpdateTransactionDto;
 import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
 
 import java.util.ArrayList;
@@ -45,6 +46,10 @@ public final class TestData {
     public static TransactionDto getCorrectTransactionDto() {
         return new TransactionDto("AGID_01", "34523860", "123456789123456789",
                 "06534340721");
+    }
+
+    public static UpdateTransactionDto getCorrectUpdateTransactionDto() {
+        return new UpdateTransactionDto(40L, "CLOSED_OK");
     }
 
     public static TransactionEntity getCorrectTransactionEntity() {
