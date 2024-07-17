@@ -28,6 +28,8 @@ public final class ErrorCodes {
     public static final String ERROR_WORKSTATIONS_MUST_NOT_BE_NULL                               = MODULE_ID + "000014";
     public static final String ERROR_BULKLOAD_FILE_MUST_NOT_BE_NULL                              = MODULE_ID + "000015";
     public static final String ERROR_NOTICE_NUMBER_MUST_NOT_BE_NULL                              = MODULE_ID + "000016";
+    public static final String ERROR_AMOUNT_MUST_NOT_BE_NULL                                     = MODULE_ID + "000017";
+    public static final String ERROR_STATUS_MUST_NOT_BE_NULL                                     = MODULE_ID + "000018";
 
     /*
      * Service errors code from 000200 to 000500
@@ -62,6 +64,8 @@ public final class ErrorCodes {
     private static final String ERROR_WORKSTATIONS_MUST_NOT_BE_NULL_DESCR = "workstations must not be null";
     private static final String ERROR_BULKLOAD_FILE_MUST_NOT_BE_NULL_DESCR = "file uploaded must not be null";
     private static final String ERROR_NOTICE_NUMBER_MUST_NOT_BE_NULL_DESCR = "noticeNumber must not be null";
+    private static final String ERROR_AMOUNT_MUST_NOT_BE_NULL_DESCR = "amount must not be null";
+    private static final String ERROR_STATUS_MUST_NOT_BE_NULL_DESCR = "status must not be null";
 
     private static final String ERROR_GENERIC_FROM_DB_DESCR = "unexpected error from db";
     private static final String ERROR_COUNTING_TERMINALS_DESCR = "error occurred while counting terminal";
@@ -93,6 +97,8 @@ public final class ErrorCodes {
     public static final String ERROR_WORKSTATIONS_MUST_NOT_BE_NULL_MSG = "[" + ERROR_WORKSTATIONS_MUST_NOT_BE_NULL + "] " + ERROR_WORKSTATIONS_MUST_NOT_BE_NULL_DESCR;
     public static final String ERROR_BULKLOAD_FILE_MUST_NOT_BE_NULL_MSG = "[" + ERROR_BULKLOAD_FILE_MUST_NOT_BE_NULL + "] " + ERROR_BULKLOAD_FILE_MUST_NOT_BE_NULL_DESCR;
     public static final String ERROR_NOTICE_NUMBER_MUST_NOT_BE_NULL_MSG = "[" + ERROR_NOTICE_NUMBER_MUST_NOT_BE_NULL + "] " + ERROR_NOTICE_NUMBER_MUST_NOT_BE_NULL_DESCR;
+    public static final String ERROR_AMOUNT_MUST_NOT_BE_NULL_MSG = "[" + ERROR_AMOUNT_MUST_NOT_BE_NULL + "] " + ERROR_AMOUNT_MUST_NOT_BE_NULL_DESCR;
+    public static final String ERROR_STATUS_MUST_NOT_BE_NULL_MSG = "[" + ERROR_STATUS_MUST_NOT_BE_NULL + "] " + ERROR_STATUS_MUST_NOT_BE_NULL_DESCR;
 
     public static final String ERROR_GENERIC_FROM_DB_MSG = "[" + ERROR_GENERIC_FROM_DB + "] " + ERROR_GENERIC_FROM_DB_DESCR;
     public static final String ERROR_COUNTING_TERMINALS_MSG = "[" + ERROR_COUNTING_TERMINALS + "] " + ERROR_COUNTING_TERMINALS_DESCR;

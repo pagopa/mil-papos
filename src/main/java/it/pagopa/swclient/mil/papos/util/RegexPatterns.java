@@ -7,6 +7,7 @@ public class RegexPatterns {
     public static final String EXACT_EIGHTEEN_NUM_PATTERN = "^\\d{18}$";
     public static final String EXACT_ELEVEN_NUM_PATTERN = "^\\d{11}$";
     public static final String SORT_STRATEGY_PATTERN = "asc|desc";
+    public static final String TRANSACTION_STATUS_PATTERN = "CLOSED_OK|ERROR_ON_PAYMENT|ABORT|CREATED";
 
     private RegexPatterns() {
     }
