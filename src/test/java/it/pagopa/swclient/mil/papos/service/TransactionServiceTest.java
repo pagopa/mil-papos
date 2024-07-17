@@ -11,6 +11,7 @@ import it.pagopa.swclient.mil.papos.dao.TransactionRepository;
 import it.pagopa.swclient.mil.papos.model.TransactionDto;
 import it.pagopa.swclient.mil.papos.util.TestData;
 import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -103,6 +104,43 @@ class TransactionServiceTest {
                 10);
 
         result.subscribe().with(list -> Assertions.assertEquals(mockedList(), list));
+    }
+
+    @Test
+    void testFindTransaction_Success() {
+        ReactivePanacheQuery<TransactionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
+        Mockito.when(query.firstResult()).thenReturn(Uni.createFrom().item(transactionEntity));
+        Mockito.when(transactionRepository.find("transactionId = ?1", "transactionId")).thenReturn(query);
+
+        Uni<TransactionEntity> transactionEntityUni = transactionService.findTransaction("transactionId");
+
+        transactionEntityUni
+                .subscribe()
+                .withSubscriber(UniAssertSubscriber.create())
+                .assertItem(transactionEntity);
+    }
+
+    @Test
+    void testDeleteTransaction_Success() {
+        Mockito.when(transactionRepository.delete(any(TransactionEntity.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        Uni<Void> result = transactionService.deleteTransaction(transactionEntity);
+
+        result.subscribe()
+                .with(Assertions::assertNull);
+    }
+
+    @Test
+    void testDeleteTransaction_Failure() {
+        Mockito.when(transactionRepository.delete(any(TransactionEntity.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Uni<Void> result = transactionService.deleteTransaction(transactionEntity);
+
+        result.subscribe()
+                .withSubscriber(UniAssertSubscriber.create())
+                .assertFailedWith(WebApplicationException.class);
     }
 
     private List<TransactionEntity> mockedList() {

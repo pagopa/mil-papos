@@ -41,6 +41,7 @@ public final class ErrorCodes {
     public static final String ERROR_PARSING_DATE                                                = MODULE_ID + "000206";
     public static final String ERROR_LIST_TRANSACTIONS                                           = MODULE_ID + "000207";
     public static final String ERROR_COUNTING_TRANSACTIONS                                       = MODULE_ID + "000208";
+    public static final String ERROR_TRANSACTION_NOT_FOUND                                       = MODULE_ID + "000209";
 
     /*
      * Error descriptions
@@ -71,6 +72,7 @@ public final class ErrorCodes {
     private static final String ERROR_PARSING_DATE_DESCR = "error occurred during parsing date";
     private static final String ERROR_LIST_TRANSACTIONS_DESCR = "error occurred while retrieving list of paginated transactions";
     private static final String ERROR_COUNTING_TRANSACTIONS_DESCR = "error occurred while counting transactions";
+    private static final String ERROR_TRANSACTION_NOT_FOUND_DESCR = "transaction not found on db";
 
     /*
      * Error complete message
@@ -101,5 +103,6 @@ public final class ErrorCodes {
     public static final String ERROR_PARSING_DATE_MSG = "[" + ERROR_PARSING_DATE + "] " + ERROR_PARSING_DATE_DESCR;
     public static final String ERROR_LIST_TRANSACTIONS_MSG = "[" + ERROR_LIST_TRANSACTIONS + "] " + ERROR_LIST_TRANSACTIONS_DESCR;
     public static final String ERROR_COUNTING_TRANSACTIONS_MSG = "[" + ERROR_COUNTING_TRANSACTIONS + "] " + ERROR_COUNTING_TRANSACTIONS_DESCR;
+    public static final String ERROR_TRANSACTION_NOT_FOUND_MSG = "[" + ERROR_TRANSACTION_NOT_FOUND + "] " + ERROR_TRANSACTION_NOT_FOUND_DESCR;
 
 }
