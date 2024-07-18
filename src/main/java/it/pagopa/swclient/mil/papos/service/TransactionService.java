@@ -106,8 +106,8 @@ public class TransactionService {
     /**
      * Update transaction starting from a terminalDto.
      *
-     * @param transactionDto  dto of modified terminal
-     * @param transactionId transactionId of old transaction to be modified
+     * @param transactionDto dto of modified terminal
+     * @param transactionId  transactionId of old transaction to be modified
      * @return transaction updated
      */
     public Uni<TransactionEntity> updateTransaction(String transactionId, UpdateTransactionDto transactionDto, TransactionEntity oldTransaction) {
@@ -121,6 +121,22 @@ public class TransactionService {
                 .transform(error -> error)
                 .onItem()
                 .transform(transactionUpdated -> transactionUpdated);
+    }
+
+    /**
+     * Retrieves the latest transaction by POS and status.
+     *
+     * @param pspId      ID of the POS PSP
+     * @param terminalId ID of the terminal for the PSP
+     * @param status     status of the transactions to search for
+     * @return transaction found
+     */
+    public Uni<TransactionEntity> latestTransaction(String pspId, String terminalId, String status, Sort sort) {
+        Log.debugf("TransactionService -> latestTransaction - Input parameters: %s, %s, %s", pspId, terminalId, status);
+
+        return transactionRepository
+                .find("pspId = ?1 AND terminalId = ?2 AND status = ?3", sort, pspId, terminalId, status)
+                .firstResult();
     }
 
     private TransactionEntity createTransactionEntity(TransactionDto transactionDto, String uuid) {

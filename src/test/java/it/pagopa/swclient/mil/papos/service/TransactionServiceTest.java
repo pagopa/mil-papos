@@ -116,10 +116,9 @@ class TransactionServiceTest {
         Mockito.when(query.firstResult()).thenReturn(Uni.createFrom().item(transactionEntity));
         Mockito.when(transactionRepository.find("transactionId = ?1", "transactionId")).thenReturn(query);
 
-        Uni<TransactionEntity> transactionEntityUni = transactionService.findTransaction("transactionId");
+        Uni<TransactionEntity> result = transactionService.findTransaction("transactionId");
 
-        transactionEntityUni
-                .subscribe()
+        result.subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
                 .assertItem(transactionEntity);
     }
@@ -168,6 +167,20 @@ class TransactionServiceTest {
         result.subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
                 .assertFailedWith(WebApplicationException.class);
+    }
+
+    @Test
+    void testLatestTransaction_Success() {
+        ReactivePanacheQuery<TransactionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
+        Mockito.when(query.firstResult()).thenReturn(Uni.createFrom().item(transactionEntity));
+        Sort sort = Sort.by("creationTimestamp", Sort.Direction.Descending);
+        Mockito.when(transactionRepository.find("pspId = ?1 AND terminalId = ?2 AND status = ?3", sort, "pspId", "terminalId", "status")).thenReturn(query);
+
+        Uni<TransactionEntity> result = transactionService.latestTransaction("pspId", "terminalId", "status", sort);
+
+        result.subscribe()
+                .withSubscriber(UniAssertSubscriber.create())
+                .assertItem(transactionEntity);
     }
 
     private List<TransactionEntity> mockedList() {
