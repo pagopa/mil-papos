@@ -20,7 +20,7 @@ tags:
   - name: terminals
     description: Terminals management operation
   - name: transactions
-    description: Transactions management opertation
+    description: Transactions management operation
   - name: pa
     description: Operation which can be invoked by Public Administration (the payee) Portal
   - name: pos
@@ -371,7 +371,7 @@ paths:
     post:
       operationId: create
       summary: Creates a transaction
-      description: Create a transaction from Public Admnitration (the payee) Portal
+      description: Create a transaction from Public Administration (the payee) Portal
       tags: [ transactions, pa ]
       parameters:
         - $ref: '#/components/parameters/RequestId'

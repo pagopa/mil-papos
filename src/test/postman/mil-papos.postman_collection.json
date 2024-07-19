@@ -211,7 +211,7 @@
 										"bulkload"
 									]
 								},
-								"description": "Creates a new terminal"
+								"description": "Allows the bulk loading of a set of terminals"
 							},
 							"response": []
 						},
@@ -252,7 +252,7 @@
 										"{{bulkLoadingId}}"
 									]
 								},
-								"description": "Returns a page of terminals"
+								"description": "Returns a json with the status of bulk loading operation"
 							},
 							"response": []
 						}
@@ -317,7 +317,7 @@
 										}
 									]
 								},
-								"description": "Returns a page of terminals"
+								"description": "Returns a page of terminals by payee code"
 							},
 							"response": []
 						},
@@ -374,7 +374,7 @@
 										}
 									]
 								},
-								"description": "Returns a page of terminals"
+								"description": "Returns a page of terminals by psp id"
 							},
 							"response": []
 						},
@@ -431,7 +431,7 @@
 										}
 									]
 								},
-								"description": "Returns a page of terminals"
+								"description": "Returns the list of terminals linked to a cash desk"
 							},
 							"response": []
 						}
@@ -486,7 +486,7 @@
 										"updateWorkstations"
 									]
 								},
-								"description": "Returns a page of terminals"
+								"description": "Updates the list of cash desks linked to the terminal"
 							},
 							"response": []
 						},
@@ -535,7 +535,7 @@
 										"{{terminalUuid}}"
 									]
 								},
-								"description": "Returns a page of terminals"
+								"description": "Updated terminal without modify linked cash desks"
 							},
 							"response": []
 						}
@@ -580,7 +580,7 @@
 										"{{terminalUuid}}"
 									]
 								},
-								"description": "Returns a page of terminals"
+								"description": "Deletes a terminal"
 							},
 							"response": []
 						}
@@ -623,7 +623,8 @@
 									"path": [
 										"transactions"
 									]
-								}
+								},
+								"description": "Create a transaction from Public Administration (the payee) Portal"
 							},
 							"response": []
 						}
@@ -703,7 +704,7 @@
 										}
 									]
 								},
-								"description": "Find transaction by payee code"
+								"description": "Retrieves the list of transactions by payee"
 							},
 							"response": []
 						},
@@ -734,7 +735,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_TR_BASE_URL}}/transactions/findByPspId?pspId={{pspId}}&startDate={{startDate}}&endDate={{endDate}}&sortStrategy=desc&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"raw": "{{MIL_TR_BASE_URL}}/transactions/findByPspId?pspId={{pspId}}&startDate={{startDate}}&endDate={{endDate}}&sortStrategy={{sortStrategy}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
 									"host": [
 										"{{MIL_TR_BASE_URL}}"
 									],
@@ -760,7 +761,7 @@
 										},
 										{
 											"key": "sortStrategy",
-											"value": "desc",
+											"value": "{{sortStrategy}}",
 											"description": "(Required) Strategy used to sort returned transactions by creation timestamp (asc, desc)"
 										},
 										{
@@ -775,7 +776,7 @@
 										}
 									]
 								},
-								"description": "Find transaction by psp id"
+								"description": "Retrieves the list of transactions by PSP"
 							},
 							"response": []
 						}
@@ -829,14 +830,121 @@
 										"{{transactionId}}"
 									]
 								},
-								"description": "Update a transaction"
+								"description": "Updates amount and status of a transaction"
 							},
 							"response": []
 						}
 					]
 				},
 				{
-					"name": "3. Delete Transaction",
+					"name": "3. Get Transaction",
+					"item": [
+						{
+							"name": "Get Transaction",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/transactions/{{transactionId}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"transactions",
+										"{{transactionId}}"
+									]
+								},
+								"description": "Returns transaction data"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "4. Get Latest Transaction",
+					"item": [
+						{
+							"name": "Latest Transaction",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/transactions/latest?pspId={{pspId}}&terminalId={{terminalId}}&status={{transactionStatus}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"transactions",
+										"latest"
+									],
+									"query": [
+										{
+											"key": "pspId",
+											"value": "{{pspId}}",
+											"description": "(Required) ID of the POS service provider"
+										},
+										{
+											"key": "terminalId",
+											"value": "{{terminalId}}",
+											"description": "(Required) ID of the terminal for the PSP"
+										},
+										{
+											"key": "status",
+											"value": "{{transactionStatus}}",
+											"description": "(Required) status of the transactions to search for"
+										}
+									]
+								},
+								"description": "Retrieves the latest transaction by POS and status"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "5. Delete Transaction",
 					"item": [
 						{
 							"name": "Delete Transaction",
@@ -874,7 +982,7 @@
 										"{{transactionId}}"
 									]
 								},
-								"description": "Delete a transaction"
+								"description": "Allows a Public Administration (the payee) Portal to delete a transaction"
 							},
 							"response": []
 						}
