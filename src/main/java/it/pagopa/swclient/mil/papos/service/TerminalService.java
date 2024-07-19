@@ -43,7 +43,6 @@ public class TerminalService {
      * @return terminal created
      */
     public Uni<TerminalEntity> createTerminal(TerminalDto terminalDto) {
-
         Log.debugf("TerminalService -> createTerminal - Input parameters: %s", terminalDto);
 
         String terminalUuid = Utility.generateRandomUuid();
@@ -99,7 +98,7 @@ public class TerminalService {
                     .onFailure()
                     .transform(error -> {
                         Log.error("TerminalService -> processBulkLoad: error persisting bulkLoadStatus", error);
-                        
+
                         return error;
                     })
                     .onItem()
@@ -122,6 +121,7 @@ public class TerminalService {
      * @return bulkLoadStatus found
      */
     public Uni<BulkLoadStatusEntity> findBulkLoadStatus(String bulkLoadingId) {
+        Log.debugf("TerminalService -> findBulkLoadStatus - Input parameters: %s", bulkLoadingId);
 
         return bulkLoadStatusRepository
                 .find("bulkLoadingId = ?1", bulkLoadingId)
@@ -136,6 +136,8 @@ public class TerminalService {
      * @return a number
      */
     public Uni<Long> getTerminalCountByAttribute(String attributeName, String attributeValue) {
+        Log.debugf("TerminalService -> getTerminalCountByAttribute - Input parameters: %s, %s", attributeName, attributeValue);
+
         if (attributeName.equals("workstation")) {
             return terminalRepository.count("{ 'workstations': ?1 }", attributeValue);
         }
@@ -152,6 +154,8 @@ public class TerminalService {
      * @return a list of terminals
      */
     public Uni<List<TerminalEntity>> getTerminalListPagedByAttribute(String attributeName, String attributeValue, int pageIndex, int pageSize) {
+        Log.debugf("TerminalService -> getTerminalListPagedByAttribute - Input parameters: %s, %s, %s, %s", attributeName, attributeValue, pageIndex, pageSize);
+
         if (attributeName.equals("workstation")) {
             return terminalRepository
                     .find("{ 'workstations': ?1 }", attributeValue)
@@ -171,6 +175,7 @@ public class TerminalService {
      * @return terminal found
      */
     public Uni<TerminalEntity> findTerminal(String terminalUuid) {
+        Log.debugf("TerminalService -> findTerminal - Input parameters: %s", terminalUuid);
 
         return terminalRepository
                 .find("terminalUuid = ?1", terminalUuid)
@@ -185,6 +190,7 @@ public class TerminalService {
      * @return terminal updated
      */
     public Uni<TerminalEntity> updateWorkstations(WorkstationsDto workstations, TerminalEntity oldTerminal) {
+        Log.debugf("TerminalService -> updateWorkstations - Input parameters: %s, %s", workstations, oldTerminal);
 
         oldTerminal.setWorkstations(workstations.workstations());
 
@@ -203,6 +209,7 @@ public class TerminalService {
      * @return terminal updated
      */
     public Uni<TerminalEntity> updateTerminal(String terminalUuid, TerminalDto terminalDto, TerminalEntity oldTerminal) {
+        Log.debugf("TerminalService -> updateTerminal - Input parameters: %s, %s, %s", terminalUuid, terminalDto, oldTerminal);
 
         TerminalEntity entity = createTerminalEntity(terminalDto, terminalUuid);
         entity.id = oldTerminal.id;
@@ -222,6 +229,7 @@ public class TerminalService {
      * @return void
      */
     public Uni<Void> deleteTerminal(TerminalEntity terminal) {
+        Log.debugf("TerminalService -> deleteTerminal - Input parameters: %s", terminal);
 
         return terminalRepository.delete(terminal)
                 .onFailure()
