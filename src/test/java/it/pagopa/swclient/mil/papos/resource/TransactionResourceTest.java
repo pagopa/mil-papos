@@ -417,4 +417,83 @@ class TransactionResourceTest {
 
         Assertions.assertEquals(500, response.statusCode());
     }
+
+    @Test
+    void testFindTransaction_200() {
+        Mockito.when(transactionService.findTransaction(any(String.class)))
+                .thenReturn(Uni.createFrom().item(transactionEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .when()
+                .get("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(200, response.statusCode());
+    }
+
+    @Test
+    void testLatestTransaction_200() {
+        Mockito.when(transactionService.latestTransaction(any(String.class), any(String.class), any(String.class), any(Sort.class)))
+                .thenReturn(Uni.createFrom().item(transactionEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("pspId", "AGID_01")
+                .queryParam("terminalId", "34523860")
+                .queryParam("status", "CLOSE_OK")
+                .and()
+                .when()
+                .get("/latest")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(200, response.statusCode());
+    }
+
+    @Test
+    void testLatestTransaction_404() {
+        transactionEntity = null;
+        Mockito.when(transactionService.latestTransaction(any(String.class), any(String.class), any(String.class), any(Sort.class)))
+                .thenReturn(Uni.createFrom().item(transactionEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("pspId", "AGID_01")
+                .queryParam("terminalId", "34523860")
+                .queryParam("status", "CLOSE_OK")
+                .and()
+                .when()
+                .get("/latest")
+                .then()
+                .extract().response();
+
+        transactionEntity = TestData.getCorrectTransactionEntity();
+        Assertions.assertEquals(404, response.statusCode());
+    }
+
+    @Test
+    void testLatestTransaction_500FT() {
+        Mockito.when(transactionService.latestTransaction(any(String.class), any(String.class), any(String.class), any(Sort.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("pspId", "AGID_01")
+                .queryParam("terminalId", "34523860")
+                .queryParam("status", "CLOSE_OK")
+                .and()
+                .when()
+                .get("/latest")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
 }
