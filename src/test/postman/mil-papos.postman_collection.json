@@ -1,0 +1,1142 @@
+{
+	"info": {
+		"_postman_id": "2e8b1dd3-ff67-4e68-890e-7a8314062541",
+		"name": "Papos Microservice",
+		"description": "Papos Microservice for Multi-channel Integration Layer of SW Client Project\n\nContact Support:\n Name: Antonio Tarricone\n Email: antonio.tarricone@pagopa.it",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "29646859"
+	},
+	"item": [
+		{
+			"name": "1. Terminal",
+			"item": [
+				{
+					"name": "0. Get Token",
+					"item": [
+						{
+							"name": "Get Papos Access Token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"pm.test(\"Body matches string\", function () {\r",
+											"    pm.expect(pm.response.text()).to.include(\"access_token\");\r",
+											"    pm.expect(pm.response.text()).to.include(\"token_type\");\r",
+											"    pm.expect(pm.response.text()).to.include(\"expires_in\");\r",
+											"\r",
+											"    pm.test(\"Token type\", function () {\r",
+											"        var jsonData = pm.response.json();\r",
+											"        pm.expect(jsonData.token_type).to.eql(\"Bearer\");\r",
+											"         pm.environment.set(\"access_token_tr\", jsonData.access_token);\r",
+											"\r",
+											"    });\r",
+											"\r",
+											"   \r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {}
+							},
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}"
+									},
+									{
+										"key": "Version",
+										"value": "{{mil_auth_api_version}}"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "client_credentials",
+											"type": "text"
+										},
+										{
+											"key": "client_id",
+											"value": "{{tr_token_client_id}}",
+											"type": "text"
+										},
+										{
+											"key": "client_secret",
+											"value": "{{tr_token_client_secret}}",
+											"type": "default"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{MIL_AUTH_BASE_URL}}/token",
+									"host": [
+										"{{MIL_AUTH_BASE_URL}}"
+									],
+									"path": [
+										"token"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "1. Create Terminal",
+					"item": [
+						{
+							"name": "Create New Terminal",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"pspId\": \"{{pspId}}\",\n  \"terminalId\": \"{{terminalId}}\",\n  \"enabled\": \"{{enabled}}\",\n  \"payeeCode\": \"{{payeeCode}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals"
+									]
+								},
+								"description": "Creates a new terminal"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "2. Bulkload",
+					"item": [
+						{
+							"name": "Bulkload",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 202\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.response.to.have.status(202);",
+											"    pm.environment.set(\"bulkLoadingId\", jsonData.bulkLoadingId);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {}
+							},
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "file",
+											"type": "file",
+											"src": "{{MIL_TR_BULKLOAD_FILE_PATH}}"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals/bulkload",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals",
+										"bulkload"
+									]
+								},
+								"description": "Allows the bulk loading of a set of terminals"
+							},
+							"response": []
+						},
+						{
+							"name": "Get BulkLoad Status",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals/bulkload/{{bulkLoadingId}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals",
+										"bulkload",
+										"{{bulkLoadingId}}"
+									]
+								},
+								"description": "Returns a json with the status of bulk loading operation"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "3. Find Terminal",
+					"item": [
+						{
+							"name": "Find By Payee Code",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = JSON.parse(pm.response.text());",
+											"pm.collectionVariables.set(\"terminalUuid\", jsonData.terminals[0].terminalUuid);",
+											"",
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals/findByPayeeCode?payeeCode={{payeeCode}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals",
+										"findByPayeeCode"
+									],
+									"query": [
+										{
+											"key": "payeeCode",
+											"value": "{{payeeCode}}",
+											"description": "(Required) Fiscal code of the subject that receives the payment"
+										},
+										{
+											"key": "page",
+											"value": "{{getTerminalPage}}",
+											"description": "(Required) Number of the requested page of data"
+										},
+										{
+											"key": "size",
+											"value": "{{getTerminalPageSize}}",
+											"description": "(Required) Size of the requested page of data"
+										}
+									]
+								},
+								"description": "Returns a page of terminals by payee code"
+							},
+							"response": []
+						},
+						{
+							"name": "Find By Psp Id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals/findByPspId?pspId={{pspId}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals",
+										"findByPspId"
+									],
+									"query": [
+										{
+											"key": "pspId",
+											"value": "{{pspId}}",
+											"description": "(Required) ID of the POS service provider"
+										},
+										{
+											"key": "page",
+											"value": "{{getTerminalPage}}",
+											"description": "(Required) Number of the requested page of data"
+										},
+										{
+											"key": "size",
+											"value": "{{getTerminalPageSize}}",
+											"description": "(Required) Size of the requested page of data"
+										}
+									]
+								},
+								"description": "Returns a page of terminals by psp id"
+							},
+							"response": []
+						},
+						{
+							"name": "Find By Workstation",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals/findByWorkstation?workstation={{workstation}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals",
+										"findByWorkstation"
+									],
+									"query": [
+										{
+											"key": "workstation",
+											"value": "{{workstation}}",
+											"description": "(Required) Fiscal code of the subject that receives the payment"
+										},
+										{
+											"key": "page",
+											"value": "{{getTerminalPage}}",
+											"description": "(Required) Number of the requested page of data"
+										},
+										{
+											"key": "size",
+											"value": "{{getTerminalPageSize}}",
+											"description": "(Required) Size of the requested page of data"
+										}
+									]
+								},
+								"description": "Returns the list of terminals linked to a cash desk"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "4. Update Terminal",
+					"item": [
+						{
+							"name": "Update Workstations",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"workstations\": [\"cassa-1-ufficio-1\",\"cassa-3-ufficio-1\"]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals/{{terminalUuid}}/updateWorkstations",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals",
+										"{{terminalUuid}}",
+										"updateWorkstations"
+									]
+								},
+								"description": "Updates the list of cash desks linked to the terminal"
+							},
+							"response": []
+						},
+						{
+							"name": "Update Terminal",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"terminalId\": \"67899876\",\r\n    \"enabled\": false,\r\n    \"payeeCode\": \"06534340721\",\r\n    \"pspId\": \"pspspId\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals/{{terminalUuid}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals",
+										"{{terminalUuid}}"
+									]
+								},
+								"description": "Updated terminal without modify linked cash desks"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "5. Delete Terminal",
+					"item": [
+						{
+							"name": "Delete Terminal",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/terminals/{{terminalUuid}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"terminals",
+										"{{terminalUuid}}"
+									]
+								},
+								"description": "Deletes a terminal"
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "2. Transaction",
+			"item": [
+				{
+					"name": "0. Create Transaction",
+					"item": [
+						{
+							"name": "Create New Transaction",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"pspId\": \"{{pspId}}\",\r\n  \"terminalId\": \"{{terminalId}}\",\r\n  \"noticeNumber\": \"{{noticeNumber}}\",\r\n  \"payeeCode\": \"{{payeeCode}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/transactions",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"transactions"
+									]
+								},
+								"description": "Create a transaction from Public Administration (the payee) Portal"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "1. Find Transaction",
+					"item": [
+						{
+							"name": "Find By Payee Code",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var jsonData = JSON.parse(pm.response.text());",
+											"pm.collectionVariables.set(\"transactionId\", jsonData.transactions[0].transactionId);",
+											"",
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/transactions/findByPayeeCode?payeeCode={{payeeCode}}&startDate={{startDate}}&endDate={{endDate}}&sortStrategy={{sortStrategy}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"transactions",
+										"findByPayeeCode"
+									],
+									"query": [
+										{
+											"key": "payeeCode",
+											"value": "{{payeeCode}}",
+											"description": "(Required) Fiscal code of the subject that receives the payment"
+										},
+										{
+											"key": "startDate",
+											"value": "{{startDate}}",
+											"description": "(Required) Start date of the time range in which to search for transactions"
+										},
+										{
+											"key": "endDate",
+											"value": "{{endDate}}",
+											"description": "(Required) End date of the time range in which to search for transactions"
+										},
+										{
+											"key": "sortStrategy",
+											"value": "{{sortStrategy}}",
+											"description": "(Required) Strategy used to sort returned transactions by creation timestamp (asc, desc)"
+										},
+										{
+											"key": "page",
+											"value": "{{getTerminalPage}}",
+											"description": "(Required) Number of the requested page of data"
+										},
+										{
+											"key": "size",
+											"value": "{{getTerminalPageSize}}",
+											"description": "(Required) Size of the requested page of data"
+										}
+									]
+								},
+								"description": "Retrieves the list of transactions by payee"
+							},
+							"response": []
+						},
+						{
+							"name": "Find By Psp Id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/transactions/findByPspId?pspId={{pspId}}&startDate={{startDate}}&endDate={{endDate}}&sortStrategy={{sortStrategy}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"transactions",
+										"findByPspId"
+									],
+									"query": [
+										{
+											"key": "pspId",
+											"value": "{{pspId}}",
+											"description": "(Required) ID of the POS service provider"
+										},
+										{
+											"key": "startDate",
+											"value": "{{startDate}}",
+											"description": "(Required) Start date of the time range in which to search for transactions"
+										},
+										{
+											"key": "endDate",
+											"value": "{{endDate}}",
+											"description": "(Required) End date of the time range in which to search for transactions"
+										},
+										{
+											"key": "sortStrategy",
+											"value": "{{sortStrategy}}",
+											"description": "(Required) Strategy used to sort returned transactions by creation timestamp (asc, desc)"
+										},
+										{
+											"key": "page",
+											"value": "{{getTerminalPage}}",
+											"description": "(Required) Number of the requested page of data"
+										},
+										{
+											"key": "size",
+											"value": "{{getTerminalPageSize}}",
+											"description": "(Required) Size of the requested page of data"
+										}
+									]
+								},
+								"description": "Retrieves the list of transactions by PSP"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "2. Update Transaction",
+					"item": [
+						{
+							"name": "Update Transaction",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"amount\": {{transactionAmount}},\r\n    \"status\": \"{{transactionStatus}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/transactions/{{transactionId}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"transactions",
+										"{{transactionId}}"
+									]
+								},
+								"description": "Updates amount and status of a transaction"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "3. Get Transaction",
+					"item": [
+						{
+							"name": "Get Transaction",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/transactions/{{transactionId}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"transactions",
+										"{{transactionId}}"
+									]
+								},
+								"description": "Returns transaction data"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "4. Get Latest Transaction",
+					"item": [
+						{
+							"name": "Latest Transaction",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/transactions/latest?pspId={{pspId}}&terminalId={{terminalId}}&status={{transactionStatus}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"transactions",
+										"latest"
+									],
+									"query": [
+										{
+											"key": "pspId",
+											"value": "{{pspId}}",
+											"description": "(Required) ID of the POS service provider"
+										},
+										{
+											"key": "terminalId",
+											"value": "{{terminalId}}",
+											"description": "(Required) ID of the terminal for the PSP"
+										},
+										{
+											"key": "status",
+											"value": "{{transactionStatus}}",
+											"description": "(Required) status of the transactions to search for"
+										}
+									]
+								},
+								"description": "Retrieves the latest transaction by POS and status"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "5. Delete Transaction",
+					"item": [
+						{
+							"name": "Delete Transaction",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_TR_BASE_URL}}/transactions/{{transactionId}}",
+									"host": [
+										"{{MIL_TR_BASE_URL}}"
+									],
+									"path": [
+										"transactions",
+										"{{transactionId}}"
+									]
+								},
+								"description": "Allows a Public Administration (the payee) Portal to delete a transaction"
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token_tr}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "terminalHandlerId",
+			"value": "45856",
+			"type": "string"
+		},
+		{
+			"key": "terminalId",
+			"value": "34523860",
+			"type": "string"
+		},
+		{
+			"key": "enabled",
+			"value": "true",
+			"type": "string"
+		},
+		{
+			"key": "payeeCode",
+			"value": "06534340721",
+			"type": "string"
+		},
+		{
+			"key": "slave",
+			"value": "true",
+			"type": "string"
+		},
+		{
+			"key": "pagoPa",
+			"value": "false",
+			"type": "string"
+		},
+		{
+			"key": "idpay",
+			"value": "true",
+			"type": "string"
+		},
+		{
+			"key": "pspId",
+			"value": "AGID_01",
+			"type": "string"
+		},
+		{
+			"key": "brokerId",
+			"value": "97735020584",
+			"type": "string"
+		},
+		{
+			"key": "channelId",
+			"value": "97735020584_03",
+			"type": "string"
+		},
+		{
+			"key": "mil_auth_api_version",
+			"value": "1.0.0"
+		},
+		{
+			"key": "getTerminalPage",
+			"value": "0"
+		},
+		{
+			"key": "getTerminalPageSize",
+			"value": "10"
+		},
+		{
+			"key": "requestId",
+			"value": "d0d654e6-97da-4848-b568-99fedccb642b"
+		},
+		{
+			"key": "terminalUuid",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "workstation",
+			"value": "cassa-1-ufficio-1",
+			"type": "string"
+		},
+		{
+			"key": "bulkLoadingId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "noticeNumber",
+			"value": "123456789123456789",
+			"type": "string"
+		},
+		{
+			"key": "startDate",
+			"value": "2024-06-01",
+			"type": "string"
+		},
+		{
+			"key": "endDate",
+			"value": "2024-08-31",
+			"type": "string"
+		},
+		{
+			"key": "sortStrategy",
+			"value": "asc",
+			"type": "string"
+		},
+		{
+			"key": "transactionId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "transactionStatus",
+			"value": "CLOSED_OK",
+			"type": "string"
+		},
+		{
+			"key": "transactionAmount",
+			"value": "40",
+			"type": "string"
+		}
+	]
+}
