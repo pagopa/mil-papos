@@ -14,7 +14,7 @@
 					"name": "0. Get Token",
 					"item": [
 						{
-							"name": "Get Papos Access Token",
+							"name": "Get Papos PSP Access Token",
 							"event": [
 								{
 									"listen": "test",
@@ -31,7 +31,7 @@
 											"    pm.test(\"Token type\", function () {\r",
 											"        var jsonData = pm.response.json();\r",
 											"        pm.expect(jsonData.token_type).to.eql(\"Bearer\");\r",
-											"         pm.environment.set(\"access_token_tr\", jsonData.access_token);\r",
+											"         pm.environment.set(\"access_token_psp\", jsonData.access_token);\r",
 											"\r",
 											"    });\r",
 											"\r",
@@ -39,7 +39,8 @@
 											"});\r",
 											""
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								},
 								{
@@ -48,7 +49,8 @@
 										"exec": [
 											""
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -80,12 +82,103 @@
 										},
 										{
 											"key": "client_id",
-											"value": "{{tr_token_client_id}}",
+											"value": "{{NEWMAN_IT__PSP_TOKEN_CLIENT_ID}}",
 											"type": "text"
 										},
 										{
 											"key": "client_secret",
-											"value": "{{tr_token_client_secret}}",
+											"value": "{{NEWMAN_IT_PSP_TOKEN_CLIENT_SECRET}}",
+											"type": "default"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{MIL_AUTH_BASE_URL}}/token",
+									"host": [
+										"{{MIL_AUTH_BASE_URL}}"
+									],
+									"path": [
+										"token"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Papos PA Access Token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"pm.test(\"Body matches string\", function () {\r",
+											"    pm.expect(pm.response.text()).to.include(\"access_token\");\r",
+											"    pm.expect(pm.response.text()).to.include(\"token_type\");\r",
+											"    pm.expect(pm.response.text()).to.include(\"expires_in\");\r",
+											"\r",
+											"    pm.test(\"Token type\", function () {\r",
+											"        var jsonData = pm.response.json();\r",
+											"        pm.expect(jsonData.token_type).to.eql(\"Bearer\");\r",
+											"         pm.environment.set(\"access_token_pa\", jsonData.access_token);\r",
+											"\r",
+											"    });\r",
+											"\r",
+											"   \r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {}
+							},
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}"
+									},
+									{
+										"key": "Version",
+										"value": "{{mil_auth_api_version}}"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "client_credentials",
+											"type": "text"
+										},
+										{
+											"key": "client_id",
+											"value": "{{NEWMAN_IT__PA_TOKEN_CLIENT_ID}}",
+											"type": "text"
+										},
+										{
+											"key": "client_secret",
+											"value": "{{NEWMAN_IT_PA_TOKEN_CLIENT_SECRET}}",
 											"type": "default"
 										}
 									]
@@ -125,6 +218,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_psp}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "POST",
 								"header": [
 									{
@@ -256,6 +359,38 @@
 							},
 							"response": []
 						}
+					],
+					"auth": {
+						"type": "bearer",
+						"bearer": [
+							{
+								"key": "token",
+								"value": "{{access_token_psp}}",
+								"type": "string"
+							}
+						]
+					},
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"packages": {},
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"packages": {},
+								"exec": [
+									""
+								]
+							}
+						}
 					]
 				},
 				{
@@ -282,6 +417,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_pa}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "GET",
 								"header": [
 									{
@@ -339,6 +484,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_psp}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "GET",
 								"header": [
 									{
@@ -396,6 +551,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_pa}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "GET",
 								"header": [
 									{
@@ -458,6 +623,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_pa}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "PATCH",
 								"header": [
 									{
@@ -508,6 +683,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_psp}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "PATCH",
 								"header": [
 									{
@@ -562,6 +747,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_psp}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "DELETE",
 								"header": [
 									{
@@ -597,6 +792,16 @@
 						{
 							"name": "Create New Transaction",
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_pa}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "POST",
 								"header": [
 									{
@@ -654,6 +859,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_pa}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "GET",
 								"header": [
 									{
@@ -726,6 +941,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_psp}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "GET",
 								"header": [
 									{
@@ -803,6 +1028,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_pa}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "PATCH",
 								"header": [
 									{
@@ -856,6 +1091,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_pa}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "GET",
 								"header": [
 									{
@@ -901,6 +1146,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_psp}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "GET",
 								"header": [
 									{
@@ -964,6 +1219,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_pa}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "DELETE",
 								"header": [
 									{
@@ -991,16 +1256,6 @@
 			]
 		}
 	],
-	"auth": {
-		"type": "bearer",
-		"bearer": [
-			{
-				"key": "token",
-				"value": "{{access_token_tr}}",
-				"type": "string"
-			}
-		]
-	},
 	"event": [
 		{
 			"listen": "prerequest",

@@ -10,6 +10,7 @@ import it.pagopa.swclient.mil.papos.util.ErrorCodes;
 import it.pagopa.swclient.mil.papos.util.Errors;
 import it.pagopa.swclient.mil.papos.util.RegexPatterns;
 import it.pagopa.swclient.mil.papos.util.Utility;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -33,7 +34,7 @@ public class TransactionResource {
     @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "public_administration" })
     public Uni<Response> createTransaction(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -64,7 +65,7 @@ public class TransactionResource {
     @Path("/findByPayeeCode")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "public_administration" })
     public Uni<Response> findByPayeeCode(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -86,6 +87,7 @@ public class TransactionResource {
     @Path("/findByPspId")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "pos_service_provider" })
     public Uni<Response> findByPspId(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -107,7 +109,7 @@ public class TransactionResource {
     @Path("/{transactionId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "public_administration" })
     public Uni<Response> deleteTransaction(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -150,7 +152,7 @@ public class TransactionResource {
     @Path("/{transactionId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "public_administration" })
     public Uni<Response> updateTransaction(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -191,7 +193,7 @@ public class TransactionResource {
     @Path("/{transactionId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "pos_service_provider", "public_administration" })
     public Uni<Response> getTransaction(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -215,7 +217,7 @@ public class TransactionResource {
     @Path("/latest")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "pos_service_provider" })
     public Uni<Response> getLatestTransaction(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
