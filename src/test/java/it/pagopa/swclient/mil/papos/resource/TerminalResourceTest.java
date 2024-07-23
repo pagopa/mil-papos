@@ -1,5 +1,6 @@
 package it.pagopa.swclient.mil.papos.resource;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import static io.restassured.RestAssured.given;
 import static it.pagopa.swclient.mil.papos.util.TestData.mockedListTerminalDto;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 
 @QuarkusTest
 @TestHTTPEndpoint(TerminalResource.class)
@@ -39,6 +41,8 @@ class TerminalResourceTest {
 
     @InjectMock
     static TerminalService terminalService;
+
+    static ObjectMapper objectMapper;
 
     static TerminalDto terminalDto;
 
@@ -54,6 +58,7 @@ class TerminalResourceTest {
         workstationsDto = TestData.getCorrectWorkstationDto();
         terminalEntity = TestData.getCorrectTerminalEntity();
         bulkLoadStatusEntity = TestData.getCorrectBulkLoadStatusEntity();
+        objectMapper = new ObjectMapper();
     }
 
     @Test
@@ -187,7 +192,7 @@ class TerminalResourceTest {
             @Claim(key = "sub", value = "AGID_01")
     })
     void testBulkLoadTerminals_ServiceError() {
-        byte[] fileContent = "test content".getBytes();
+        byte[] fileContent = "malformed content".getBytes();
         InputStream fileInputStream = new ByteArrayInputStream(fileContent);
 
         Mockito.when(terminalService.processBulkLoad(mockedListTerminalDto()))
@@ -202,6 +207,30 @@ class TerminalResourceTest {
                 .extract().response();
 
         Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"pos_service_provider"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "AGID_01")
+    })
+    void testBulkLoadTerminals_InternalServerErrorException() {
+        String fileContent = "[{\"pspId\": \"AGID_01\", \"terminalId\": \"term1\"}, {\"pspId\": \"AGID_01\", \"terminalId\": \"term2\"}]";
+        InputStream fileInputStream = new ByteArrayInputStream(fileContent.getBytes(StandardCharsets.UTF_8));
+
+        Mockito.when(terminalService.processBulkLoad(anyList()))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.MULTIPART)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .multiPart("file", "file.json", fileInputStream, MediaType.APPLICATION_OCTET_STREAM)
+                .when()
+                .post("/bulkload")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.getStatusCode());
     }
 
     @Test

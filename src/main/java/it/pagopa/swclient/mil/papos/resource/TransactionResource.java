@@ -17,6 +17,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.time.format.DateTimeParseException;
 import java.util.Date;
@@ -26,8 +27,11 @@ public class TransactionResource {
 
     private final TransactionService transactionService;
 
-    public TransactionResource(TransactionService transactionService) {
+    private final JsonWebToken jwt;
+
+    public TransactionResource(TransactionService transactionService, JsonWebToken jwt) {
         this.transactionService = transactionService;
+        this.jwt = jwt;
     }
 
     @POST
@@ -42,6 +46,8 @@ public class TransactionResource {
             @Valid @NotNull(message = ErrorCodes.ERROR_DTO_MUST_NOT_BE_NULL_MSG) TransactionDto transaction) {
 
         Log.debugf("TransactionResource -> createTransaction - Input requestId, createTransaction: %s, %s", requestId, transaction);
+
+        checkToken(transaction.payeeCode());
 
         return transactionService.createTransaction(transaction)
                 .onFailure()
@@ -80,6 +86,8 @@ public class TransactionResource {
 
         Log.debugf("TransactionResource -> findByPayeeCode - Input requestId, payeeCode, startDate, endDate, sortStrategy, page, size: %s, %s, %s, %s, %s, %s, %s", requestId, payeeCode, startDate, endDate, sortStrategy, pageNumber, pageSize);
 
+        checkToken(payeeCode);
+
         return findByAttribute("payeeCode", payeeCode, startDate, endDate, sortStrategy, pageNumber, pageSize);
     }
 
@@ -101,6 +109,8 @@ public class TransactionResource {
             @QueryParam("size") int pageSize) {
 
         Log.debugf("TransactionResource -> findByPspId - Input requestId, pspId, startDate, endDate, sortStrategy, page, size: %s, %s, %s, %s, %s, %s, %s", requestId, pspId, startDate, endDate, sortStrategy, pageNumber, pageSize);
+
+        checkToken(pspId);
 
         return findByAttribute("pspId", pspId, startDate, endDate, sortStrategy, pageNumber, pageSize);
     }
@@ -229,6 +239,8 @@ public class TransactionResource {
         Log.debugf("TransactionResource -> getLatestTransaction - Input requestId, pspId, terminalId, status: %s, %s, %s, %s", requestId, pspId, terminalId, status);
         Sort sort = Sort.by("creationTimestamp", Sort.Direction.Descending);
 
+        checkToken(pspId);
+
         return transactionService.latestTransaction(pspId, terminalId, status, sort)
                 .onFailure()
                 .transform(err -> {
@@ -335,5 +347,18 @@ public class TransactionResource {
 
                     return Uni.createFrom().item(transactionEntity);
                 });
+    }
+
+    private void checkToken(String toCheck) {
+        Log.debugf("TransactionResource -> checkToken: sub [%s], pspId/payeeCode: [%s]", jwt.getSubject(), toCheck);
+
+        if (!jwt.getSubject().equals(toCheck)) {
+            Log.errorf("TransactionResource -> checkToken: Error while checking token, subject not equals to pspId/payeeCode [%s, %s]", jwt.getSubject(), toCheck);
+
+            throw new WebApplicationException(Response
+                    .status(Response.Status.UNAUTHORIZED)
+                    .entity(new Errors(ErrorCodes.ERROR_CHECK_TOKEN, ErrorCodes.ERROR_CHECK_TOKEN_MSG))
+                    .build());
+        }
     }
 }

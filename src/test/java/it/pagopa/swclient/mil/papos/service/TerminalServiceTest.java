@@ -1,6 +1,4 @@
 package it.pagopa.swclient.mil.papos.service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.mongodb.panache.reactive.ReactivePanacheQuery;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -37,8 +35,6 @@ class TerminalServiceTest {
     @InjectMock
     static BulkLoadStatusRepository bulkLoadStatusRepository;
 
-    static ObjectMapper objectMapper;
-
     static TerminalDto terminalDto;
 
     static WorkstationsDto workstationsDto;
@@ -55,7 +51,6 @@ class TerminalServiceTest {
         workstationsDto = TestData.getCorrectWorkstationDto();
         terminalEntity = TestData.getCorrectTerminalEntity();
         bulkLoadStatusEntity = TestData.getCorrectBulkLoadStatusEntity();
-        objectMapper = new ObjectMapper();
         terminalService = new TerminalService(terminalRepository, bulkLoadStatusRepository);
     }
 
