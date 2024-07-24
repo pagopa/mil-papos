@@ -14,7 +14,7 @@
 					"name": "0. Get Token",
 					"item": [
 						{
-							"name": "Get Papos Access Token",
+							"name": "Get Papos PSP Access Token",
 							"event": [
 								{
 									"listen": "test",
@@ -31,7 +31,7 @@
 											"    pm.test(\"Token type\", function () {\r",
 											"        var jsonData = pm.response.json();\r",
 											"        pm.expect(jsonData.token_type).to.eql(\"Bearer\");\r",
-											"         pm.environment.set(\"access_token_tr\", jsonData.access_token);\r",
+											"         pm.environment.set(\"access_token_psp\", jsonData.access_token);\r",
 											"\r",
 											"    });\r",
 											"\r",
@@ -39,7 +39,8 @@
 											"});\r",
 											""
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								},
 								{
@@ -48,7 +49,8 @@
 										"exec": [
 											""
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -80,12 +82,103 @@
 										},
 										{
 											"key": "client_id",
-											"value": "{{tr_token_client_id}}",
+											"value": "{{NEWMAN_IT__PSP_TOKEN_CLIENT_ID}}",
 											"type": "text"
 										},
 										{
 											"key": "client_secret",
-											"value": "{{tr_token_client_secret}}",
+											"value": "{{NEWMAN_IT_PSP_TOKEN_CLIENT_SECRET}}",
+											"type": "default"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{MIL_AUTH_BASE_URL}}/token",
+									"host": [
+										"{{MIL_AUTH_BASE_URL}}"
+									],
+									"path": [
+										"token"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Papos PA Access Token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"pm.test(\"Body matches string\", function () {\r",
+											"    pm.expect(pm.response.text()).to.include(\"access_token\");\r",
+											"    pm.expect(pm.response.text()).to.include(\"token_type\");\r",
+											"    pm.expect(pm.response.text()).to.include(\"expires_in\");\r",
+											"\r",
+											"    pm.test(\"Token type\", function () {\r",
+											"        var jsonData = pm.response.json();\r",
+											"        pm.expect(jsonData.token_type).to.eql(\"Bearer\");\r",
+											"         pm.environment.set(\"access_token_pa\", jsonData.access_token);\r",
+											"\r",
+											"    });\r",
+											"\r",
+											"   \r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {}
+							},
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}"
+									},
+									{
+										"key": "Version",
+										"value": "{{mil_auth_api_version}}"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "client_credentials",
+											"type": "text"
+										},
+										{
+											"key": "client_id",
+											"value": "{{NEWMAN_IT__PA_TOKEN_CLIENT_ID}}",
+											"type": "text"
+										},
+										{
+											"key": "client_secret",
+											"value": "{{NEWMAN_IT_PA_TOKEN_CLIENT_SECRET}}",
 											"type": "default"
 										}
 									]
@@ -125,6 +218,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_psp}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "POST",
 								"header": [
 									{
@@ -143,9 +246,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{MIL_TR_BASE_URL}}/terminals",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals",
 									"host": [
-										"{{MIL_TR_BASE_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals"
@@ -197,14 +300,14 @@
 										{
 											"key": "file",
 											"type": "file",
-											"src": "{{MIL_TR_BULKLOAD_FILE_PATH}}"
+											"src": "{{MIL_PAPOS_BULKLOAD_FILE_PATH}}"
 										}
 									]
 								},
 								"url": {
-									"raw": "{{MIL_TR_BASE_URL}}/terminals/bulkload",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/bulkload",
 									"host": [
-										"{{MIL_TR_BASE_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals",
@@ -242,9 +345,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_TR_BASE_URL}}/terminals/bulkload/{{bulkLoadingId}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/bulkload/{{bulkLoadingId}}",
 									"host": [
-										"{{MIL_TR_BASE_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals",
@@ -255,6 +358,38 @@
 								"description": "Returns a json with the status of bulk loading operation"
 							},
 							"response": []
+						}
+					],
+					"auth": {
+						"type": "bearer",
+						"bearer": [
+							{
+								"key": "token",
+								"value": "{{access_token_psp}}",
+								"type": "string"
+							}
+						]
+					},
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"packages": {},
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"packages": {},
+								"exec": [
+									""
+								]
+							}
 						}
 					]
 				},
@@ -282,6 +417,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_pa}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "GET",
 								"header": [
 									{
@@ -291,9 +436,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_TR_BASE_URL}}/terminals/findByPayeeCode?payeeCode={{payeeCode}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/findByPayeeCode?payeeCode={{payeeCode}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
 									"host": [
-										"{{MIL_TR_BASE_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals",
@@ -339,6 +484,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_psp}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "GET",
 								"header": [
 									{
@@ -348,9 +503,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_TR_BASE_URL}}/terminals/findByPspId?pspId={{pspId}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/findByPspId?pspId={{pspId}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
 									"host": [
-										"{{MIL_TR_BASE_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals",
@@ -396,6 +551,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_pa}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "GET",
 								"header": [
 									{
@@ -405,9 +570,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_TR_BASE_URL}}/terminals/findByWorkstation?workstation={{workstation}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/findByWorkstation?workstation={{workstation}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
 									"host": [
-										"{{MIL_TR_BASE_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals",
@@ -458,6 +623,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_pa}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "PATCH",
 								"header": [
 									{
@@ -476,9 +651,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{MIL_TR_BASE_URL}}/terminals/{{terminalUuid}}/updateWorkstations",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/{{terminalUuid}}/updateWorkstations",
 									"host": [
-										"{{MIL_TR_BASE_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals",
@@ -508,6 +683,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_psp}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "PATCH",
 								"header": [
 									{
@@ -526,9 +711,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{MIL_TR_BASE_URL}}/terminals/{{terminalUuid}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/{{terminalUuid}}",
 									"host": [
-										"{{MIL_TR_BASE_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals",
@@ -562,6 +747,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_psp}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "DELETE",
 								"header": [
 									{
@@ -571,9 +766,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_TR_BASE_URL}}/terminals/{{terminalUuid}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/{{terminalUuid}}",
 									"host": [
-										"{{MIL_TR_BASE_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals",
@@ -597,6 +792,16 @@
 						{
 							"name": "Create New Transaction",
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_pa}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "POST",
 								"header": [
 									{
@@ -616,9 +821,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{MIL_TR_BASE_URL}}/transactions",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/transactions",
 									"host": [
-										"{{MIL_TR_BASE_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"transactions"
@@ -654,6 +859,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_pa}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "GET",
 								"header": [
 									{
@@ -663,9 +878,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_TR_BASE_URL}}/transactions/findByPayeeCode?payeeCode={{payeeCode}}&startDate={{startDate}}&endDate={{endDate}}&sortStrategy={{sortStrategy}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/transactions/findByPayeeCode?payeeCode={{payeeCode}}&startDate={{startDate}}&endDate={{endDate}}&sortStrategy={{sortStrategy}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
 									"host": [
-										"{{MIL_TR_BASE_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"transactions",
@@ -726,6 +941,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_psp}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "GET",
 								"header": [
 									{
@@ -735,9 +960,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_TR_BASE_URL}}/transactions/findByPspId?pspId={{pspId}}&startDate={{startDate}}&endDate={{endDate}}&sortStrategy={{sortStrategy}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/transactions/findByPspId?pspId={{pspId}}&startDate={{startDate}}&endDate={{endDate}}&sortStrategy={{sortStrategy}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
 									"host": [
-										"{{MIL_TR_BASE_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"transactions",
@@ -803,6 +1028,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_pa}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "PATCH",
 								"header": [
 									{
@@ -821,9 +1056,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{MIL_TR_BASE_URL}}/transactions/{{transactionId}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/transactions/{{transactionId}}",
 									"host": [
-										"{{MIL_TR_BASE_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"transactions",
@@ -856,6 +1091,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_pa}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "GET",
 								"header": [
 									{
@@ -866,9 +1111,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_TR_BASE_URL}}/transactions/{{transactionId}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/transactions/{{transactionId}}",
 									"host": [
-										"{{MIL_TR_BASE_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"transactions",
@@ -901,6 +1146,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_psp}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "GET",
 								"header": [
 									{
@@ -911,9 +1166,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_TR_BASE_URL}}/transactions/latest?pspId={{pspId}}&terminalId={{terminalId}}&status={{transactionStatus}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/transactions/latest?pspId={{pspId}}&terminalId={{terminalId}}&status={{transactionStatus}}",
 									"host": [
-										"{{MIL_TR_BASE_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"transactions",
@@ -964,6 +1219,16 @@
 								}
 							],
 							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_pa}}",
+											"type": "string"
+										}
+									]
+								},
 								"method": "DELETE",
 								"header": [
 									{
@@ -973,9 +1238,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_TR_BASE_URL}}/transactions/{{transactionId}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/transactions/{{transactionId}}",
 									"host": [
-										"{{MIL_TR_BASE_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"transactions",
@@ -991,16 +1256,6 @@
 			]
 		}
 	],
-	"auth": {
-		"type": "bearer",
-		"bearer": [
-			{
-				"key": "token",
-				"value": "{{access_token_tr}}",
-				"type": "string"
-			}
-		]
-	},
 	"event": [
 		{
 			"listen": "prerequest",
@@ -1059,7 +1314,7 @@
 		},
 		{
 			"key": "pspId",
-			"value": "AGID_01",
+			"value": "TMIL0101",
 			"type": "string"
 		},
 		{

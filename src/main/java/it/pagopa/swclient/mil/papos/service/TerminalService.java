@@ -1,6 +1,5 @@
 package it.pagopa.swclient.mil.papos.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.papos.dao.BulkLoadStatusEntity;
@@ -10,14 +9,9 @@ import it.pagopa.swclient.mil.papos.dao.TerminalRepository;
 import it.pagopa.swclient.mil.papos.model.BulkLoadStatus;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
 import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
-import it.pagopa.swclient.mil.papos.util.ErrorCodes;
-import it.pagopa.swclient.mil.papos.util.Errors;
 import it.pagopa.swclient.mil.papos.util.Utility;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.InternalServerErrorException;
-import jakarta.ws.rs.core.Response;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,12 +22,9 @@ public class TerminalService {
 
     private final BulkLoadStatusRepository bulkLoadStatusRepository;
 
-    private final ObjectMapper objectMapper;
-
-    public TerminalService(TerminalRepository terminalRepository, BulkLoadStatusRepository bulkLoadStatusRepository, ObjectMapper objectMapper) {
+    public TerminalService(TerminalRepository terminalRepository, BulkLoadStatusRepository bulkLoadStatusRepository) {
         this.terminalRepository = terminalRepository;
         this.bulkLoadStatusRepository = bulkLoadStatusRepository;
-        this.objectMapper = objectMapper;
     }
 
     /**
@@ -58,61 +49,52 @@ public class TerminalService {
     /**
      * Allows the bulk loading of a set of terminals starting from a fileContent.
      *
-     * @param fileContent file json containing a set of terminals
+     * @param terminalRequests file json containing a set of terminals
      * @return list of terminal created
      */
-    public Uni<BulkLoadStatusEntity> processBulkLoad(byte[] fileContent) {
-        Log.debugf("TerminalService -> processBulkLoad - Input parameters: file content length: %d bytes", fileContent.length);
+    public Uni<BulkLoadStatusEntity> processBulkLoad(List<TerminalDto> terminalRequests) {
+        Log.debugf("TerminalService -> processBulkLoad - Input parameters: file content length: %d bytes", terminalRequests.size());
 
         String bulkLoadingId = Utility.generateRandomUuid();
         BulkLoadStatus bulkLoadStatus = new BulkLoadStatus(bulkLoadingId, 0);
 
-        try {
-            List<TerminalDto> terminalRequests = objectMapper.readValue(fileContent, objectMapper.getTypeFactory().constructCollectionType(List.class, TerminalDto.class));
-            bulkLoadStatus.setTotalRecords(terminalRequests.size());
-            List<Uni<Void>> terminalCreationUnis = new ArrayList<>();
+        bulkLoadStatus.setTotalRecords(terminalRequests.size());
+        List<Uni<Void>> terminalCreationUnis = new ArrayList<>();
 
-            for (TerminalDto terminal : terminalRequests) {
-                Uni<Void> terminalCreationUni = createTerminal(terminal)
-                        .onFailure()
-                        .transform(failure -> {
-                            bulkLoadStatus.recordFailure(failure.getMessage());
-
-                            return failure;
-                        })
-                        .onItem()
-                        .transform(success -> {
-                            bulkLoadStatus.recordSuccess();
-
-                            return null;
-                        });
-
-                terminalCreationUnis.add(terminalCreationUni);
-            }
-
-            Uni<Void> allTerminalCreations = Uni.combine().all().unis(terminalCreationUnis).discardItems();
-
-            return allTerminalCreations
-                    .onItem()
-                    .transformToUni(ignored -> bulkLoadStatusRepository.persist(createBulkLoadStatusEntity(bulkLoadStatus)))
+        for (TerminalDto terminal : terminalRequests) {
+            Uni<Void> terminalCreationUni = createTerminal(terminal)
                     .onFailure()
-                    .transform(error -> {
-                        Log.error("TerminalService -> processBulkLoad: error persisting bulkLoadStatus", error);
+                    .transform(failure -> {
+                        bulkLoadStatus.recordFailure(failure.getMessage());
 
-                        return error;
+                        return failure;
                     })
                     .onItem()
-                    .transform(terminalSaved -> terminalSaved);
+                    .transform(success -> {
+                        bulkLoadStatus.recordSuccess();
 
-        } catch (IOException e) {
-            Log.error("TerminalService -> processBulkLoad: Error processing file", e);
+                        return null;
+                    });
 
-            return Uni.createFrom().failure(new InternalServerErrorException(Response
-                    .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new Errors(ErrorCodes.ERROR_PROCESSING_FILE, ErrorCodes.ERROR_PROCESSING_FILE_MSG))
-                    .build()));
+            terminalCreationUnis.add(terminalCreationUni);
         }
+
+        Uni<Void> allTerminalCreations = Uni.combine().all().unis(terminalCreationUnis).discardItems();
+
+        return allTerminalCreations
+                .onItem()
+                .transformToUni(ignored -> bulkLoadStatusRepository.persist(createBulkLoadStatusEntity(bulkLoadStatus)))
+                .onFailure()
+                .transform(error -> {
+                    Log.error("TerminalService -> processBulkLoad: error persisting bulkLoadStatus", error);
+
+                    return error;
+                })
+                .onItem()
+                .transform(terminalSaved -> terminalSaved);
+
     }
+
 
     /**
      * Find first bulkLoad status equals to terminalUuid given in input.

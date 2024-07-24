@@ -44,6 +44,7 @@ public final class ErrorCodes {
     public static final String ERROR_LIST_TRANSACTIONS                                           = MODULE_ID + "000207";
     public static final String ERROR_COUNTING_TRANSACTIONS                                       = MODULE_ID + "000208";
     public static final String ERROR_TRANSACTION_NOT_FOUND                                       = MODULE_ID + "000209";
+    public static final String ERROR_CHECK_TOKEN                                                 = MODULE_ID + "000210";
 
     /*
      * Error descriptions
@@ -77,6 +78,7 @@ public final class ErrorCodes {
     private static final String ERROR_LIST_TRANSACTIONS_DESCR = "error occurred while retrieving list of paginated transactions";
     private static final String ERROR_COUNTING_TRANSACTIONS_DESCR = "error occurred while counting transactions";
     private static final String ERROR_TRANSACTION_NOT_FOUND_DESCR = "transaction not found on db";
+    private static final String ERROR_CHECK_TOKEN_DESCR = "check token fails, subject differs from pspId/payeeCode";
 
     /*
      * Error complete message
@@ -110,5 +112,6 @@ public final class ErrorCodes {
     public static final String ERROR_LIST_TRANSACTIONS_MSG = "[" + ERROR_LIST_TRANSACTIONS + "] " + ERROR_LIST_TRANSACTIONS_DESCR;
     public static final String ERROR_COUNTING_TRANSACTIONS_MSG = "[" + ERROR_COUNTING_TRANSACTIONS + "] " + ERROR_COUNTING_TRANSACTIONS_DESCR;
     public static final String ERROR_TRANSACTION_NOT_FOUND_MSG = "[" + ERROR_TRANSACTION_NOT_FOUND + "] " + ERROR_TRANSACTION_NOT_FOUND_DESCR;
+    public static final String ERROR_CHECK_TOKEN_MSG = "[" + ERROR_CHECK_TOKEN + "] " + ERROR_CHECK_TOKEN_DESCR;
 
 }

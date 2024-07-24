@@ -10,12 +10,14 @@ import it.pagopa.swclient.mil.papos.util.ErrorCodes;
 import it.pagopa.swclient.mil.papos.util.Errors;
 import it.pagopa.swclient.mil.papos.util.RegexPatterns;
 import it.pagopa.swclient.mil.papos.util.Utility;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.time.format.DateTimeParseException;
 import java.util.Date;
@@ -25,15 +27,18 @@ public class TransactionResource {
 
     private final TransactionService transactionService;
 
-    public TransactionResource(TransactionService transactionService) {
+    private final JsonWebToken jwt;
+
+    public TransactionResource(TransactionService transactionService, JsonWebToken jwt) {
         this.transactionService = transactionService;
+        this.jwt = jwt;
     }
 
     @POST
     @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "public_administration" })
     public Uni<Response> createTransaction(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -41,6 +46,8 @@ public class TransactionResource {
             @Valid @NotNull(message = ErrorCodes.ERROR_DTO_MUST_NOT_BE_NULL_MSG) TransactionDto transaction) {
 
         Log.debugf("TransactionResource -> createTransaction - Input requestId, createTransaction: %s, %s", requestId, transaction);
+
+        checkToken(transaction.payeeCode());
 
         return transactionService.createTransaction(transaction)
                 .onFailure()
@@ -64,7 +71,7 @@ public class TransactionResource {
     @Path("/findByPayeeCode")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "public_administration" })
     public Uni<Response> findByPayeeCode(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -79,6 +86,8 @@ public class TransactionResource {
 
         Log.debugf("TransactionResource -> findByPayeeCode - Input requestId, payeeCode, startDate, endDate, sortStrategy, page, size: %s, %s, %s, %s, %s, %s, %s", requestId, payeeCode, startDate, endDate, sortStrategy, pageNumber, pageSize);
 
+        checkToken(payeeCode);
+
         return findByAttribute("payeeCode", payeeCode, startDate, endDate, sortStrategy, pageNumber, pageSize);
     }
 
@@ -86,6 +95,7 @@ public class TransactionResource {
     @Path("/findByPspId")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "pos_service_provider" })
     public Uni<Response> findByPspId(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -100,6 +110,8 @@ public class TransactionResource {
 
         Log.debugf("TransactionResource -> findByPspId - Input requestId, pspId, startDate, endDate, sortStrategy, page, size: %s, %s, %s, %s, %s, %s, %s", requestId, pspId, startDate, endDate, sortStrategy, pageNumber, pageSize);
 
+        checkToken(pspId);
+
         return findByAttribute("pspId", pspId, startDate, endDate, sortStrategy, pageNumber, pageSize);
     }
 
@@ -107,7 +119,7 @@ public class TransactionResource {
     @Path("/{transactionId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "public_administration" })
     public Uni<Response> deleteTransaction(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -150,7 +162,7 @@ public class TransactionResource {
     @Path("/{transactionId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "public_administration" })
     public Uni<Response> updateTransaction(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -191,7 +203,7 @@ public class TransactionResource {
     @Path("/{transactionId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "pos_service_provider", "public_administration" })
     public Uni<Response> getTransaction(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -215,7 +227,7 @@ public class TransactionResource {
     @Path("/latest")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "pos_service_provider" })
     public Uni<Response> getLatestTransaction(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -226,6 +238,8 @@ public class TransactionResource {
 
         Log.debugf("TransactionResource -> getLatestTransaction - Input requestId, pspId, terminalId, status: %s, %s, %s, %s", requestId, pspId, terminalId, status);
         Sort sort = Sort.by("creationTimestamp", Sort.Direction.Descending);
+
+        checkToken(pspId);
 
         return transactionService.latestTransaction(pspId, terminalId, status, sort)
                 .onFailure()
@@ -333,5 +347,18 @@ public class TransactionResource {
 
                     return Uni.createFrom().item(transactionEntity);
                 });
+    }
+
+    private void checkToken(String toCheck) {
+        Log.debugf("TransactionResource -> checkToken: sub [%s], pspId/payeeCode: [%s]", jwt.getSubject(), toCheck);
+
+        if (!jwt.getSubject().equals(toCheck)) {
+            Log.errorf("TransactionResource -> checkToken: Error while checking token, subject not equals to pspId/payeeCode [%s, %s]", jwt.getSubject(), toCheck);
+
+            throw new WebApplicationException(Response
+                    .status(Response.Status.UNAUTHORIZED)
+                    .entity(new Errors(ErrorCodes.ERROR_CHECK_TOKEN, ErrorCodes.ERROR_CHECK_TOKEN_MSG))
+                    .build());
+        }
     }
 }

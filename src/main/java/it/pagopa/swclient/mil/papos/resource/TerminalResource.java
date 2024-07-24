@@ -1,5 +1,6 @@
 package it.pagopa.swclient.mil.papos.resource;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.unchecked.Unchecked;
@@ -11,29 +12,39 @@ import it.pagopa.swclient.mil.papos.service.TerminalService;
 import it.pagopa.swclient.mil.papos.util.ErrorCodes;
 import it.pagopa.swclient.mil.papos.util.Errors;
 import it.pagopa.swclient.mil.papos.util.RegexPatterns;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.resteasy.reactive.RestForm;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 @Path("/terminals")
 public class TerminalResource {
     private final TerminalService terminalService;
 
-    public TerminalResource(TerminalService terminalService) {
+    private final JsonWebToken jwt;
+
+    private final ObjectMapper objectMapper;
+
+    public TerminalResource(TerminalService terminalService, JsonWebToken jwt, ObjectMapper objectMapper) {
         this.terminalService = terminalService;
+        this.jwt = jwt;
+        this.objectMapper = objectMapper;
     }
 
     @POST
     @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "pos_service_provider" })
     public Uni<Response> createTerminal(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -41,6 +52,8 @@ public class TerminalResource {
             @Valid @NotNull(message = ErrorCodes.ERROR_DTO_MUST_NOT_BE_NULL_MSG) TerminalDto terminal) {
 
         Log.debugf("TerminalResource -> createTerminal - Input requestId, createTerminal: %s, %s", requestId, terminal);
+
+        checkToken(terminal.pspId());
 
         return terminalService.createTerminal(terminal)
                 .onFailure()
@@ -68,7 +81,7 @@ public class TerminalResource {
     @Path("/bulkload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "pos_service_provider" })
     public Uni<Response> bulkLoadTerminals(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -87,8 +100,9 @@ public class TerminalResource {
             );
         }
 
-        return Uni.createFrom().item(Unchecked.supplier(fileInputStream::readAllBytes)).onItem()
-                .transformToUni(file -> {
+        return Uni.createFrom().item(Unchecked.supplier(fileInputStream::readAllBytes))
+                .onItem()
+                .transformToUni(Unchecked.function(file -> {
                     if (file.length == 0) {
                         Log.error("TerminalResource -> bulkLoadTerminals: error uploaded file is empty");
 
@@ -99,33 +113,48 @@ public class TerminalResource {
                         );
                     }
 
-                    return terminalService.processBulkLoad(file)
-                            .onFailure()
-                            .transform(err -> {
-                                Log.errorf(err, "TerminalResource -> bulkLoadTerminals: error during bulkLoad process with file: length [%d] bytes", file.length);
+                    try {
+                        List<TerminalDto> terminalRequests = objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(List.class, TerminalDto.class));
+                        for (TerminalDto terminal : terminalRequests) {
+                            checkToken(terminal.pspId());
+                        }
 
-                                return new InternalServerErrorException(Response
-                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
-                                        .build());
-                            })
-                            .onItem()
-                            .transform(bulkLoadStatus -> {
-                                Log.debugf("TerminalResource -> bulkLoadTerminals: bulkLoad terminals completed [%s]", bulkLoadStatus);
+                        return terminalService.processBulkLoad(terminalRequests)
+                                .onFailure()
+                                .transform(err -> {
+                                    Log.errorf(err, "TerminalResource -> bulkLoadTerminals: error during bulkLoad process with file: length [%d] bytes", file.length);
 
-                                return Response
-                                        .status(Response.Status.ACCEPTED)
-                                        .entity(bulkLoadStatus)
-                                        .build();
-                            });
-                });
+                                    return new InternalServerErrorException(Response
+                                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                            .build());
+                                })
+                                .onItem()
+                                .transform(bulkLoadStatus -> {
+                                    Log.debugf("TerminalResource -> bulkLoadTerminals: bulkLoad terminals completed [%s]", bulkLoadStatus);
+
+                                    return Response
+                                            .status(Response.Status.ACCEPTED)
+                                            .entity(bulkLoadStatus)
+                                            .build();
+                                });
+                    } catch (IOException e) {
+                        Log.error("TerminalService -> processBulkLoad: Error processing file", e);
+
+                        return Uni.createFrom().failure(new InternalServerErrorException(Response
+                                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                .entity(new Errors(ErrorCodes.ERROR_PROCESSING_FILE, ErrorCodes.ERROR_PROCESSING_FILE_MSG))
+                                .build()));
+                    }
+
+                }));
     }
 
     @GET
     @Path("/bulkload/{bulkLoadingId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "pos_service_provider" })
     public Uni<Response> getBulkLoadingStatusFile(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -170,7 +199,7 @@ public class TerminalResource {
     @Path("/findByPayeeCode")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "public_administration" })
     public Uni<Response> findByPayeeCode(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -179,6 +208,8 @@ public class TerminalResource {
             @QueryParam("page") int pageNumber,
             @QueryParam("size") int pageSize) {
 
+        checkToken(payeeCode);
+
         return findByAttribute(requestId, "payeeCode", payeeCode, pageNumber, pageSize);
     }
 
@@ -186,7 +217,7 @@ public class TerminalResource {
     @Path("/findByPspId")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "pos_service_provider" })
     public Uni<Response> findByPspId(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -195,6 +226,8 @@ public class TerminalResource {
             @QueryParam("page") int pageNumber,
             @QueryParam("size") int pageSize) {
 
+        checkToken(pspId);
+
         return findByAttribute(requestId, "pspId", pspId, pageNumber, pageSize);
     }
 
@@ -202,7 +235,7 @@ public class TerminalResource {
     @Path("/findByWorkstation")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "public_administration" })
     public Uni<Response> findByWorkstation(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -218,7 +251,7 @@ public class TerminalResource {
     @Path("/{terminalUuid}/updateWorkstations")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "public_administration" })
     public Uni<Response> updateWorkstations(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -280,7 +313,7 @@ public class TerminalResource {
     @Path("/{terminalUuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "pos_service_provider" })
     public Uni<Response> updateTerminal(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -289,6 +322,8 @@ public class TerminalResource {
             @PathParam(value = "terminalUuid") String terminalUuid) {
 
         Log.debugf("TerminalResource -> updateTerminal - Input requestId, updateTerminal: %s, %s", requestId, terminal);
+
+        checkToken(terminal.pspId());
 
         return terminalService.findTerminal(terminalUuid)
                 .onFailure()
@@ -342,7 +377,7 @@ public class TerminalResource {
     @Path("/{terminalUuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({ "pos_service_provider" })
     public Uni<Response> deleteTerminal(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -441,5 +476,18 @@ public class TerminalResource {
                                         .build();
                             });
                 });
+    }
+
+    private void checkToken(String toCheck) {
+        Log.debugf("TerminalResource -> checkToken: sub [%s], pspId/payeeCode: [%s]", jwt.getSubject(), toCheck);
+
+        if (!jwt.getSubject().equals(toCheck)) {
+            Log.errorf("TerminalResource -> checkToken: Error while checking token, subject not equals to pspId/payeeCode [%s, %s]", jwt.getSubject(), toCheck);
+
+            throw new WebApplicationException(Response
+                    .status(Response.Status.UNAUTHORIZED)
+                    .entity(new Errors(ErrorCodes.ERROR_CHECK_TOKEN, ErrorCodes.ERROR_CHECK_TOKEN_MSG))
+                    .build());
+        }
     }
 }

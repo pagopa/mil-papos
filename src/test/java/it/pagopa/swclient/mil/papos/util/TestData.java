@@ -63,4 +63,20 @@ public final class TestData {
         return transactionEntity;
     }
 
+    public static List<TerminalEntity> mockedList() {
+        TerminalEntity te1 = new TerminalEntity();
+        te1.setTerminalUuid("uuid1");
+        TerminalEntity te2 = new TerminalEntity();
+        te2.setTerminalUuid("uuid2");
+
+        return List.of(te1, te2);
+    }
+
+    public static List<TerminalDto> mockedListTerminalDto() {
+        TerminalDto td1 = new TerminalDto("AGID_01", "34523860", true, "123456789123456789", null);
+        TerminalDto td2 = new TerminalDto("AGID_02", "34523861", false, "123456789123456782", null);
+
+        return List.of(td1, td2);
+    }
+
 }

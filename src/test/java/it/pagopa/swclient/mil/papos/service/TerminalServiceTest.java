@@ -1,6 +1,4 @@
 package it.pagopa.swclient.mil.papos.service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.mongodb.panache.reactive.ReactivePanacheQuery;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -20,10 +18,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
-
-import java.io.IOException;
 import java.util.List;
 
+import static it.pagopa.swclient.mil.papos.util.TestData.mockedList;
+import static it.pagopa.swclient.mil.papos.util.TestData.mockedListTerminalDto;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 
@@ -36,8 +34,6 @@ class TerminalServiceTest {
 
     @InjectMock
     static BulkLoadStatusRepository bulkLoadStatusRepository;
-
-    static ObjectMapper objectMapper;
 
     static TerminalDto terminalDto;
 
@@ -55,8 +51,7 @@ class TerminalServiceTest {
         workstationsDto = TestData.getCorrectWorkstationDto();
         terminalEntity = TestData.getCorrectTerminalEntity();
         bulkLoadStatusEntity = TestData.getCorrectBulkLoadStatusEntity();
-        objectMapper = new ObjectMapper();
-        terminalService = new TerminalService(terminalRepository, bulkLoadStatusRepository, objectMapper);
+        terminalService = new TerminalService(terminalRepository, bulkLoadStatusRepository);
     }
 
     @Test
@@ -83,16 +78,13 @@ class TerminalServiceTest {
     }
 
     @Test
-    void testProcessBulkLoad_Success() throws IOException {
-        List<TerminalDto> terminalDtos = List.of(terminalDto, terminalDto);
-        byte[] fileContent = objectMapper.writeValueAsBytes(terminalDtos);
-
+    void testProcessBulkLoad_Success() {
         Mockito.when(terminalRepository.persist(any(TerminalEntity.class)))
                 .thenReturn(Uni.createFrom().item(new TerminalEntity()));
         Mockito.when(bulkLoadStatusRepository.persist(any(BulkLoadStatusEntity.class)))
                 .thenReturn(Uni.createFrom().item(new BulkLoadStatusEntity()));
 
-        Uni<BulkLoadStatusEntity> result = terminalService.processBulkLoad(fileContent);
+        Uni<BulkLoadStatusEntity> result = terminalService.processBulkLoad(mockedListTerminalDto());
 
         result.subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
@@ -100,16 +92,13 @@ class TerminalServiceTest {
     }
 
     @Test
-    void testProcessBulkLoad_CreateTerminalFailure() throws IOException {
-        List<TerminalDto> terminalDtos = List.of(terminalDto, terminalDto);
-        byte[] fileContent = objectMapper.writeValueAsBytes(terminalDtos);
-
+    void testProcessBulkLoad_CreateTerminalFailure() {
         Mockito.when(terminalRepository.persist(any(TerminalEntity.class)))
                 .thenReturn(Uni.createFrom().failure(new RuntimeException()));
         Mockito.when(bulkLoadStatusRepository.persist(any(BulkLoadStatusEntity.class)))
                 .thenReturn(Uni.createFrom().item(new BulkLoadStatusEntity()));
 
-        Uni<BulkLoadStatusEntity> result = terminalService.processBulkLoad(fileContent);
+        Uni<BulkLoadStatusEntity> result = terminalService.processBulkLoad(mockedListTerminalDto());
 
         result.subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
@@ -131,29 +120,13 @@ class TerminalServiceTest {
     }
 
     @Test
-    void testProcessBulkLoad_FileReadError() {
-        byte[] fileContent = "malformed content".getBytes();
-
-        Uni<BulkLoadStatusEntity> result = terminalService.processBulkLoad(fileContent);
-
-        UniAssertSubscriber<BulkLoadStatusEntity> subscriber = result
-                .subscribe()
-                .withSubscriber(UniAssertSubscriber.create());
-
-        subscriber.awaitFailure().assertFailedWith(WebApplicationException.class);
-    }
-
-    @Test
-    void testProcessBulkLoad_PersistenceError() throws IOException {
-        List<TerminalDto> terminalDtos = List.of(terminalDto, terminalDto);
-        byte[] fileContent = objectMapper.writeValueAsBytes(terminalDtos);
-
+    void testProcessBulkLoad_PersistenceError() {
         Mockito.when(terminalRepository.persist(any(TerminalEntity.class)))
                 .thenReturn(Uni.createFrom().item(new TerminalEntity()));
         Mockito.when(bulkLoadStatusRepository.persist(any(BulkLoadStatusEntity.class)))
                 .thenReturn(Uni.createFrom().failure(new RuntimeException("Error persisting bulk load status")));
 
-        Uni<BulkLoadStatusEntity> result = terminalService.processBulkLoad(fileContent);
+        Uni<BulkLoadStatusEntity> result = terminalService.processBulkLoad(mockedListTerminalDto());
 
         result.subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
@@ -293,14 +266,5 @@ class TerminalServiceTest {
         result.subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
                 .assertFailedWith(WebApplicationException.class);
-    }
-
-    private List<TerminalEntity> mockedList() {
-        TerminalEntity te1 = new TerminalEntity();
-        te1.setTerminalUuid("uuid1");
-        TerminalEntity te2 = new TerminalEntity();
-        te2.setTerminalUuid("uuid2");
-
-        return List.of(te1, te2);
     }
 }
