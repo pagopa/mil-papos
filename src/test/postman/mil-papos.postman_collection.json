@@ -82,12 +82,12 @@
 										},
 										{
 											"key": "client_id",
-											"value": "{{NEWMAN_IT__PSP_TOKEN_CLIENT_ID}}",
+											"value": "{{clientIdPsp}}",
 											"type": "text"
 										},
 										{
 											"key": "client_secret",
-											"value": "{{NEWMAN_IT_PSP_TOKEN_CLIENT_SECRET}}",
+											"value": "{{clientSecretPsp}}",
 											"type": "default"
 										}
 									]
@@ -173,12 +173,12 @@
 										},
 										{
 											"key": "client_id",
-											"value": "{{NEWMAN_IT__PA_TOKEN_CLIENT_ID}}",
+											"value": "{{clientIdPa}}",
 											"type": "text"
 										},
 										{
 											"key": "client_secret",
-											"value": "{{NEWMAN_IT_PA_TOKEN_CLIENT_SECRET}}",
+											"value": "{{clientSecretPa}}",
 											"type": "default"
 										}
 									]
@@ -300,7 +300,7 @@
 										{
 											"key": "file",
 											"type": "file",
-											"src": "{{MIL_PAPOS_BULKLOAD_FILE_PATH}}"
+											"src": "{{filePathBulkload}}"
 										}
 									]
 								},
