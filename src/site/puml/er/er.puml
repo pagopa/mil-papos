@@ -1,0 +1,30 @@
+@startuml
+skinparam linetype ortho
+
+entity "Solution" as sol {
+	**solutionId**
+	pspId
+	payeeCode
+}
+
+entity "Terminal" as pos {
+	**terminalUuid**
+	solutionId
+	terminalId
+	enabled
+}
+
+entity "Transaction" as trx {
+	**id**
+	terminalUuid
+	noticeNumber
+	payeeCode
+	creationTimestamp
+	lastUpdateTimestamp
+	status
+	amount
+}
+
+sol ||..o{ pos
+pos ||..o{ trx
+@enduml
