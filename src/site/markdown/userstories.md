@@ -29,7 +29,7 @@ Indica il soggetto che gestisce i terminali POS.
 6. **Come** POS Service Provider **voglio** registrare un POS in una soluzione **così da** renderlo utilizzabile dal sistema. `POST /payees/{payeeCode}/terminals`
 7. **Come** POS Service Provider **voglio** cancellare un POS in una soluzione **così da** gestire la dismissione di un POS. `DELETE /payees/{payeeCode}/terminals/{terminalUuid}`
 8. **Come** POS Service Provider **voglio** aggiornare i dati di un POS in una soluzione **così da** gestire le modifiche alla configurazione dello stesso. `PUT /payees/{payeeCode}/terminals/{terminalUuid}`
-9. **Come** POS Service Provider **voglio** ottenere i dettagli di un POS **così da** consulare la configurazione dello stesso. `GET /payees/{payeeCode}/terminals/{terminalUuid}`
+9. **Come** POS Service Provider **voglio** ottenere i dettagli di un POS **così da** consultare la configurazione dello stesso. `GET /payees/{payeeCode}/terminals/{terminalUuid}`
 10. **Come** POS Service Provider **voglio** ottenere l'elenco dei POS in una soluzione **così da** eseguire una operazione di cancellazione, aggiornamento o recupero dei dettagli di un POS. `GET /payees/{payeeCode}/terminals`
 11. **Come** POS Service Provider **voglio** eseguire il bulk loading dei POS in una soluzione **così da** renderli utilizzabili dal sistema. `POST /payees/{payeeCode}/terminals/bulkload`
 12. **Come** POS Service Provider **voglio** ottenere l'elenco delle soluzioni che adoperano il mio servizio di Gestore POS **così da** poter eseguire un'operazione (vedi 6-11) su una di esse. `GET /payees?pspId={pspId}`
