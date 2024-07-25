@@ -21,17 +21,269 @@ tags:
     description: Terminals management operation
   - name: transactions
     description: Transactions management operation
+  - name: solutions
+    description: Solutions management operation
   - name: pa
     description: Operation which can be invoked by Public Administration (the payee) Portal
   - name: pos
     description: Operation which can be invoked by POS (through a back-end)
   - name: psp
     description: Operation which can be invoked by POS PSP
+  - name: admin
+    description: Operation which can be invoked by the Administrator to configure the system
 
 security:
   - bearerAuth: [ ]
 
 paths:
+  /solutions:
+    parameters:
+      - $ref: '#/components/parameters/RequestId'
+    
+    post:
+      operationId: createSolution
+      description: Creates a solution
+      tags: [ solutions, admin ]
+      requestBody:
+        $ref: '#/components/requestBodies/CreateOrUpdateSolution'
+      responses:
+        "201":
+          #description: Created
+          $ref: '#/components/responses/CreateSolution'
+        "400":
+          #description: Bad request
+          $ref: '#/components/responses/Error'
+        "401":
+          #description: Access token is missing or invalid
+          $ref: '#/components/responses/Error'
+        "403":
+          #description: Forbidden
+          $ref: '#/components/responses/Error'
+        "406":
+          #description: Not acceptable. Did you require application/json?
+          $ref: '#/components/responses/Error'
+        "415":
+          #description: Unsupported media type. Did you provide application/json?
+          $ref: '#/components/responses/Error'
+        "429":
+          #description: Too many requests
+          $ref: '#/components/responses/Error'
+        "500":
+          #description: Server error
+          $ref: '#/components/responses/Error'
+        default:
+          description: Unexpected error
+    
+    get:
+      operationId: getSolutions
+      description: Returns all solutions
+      tags: [ solutions, admin ]
+      parameters:
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        "200":
+          #description: Ok
+          $ref: '#/components/responses/PageOfSolutions'
+        "400":
+          #description: Bad request
+          $ref: '#/components/responses/Error'
+        "401":
+          #description: Access token is missing or invalid
+          $ref: '#/components/responses/Error'
+        "403":
+          #description: Forbidden
+          $ref: '#/components/responses/Error'
+        "406":
+          #description: Not acceptable. Did you require application/json?
+          $ref: '#/components/responses/Error'
+        "429":
+          #description: Too many request
+          $ref: '#/components/responses/Error'
+        "500":
+          #description: Server error
+          $ref: '#/components/responses/Error'
+        default:
+          description: Unexpected error
+  
+  /solutions/findByPspId:
+    parameters:
+      - $ref: '#/components/parameters/RequestId'
+   
+    get:
+      operationId: getSolutionByPsp
+      description: Returns all solutions for a given PSP
+      tags: [ solutions, admin, psp ]
+      parameters:
+        - $ref: '#/components/parameters/PspId'
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        "200":
+          #description: Ok
+          $ref: '#/components/responses/PageOfSolutions'
+        "400":
+          #description: Bad request
+          $ref: '#/components/responses/Error'
+        "401":
+          #description: Access token is missing or invalid
+          $ref: '#/components/responses/Error'
+        "403":
+          #description: Forbidden
+          $ref: '#/components/responses/Error'
+        "406":
+          #description: Not acceptable. Did you require application/json?
+          $ref: '#/components/responses/Error'
+        "429":
+          #description: Too many request
+          $ref: '#/components/responses/Error'
+        "500":
+          #description: Server error
+          $ref: '#/components/responses/Error'
+        default:
+          description: Unexpected error
+  
+  /solutions/findByPayeeCode:
+    parameters:
+      - $ref: '#/components/parameters/RequestId'
+    
+    get:
+      operationId: getSolutionsByPayee
+      description: Returns all solutions for a given Payee
+      tags: [ solutions, admin, pa ]
+      parameters:
+        - $ref: '#/components/parameters/PayeeCode'
+        - $ref: '#/components/parameters/PageNumber'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        "200":
+          #description: Ok
+          $ref: '#/components/responses/PageOfSolutions'
+        "400":
+          #description: Bad request
+          $ref: '#/components/responses/Error'
+        "401":
+          #description: Access token is missing or invalid
+          $ref: '#/components/responses/Error'
+        "403":
+          #description: Forbidden
+          $ref: '#/components/responses/Error'
+        "406":
+          #description: Not acceptable. Did you require application/json?
+          $ref: '#/components/responses/Error'
+        "429":
+          #description: Too many request
+          $ref: '#/components/responses/Error'
+        "500":
+          #description: Server error
+          $ref: '#/components/responses/Error'
+        default:
+          description: Unexpected error
+          
+    
+  /solutions/{solutionId}:
+    parameters:
+      - $ref: '#/components/parameters/RequestId'
+      - $ref: '#/components/parameters/SolutionId'
+    
+    get:
+      operationId: getSolution
+      description: Returns a solution
+      tags: [ solutions, admin ]
+      responses:
+        "200":
+          #description: Ok
+          $ref: '#/components/responses/Solution'
+        "400":
+          #description: Bad request
+          $ref: '#/components/responses/Error'
+        "401":
+          #description: Access token is missing or invalid
+          $ref: '#/components/responses/Error'
+        "403":
+          #description: Forbidden
+          $ref: '#/components/responses/Error'
+        "406":
+          #description: Not acceptable. Did you require application/json?
+          $ref: '#/components/responses/Error'
+        "429":
+          #description: Too many request
+          $ref: '#/components/responses/Error'
+        "500":
+          #description: Server error
+          $ref: '#/components/responses/Error'
+        default:
+          description: Unexpected error
+    
+    put:
+      operationId: updateSolution
+      description: Updates a solution
+      tags: [ solutions, admin ]
+      requestBody:
+        $ref: '#/components/requestBodies/CreateOrUpdateSolution'
+      responses:
+        "204":
+          #description: No content
+          $ref: '#/components/responses/NoContent'
+        "400":
+          #description: Bad request
+          $ref: '#/components/responses/Error'
+        "401":
+          #description: Access token is missing or invalid
+          $ref: '#/components/responses/Error'
+        "403":
+          #description: Forbidden
+          $ref: '#/components/responses/Error'
+        "404":
+          #description: Not found
+          $ref: '#/components/responses/Error'
+        "406":
+          #description: Not acceptable. Did you require application/json?
+          $ref: '#/components/responses/Error'
+        "415":
+          #description: Unsupported media type. Did you provide application/json?
+          $ref: '#/components/responses/Error'
+        "429":
+          #description: Too many requests
+          $ref: '#/components/responses/Error'
+        "500":
+          #description: Server error
+          $ref: '#/components/responses/Error'
+        default:
+          description: Unexpected error
+    
+    delete:
+      operationId: deleteSolution
+      description: Deletes a solution
+      tags: [ solutions, admin ]
+      responses:
+        "204":
+          #description: No content
+          $ref: '#/components/responses/NoContent'
+        "400":
+          #description: Bad request
+          $ref: '#/components/responses/Error'
+        "401":
+          #description: Access token is missing or invalid
+          $ref: '#/components/responses/Error'
+        "403":
+          #description: Forbidden
+          $ref: '#/components/responses/Error'
+        "404":
+          #description: Not found
+          $ref: '#/components/responses/Error'
+        "406":
+          #description: Not acceptable. Did you require application/json?
+          $ref: '#/components/responses/Error'
+        "429":
+          #description: Too many requests
+          $ref: '#/components/responses/Error'
+        "500":
+          #description: Server error
+          $ref: '#/components/responses/Error'
+        default:
+          description: Unexpected error
+
   /terminals:
     post:
       operationId: createTerminal
@@ -751,6 +1003,23 @@ components:
       minimum: 1
       maximum: 240
     
+    SolutionId:
+      description: Solution ID
+      type: string
+      pattern: "^[0-9a-f]{24}$"
+      minLength: 24
+      maxLength: 24
+      example: "2f6a6bbe78904acef70345ca"
+    
+    SolutionLocation:
+      description: URL of the solution
+      type: string
+      format: uri
+      pattern: "^[ -~]{1,2048}$"
+      minLength: 1
+      maxLength: 2048
+      example: "https://mil-d-apim.azure-api.net/mil-papos/solutions/2f6a6bbe78904acef70345ca"
+    
     Status:
       description: Status of the transaction
       type: string
@@ -831,51 +1100,59 @@ components:
     # ------------------------------------------------------
     # Complex types
     # ------------------------------------------------------
-    CreateOrUpdateTerminal:
-      description: Request to create or update a terminal by PSP
+    CreateOrUpdateSolution:
+      description: Request to create or update a solution
       type: object
       additionalProperties: false
       properties:
         pspId:
           $ref: '#/components/schemas/PspId'
-        terminalId:
-          $ref: '#/components/schemas/TerminalId'
-        enabled:
-          $ref: '#/components/schemas/Enabled'
         payeeCode:
           $ref: '#/components/schemas/PayeeCode'
       required:
         - pspId
-        - terminalId
-        - enabled
         - payeeCode
       example:
         pspId: "AGID_01"
+        payeeCode: "06534340721"
+        
+    CreateOrUpdateTerminal:
+      description: Request to create or update a terminal by PSP
+      type: object
+      additionalProperties: false
+      properties:
+        solutionId:
+          $ref: '#/components/schemas/SolutionId'
+        terminalId:
+          $ref: '#/components/schemas/TerminalId'
+        enabled:
+          $ref: '#/components/schemas/Enabled'
+      required:
+        - solutionId
+        - terminalId
+        - enabled
+      example:
+        solutionId: "2f6a6bbe78904acef70345ca"
         terminalId: "34523860"
         enabled: true
-        payeeCode: "06534340721"
 
     CreateTransaction:
       description: Request to create a transaction from Public Administration (the payee) Portal
       type: object
       additionalProperties: false
       properties:
-        pspId:
-          $ref: '#/components/schemas/PspId'
-        terminalId:
-          $ref: '#/components/schemas/TerminalId'
+        terminalUuid:
+          $ref: '#/components/schemas/TerminalUuid'
         noticeNumber:
           $ref: '#/components/schemas/NoticeNumber'
         payeeCode:
           $ref: '#/components/schemas/PayeeCode'
       required:
-        - pspId
-        - terminalId
+        - terminalUuid
         - noticeNumber
         - payeeCode
       example:
-        pspId: "AGID_01"
-        terminalId: "34523860"
+        terminalUuid: "c7a1b24b0583477292ebdbaa"
         noticeNumber: "485564829563528563"
         payeeCode: "06534340721"
     
@@ -936,6 +1213,33 @@ components:
         totalElements: 100
         totalPages: 5
 
+    PageOfSolutions:
+      description: Page of solutions
+      allOf:
+        - type: object
+          additionalProperties: false
+          properties:
+            solutions:
+              $ref: '#/components/schemas/Solutions'
+          required:
+            - solutions
+        - type: object
+          additionalProperties: false
+          properties:
+            page:
+              $ref: '#/components/schemas/PageMetadata'
+          required:
+            - page
+      example:
+        solutions:
+          - solutionId: "2f6a6bbe78904acef70345ca"
+            pspId: "AGID_01"
+            payeeCode: "06534340721"
+        page:
+          size: 1
+          totalElements: 1
+          totalPages: 1
+    
     PageOfTerminals:
       description: Page of terminals data
       allOf:
@@ -950,15 +1254,13 @@ components:
       example:
         terminals:
           - terminalUuid: "c7a1b24b0583477292ebdbaa"
-            pspId: "AGID_01"
+            solutionId: "2f6a6bbe78904acef70345ca"
             terminalId: "34523860"
             enabled: true
-            payeeCode: "06534340721"
           - terminalUuid: "635edc54ab35f303668bbe7e"
-            pspId: "AGID_01"
+            solutionId: "2f6a6bbe78904acef70345ca"
             terminalId: "34523865"
             enabled: true
-            payeeCode: "06534340721"
         page:
           size: 2
           totalElements: 5
@@ -978,18 +1280,16 @@ components:
       example:
         terminals:
           - terminalUuid: "c7a1b24b0583477292ebdbaa"
-            pspId: "AGID_01"
+            solutionId: "2f6a6bbe78904acef70345ca"
             terminalId: "34523860"
             enabled: true
-            payeeCode: "06534340721"
             workstations:
               - "cassa-1-ufficio-3"
               - "cassa-2-ufficio-3"
           - terminalUuid: "635edc54ab35f303668bbe7e"
-            pspId: "AGID_01"
+            solutionId: "2f6a6bbe78904acef70345ca"
             terminalId: "34523865"
             enabled: true
-            payeeCode: "06534340721"
             workstations:
               - "cassa-3-ufficio-3"
               - "cassa-4-ufficio-3"
@@ -1018,8 +1318,7 @@ components:
       example:
         transactions:
           - id: "4658fcb36e520a65b1be79d0"
-            pspId: "AGID_01"
-            terminalId: "34523860"
+            terminalUuid: "AGID_01"
             noticeNumber: "485564829563528563"
             payeeCode: "06534340721"
             creationTimestamp: "2024-03-06T13:15:54Z"
@@ -1030,7 +1329,39 @@ components:
           size: 1
           totalElements: 5
           totalPages: 5
-
+    
+    Solution:
+      description: Represents a solution which is made up of Payee and a PSP and carries the configuration to connect the service used by the Payee
+      type: object
+      additionalProperties: false
+      properties:
+        solutionId:
+          $ref: '#/components/schemas/SolutionId'
+        pspId:
+          $ref: '#/components/schemas/PspId'
+        payeeCode:
+          $ref: '#/components/schemas/PayeeCode'
+      required:
+        - solutionId
+        - pspId
+        - payeeCode
+      example:
+        solutionId: "2f6a6bbe78904acef70345ca"
+        pspId: "AGID_01"
+        payeeCode: "06534340721"
+    
+    Solutions:
+      description: List of solutions
+      type: array
+      minItems: 0
+      maxItems: 128
+      items:
+        $ref: '#/components/schemas/Solution'
+      example:
+        - solutionId: "2f6a6bbe78904acef70345ca"
+          pspId: "AGID_01"
+          payeeCode: "06534340721"
+    
     Terminal:
       description: Data of a terminal
       type: object
@@ -1038,26 +1369,22 @@ components:
       properties:
         terminalUuid:
           $ref: '#/components/schemas/TerminalUuid'
-        pspId:
-          $ref: '#/components/schemas/PspId'
+        solutionId:
+          $ref: '#/components/schemas/SolutionId'
         terminalId:
           $ref: '#/components/schemas/TerminalId'
         enabled:
           $ref: '#/components/schemas/Enabled'
-        payeeCode:
-          $ref: '#/components/schemas/PayeeCode'
       required:
         - terminalUuid
-        - pspId
+        - solutionId
         - terminalId
         - enabled
-        - payeeCode
       example:
         terminalUuid: "c7a1b24b0583477292ebdbaa"
-        pspId: "AGID_01"
+        solutionId: "2f6a6bbe78904acef70345ca"
         terminalId: "34523860"
         enabled: true
-        payeeCode: "06534340721"
     
     TerminalWithWorkstations:
       description: Data of a terminal
@@ -1066,29 +1393,25 @@ components:
       properties:
         terminalUuid:
           $ref: '#/components/schemas/TerminalUuid'
-        pspId:
-          $ref: '#/components/schemas/PspId'
+        solutionId:
+          $ref: '#/components/schemas/SolutionId'
         terminalId:
           $ref: '#/components/schemas/TerminalId'
         enabled:
           $ref: '#/components/schemas/Enabled'
-        payeeCode:
-          $ref: '#/components/schemas/PayeeCode'
         workstations:
           $ref: '#/components/schemas/WorkstationsArray'
       required:
         - terminalUuid
-        - pspId
+        - solutionId
         - terminalId
         - enabled
-        - payeeCode
         - workstations
       example:
         terminalUuid: "c7a1b24b0583477292ebdbaa"
-        pspId: "AGID_01"
+        solutionId: "2f6a6bbe78904acef70345ca"
         terminalId: "34523860"
         enabled: true
-        payeeCode: "06534340721"
         workstations:
           - "cassa-1-ufficio-3"
           - "cassa-2-ufficio-3"
@@ -1109,15 +1432,13 @@ components:
       example:
         terminals:
           - terminalUuid: "c7a1b24b0583477292ebdbaa"
-            pspId: "AGID_01"
+            solutionId: "2f6a6bbe78904acef70345ca"
             terminalId: "34523860"
             enabled: true
-            payeeCode: "06534340721"
           - terminalUuid: "635edc54ab35f303668bbe7e"
-            pspId: "AGID_01"
+            solutionId: "2f6a6bbe78904acef70345ca"
             terminalId: "34523865"
             enabled: true
-            payeeCode: "06534340721"
 
     TerminalsWithWorkstations:
       description: List of terminals
@@ -1135,18 +1456,16 @@ components:
       example:
         terminals:
           - terminalUuid: "c7a1b24b0583477292ebdbaa"
-            pspId: "AGID_01"
+            solutionId: "2f6a6bbe78904acef70345ca"
             terminalId: "34523860"
             enabled: true
-            payeeCode: "06534340721"
             workstations:
               - "cassa-1-ufficio-3"
               - "cassa-2-ufficio-3"
           - terminalUuid: "635edc54ab35f303668bbe7e"
-            pspId: "AGID_01"
+            solutionId: "2f6a6bbe78904acef70345ca"
             terminalId: "34523865"
             enabled: true
-            payeeCode: "06534340721"
             workstations:
               - "cassa-3-ufficio-3"
               - "cassa-4-ufficio-3"
@@ -1158,10 +1477,8 @@ components:
       properties:
         id:
           $ref: '#/components/schemas/TransactionId'
-        pspId:
-          $ref: '#/components/schemas/PspId'
-        terminalId:
-          $ref: '#/components/schemas/TerminalId'
+        terminalUuid:
+          $ref: '#/components/schemas/TerminalUuid'
         noticeNumber:
           $ref: '#/components/schemas/NoticeNumber'
         payeeCode:
@@ -1179,8 +1496,7 @@ components:
           $ref: '#/components/schemas/EuroCents'
       required:
         - id
-        - pspId
-        - terminalId
+        - terminalUuid
         - noticeNumber
         - payeeCode
         - creationTimestamp
@@ -1188,8 +1504,7 @@ components:
         - status
       example:
         id: "4658fcb36e520a65b1be79d0"
-        pspId: "AGID_01"
-        terminalId: "34523860"
+        terminalUuid: "c7a1b24b0583477292ebdbaa"
         noticeNumber: "485564829563528563"
         payeeCode: "06534340721"
         creationTimestamp: "2024-03-06T13:15:54Z"
@@ -1206,8 +1521,7 @@ components:
         $ref: '#/components/schemas/Transaction'
       example:
         - id: "4658fcb36e520a65b1be79d0"
-          pspId: "AGID_01"
-          terminalId: "34523860"
+          terminalUuid: "c7a1b24b0583477292ebdbaa"
           noticeNumber: "485564829563528563"
           payeeCode: "06534340721"
           creationTimestamp: "2024-03-06T13:15:54Z"
@@ -1273,13 +1587,20 @@ components:
                 format: binary
                 maxLength: 134217728 # 256MB
 
+    CreateOrUpdateSolution:
+      description: Request to create a new solution or update an existing one
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateOrUpdateSolution'
+    
     CreateOrUpdateTerminal:
       description: Request to create a new terminal or update an existing one
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CreateOrUpdateTerminal'
-
+    
     CreateTransaction:
       description: Request to create a transaction from Public Administration (payee) portal
       content:
@@ -1364,6 +1685,14 @@ components:
       schema:
         $ref: '#/components/schemas/UUID'
 
+    SolutionId:
+      name: solutionId
+      in: path
+      description: Solution ID
+      required: true
+      schema:
+        $ref: '#/components/schemas/SolutionId'
+    
     SortStrategy:
       name: sortStrategy
       in: query
@@ -1480,6 +1809,30 @@ components:
           schema:
             $ref: '#/components/schemas/BulkLoadingLocation'
 
+    CreateSolution:
+      description: Response of create solution operation
+      headers:
+        Access-Control-Allow-Origin:
+          description: Indicates whether the response can be shared with requesting code from the given origin
+          required: false
+          schema:
+            $ref: '#/components/schemas/AccessControlAllowOrigin'
+        RateLimit-Limit:
+          description: The number of allowed requests in the current period
+          required: false
+          schema:
+            $ref: '#/components/schemas/RateLimitLimit'
+        RateLimit-Reset:
+          description: The number of seconds left in the current period
+          required: false
+          schema:
+            $ref: '#/components/schemas/RateLimitReset'
+        Location:
+          description: URL of the solution
+          required: true
+          schema:
+            $ref: '#/components/schemas/SolutionLocation'
+
     CreateTerminal:
       description: Response of create terminal operation
       headers:
@@ -1575,6 +1928,29 @@ components:
           schema:
             $ref: '#/components/schemas/RateLimitReset'
     
+    PageOfSolutions:
+      description: Page of solutions data
+      headers:
+        Access-Control-Allow-Origin:
+          description: Indicates whether the response can be shared with requesting code from the given origin
+          required: false
+          schema:
+            $ref: '#/components/schemas/AccessControlAllowOrigin'
+        RateLimit-Limit:
+          description: The number of allowed requests in the current period
+          required: false
+          schema:
+            $ref: '#/components/schemas/RateLimitLimit'
+        RateLimit-Reset:
+          description: The number of seconds left in the current period
+          required: false
+          schema:
+            $ref: '#/components/schemas/RateLimitReset'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PageOfSolutions'
+    
     PageOfTerminals:
       description: Page of terminals data
       headers:
@@ -1644,6 +2020,29 @@ components:
           schema:
             $ref: '#/components/schemas/PageOfTransactions'
 
+    Solution:
+      description: Retrieved solution
+      headers:
+        Access-Control-Allow-Origin:
+          description: Indicates whether the response can be shared with requesting code from the given origin
+          required: false
+          schema:
+            $ref: '#/components/schemas/AccessControlAllowOrigin'
+        RateLimit-Limit:
+          description: The number of allowed requests in the current period
+          required: false
+          schema:
+            $ref: '#/components/schemas/RateLimitLimit'
+        RateLimit-Reset:
+          description: The number of seconds left in the current period
+          required: false
+          schema:
+            $ref: '#/components/schemas/RateLimitReset'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Solution'
+    
     TerminalsWithWorkstations:
       description: Terminals list
       headers:
