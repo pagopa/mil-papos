@@ -1,30 +1,30 @@
 [
   {
-    "pspId": "AGID_01",
+    "pspId": "TMIL0101",
     "terminalId": "34523860",
     "enabled": true,
     "payeeCode": "06534340721"
   },
   {
-    "pspId": "AGID_02",
+    "pspId": "TMIL0101",
     "terminalId": "84523987",
     "enabled": false,
     "payeeCode": "12345678901"
   },
   {
-    "pspId": "AGID_03",
+    "pspId": "TMIL0101",
     "terminalId": "94523012",
     "enabled": true,
     "payeeCode": "98765432100"
   },
   {
-    "pspId": "AGID_04",
+    "pspId": "TMIL0101",
     "terminalId": "74523123",
     "enabled": false,
     "payeeCode": "11223344556"
   },
   {
-    "pspId": "AGID_05",
+    "pspId": "TMIL0101",
     "terminalId": "64523234",
     "enabled": true,
     "payeeCode": "66778899001"
