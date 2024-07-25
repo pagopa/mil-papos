@@ -180,7 +180,6 @@ paths:
         default:
           description: Unexpected error
           
-    
   /solutions/{solutionId}:
     parameters:
       - $ref: '#/components/parameters/RequestId'
