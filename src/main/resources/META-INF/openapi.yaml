@@ -941,6 +941,14 @@ components:
       maximum: 99999999999
       example: 12345
 
+    LocationCode:
+      description: Fiscal code of the subject that helds the terminal
+      type: string
+      pattern: "^\\d{11}$"
+      minLength: 11
+      maxLength: 11
+      example: "06534340721"
+
     NoticeNumber:
       description: Notice number
       type: string
@@ -1106,14 +1114,14 @@ components:
       properties:
         pspId:
           $ref: '#/components/schemas/PspId'
-        payeeCode:
-          $ref: '#/components/schemas/PayeeCode'
+        locationCode:
+          $ref: '#/components/schemas/LocationCode'
       required:
         - pspId
-        - payeeCode
+        - locationCode
       example:
         pspId: "AGID_01"
-        payeeCode: "06534340721"
+        locationCode: "06534340721"
         
     CreateOrUpdateTerminal:
       description: Request to create or update a terminal by PSP
@@ -1233,7 +1241,7 @@ components:
         solutions:
           - solutionId: "2f6a6bbe78904acef70345ca"
             pspId: "AGID_01"
-            payeeCode: "06534340721"
+            locationCode: "06534340721"
         page:
           size: 1
           totalElements: 1
@@ -1330,7 +1338,7 @@ components:
           totalPages: 5
     
     Solution:
-      description: Represents a solution which is made up of Payee and a PSP and carries the configuration to connect the service used by the Payee
+      description: Represents a solution which is made up of Public administration and a PSP and carries the configuration to connect the service used by the Payee
       type: object
       additionalProperties: false
       properties:
@@ -1338,16 +1346,16 @@ components:
           $ref: '#/components/schemas/SolutionId'
         pspId:
           $ref: '#/components/schemas/PspId'
-        payeeCode:
-          $ref: '#/components/schemas/PayeeCode'
+        locationCode:
+          $ref: '#/components/schemas/LocationCode'
       required:
         - solutionId
         - pspId
-        - payeeCode
+        - locationCode
       example:
         solutionId: "2f6a6bbe78904acef70345ca"
         pspId: "AGID_01"
-        payeeCode: "06534340721"
+        locationCode: "06534340721"
     
     Solutions:
       description: List of solutions
@@ -1359,7 +1367,7 @@ components:
       example:
         - solutionId: "2f6a6bbe78904acef70345ca"
           pspId: "AGID_01"
-          payeeCode: "06534340721"
+          locationCode: "06534340721"
     
     Terminal:
       description: Data of a terminal

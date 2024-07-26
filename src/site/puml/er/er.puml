@@ -4,7 +4,7 @@ skinparam linetype ortho
 entity "Solution" as sol {
 	**solutionId**
 	pspId
-	payeeCode
+	locationCode
 }
 
 entity "Terminal" as pos {
