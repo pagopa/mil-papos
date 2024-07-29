@@ -30,6 +30,7 @@ public final class ErrorCodes {
     public static final String ERROR_NOTICE_NUMBER_MUST_NOT_BE_NULL                              = MODULE_ID + "000016";
     public static final String ERROR_AMOUNT_MUST_NOT_BE_NULL                                     = MODULE_ID + "000017";
     public static final String ERROR_STATUS_MUST_NOT_BE_NULL                                     = MODULE_ID + "000018";
+    public static final String ERROR_SOLUTIONID_MUST_NOT_BE_NULL                                 = MODULE_ID + "000019";
 
     /*
      * Service errors code from 000200 to 000500
@@ -45,6 +46,7 @@ public final class ErrorCodes {
     public static final String ERROR_COUNTING_TRANSACTIONS                                       = MODULE_ID + "000208";
     public static final String ERROR_TRANSACTION_NOT_FOUND                                       = MODULE_ID + "000209";
     public static final String ERROR_CHECK_TOKEN                                                 = MODULE_ID + "000210";
+    public static final String ERROR_SOLUTION_NOT_FOUND                                          = MODULE_ID + "000211";
 
     /*
      * Error descriptions
@@ -67,6 +69,7 @@ public final class ErrorCodes {
     private static final String ERROR_NOTICE_NUMBER_MUST_NOT_BE_NULL_DESCR = "noticeNumber must not be null";
     private static final String ERROR_AMOUNT_MUST_NOT_BE_NULL_DESCR = "amount must not be null";
     private static final String ERROR_STATUS_MUST_NOT_BE_NULL_DESCR = "status must not be null";
+    private static final String ERROR_SOLUTIONID_MUST_NOT_BE_NULL_DESCR = "solutionId must not be null";
 
     private static final String ERROR_GENERIC_FROM_DB_DESCR = "unexpected error from db";
     private static final String ERROR_COUNTING_TERMINALS_DESCR = "error occurred while counting terminal";
@@ -79,6 +82,7 @@ public final class ErrorCodes {
     private static final String ERROR_COUNTING_TRANSACTIONS_DESCR = "error occurred while counting transactions";
     private static final String ERROR_TRANSACTION_NOT_FOUND_DESCR = "transaction not found on db";
     private static final String ERROR_CHECK_TOKEN_DESCR = "check token fails, subject differs from pspId/payeeCode";
+    private static final String ERROR_SOLUTION_NOT_FOUND_DESCR = "solution not found on db";
 
     /*
      * Error complete message
@@ -101,6 +105,7 @@ public final class ErrorCodes {
     public static final String ERROR_NOTICE_NUMBER_MUST_NOT_BE_NULL_MSG = "[" + ERROR_NOTICE_NUMBER_MUST_NOT_BE_NULL + "] " + ERROR_NOTICE_NUMBER_MUST_NOT_BE_NULL_DESCR;
     public static final String ERROR_AMOUNT_MUST_NOT_BE_NULL_MSG = "[" + ERROR_AMOUNT_MUST_NOT_BE_NULL + "] " + ERROR_AMOUNT_MUST_NOT_BE_NULL_DESCR;
     public static final String ERROR_STATUS_MUST_NOT_BE_NULL_MSG = "[" + ERROR_STATUS_MUST_NOT_BE_NULL + "] " + ERROR_STATUS_MUST_NOT_BE_NULL_DESCR;
+    public static final String ERROR_SOLUTIONID_MUST_NOT_BE_NULL_MSG = "[" + ERROR_SOLUTIONID_MUST_NOT_BE_NULL + "] " + ERROR_SOLUTIONID_MUST_NOT_BE_NULL_DESCR;
 
     public static final String ERROR_GENERIC_FROM_DB_MSG = "[" + ERROR_GENERIC_FROM_DB + "] " + ERROR_GENERIC_FROM_DB_DESCR;
     public static final String ERROR_COUNTING_TERMINALS_MSG = "[" + ERROR_COUNTING_TERMINALS + "] " + ERROR_COUNTING_TERMINALS_DESCR;
@@ -113,5 +118,6 @@ public final class ErrorCodes {
     public static final String ERROR_COUNTING_TRANSACTIONS_MSG = "[" + ERROR_COUNTING_TRANSACTIONS + "] " + ERROR_COUNTING_TRANSACTIONS_DESCR;
     public static final String ERROR_TRANSACTION_NOT_FOUND_MSG = "[" + ERROR_TRANSACTION_NOT_FOUND + "] " + ERROR_TRANSACTION_NOT_FOUND_DESCR;
     public static final String ERROR_CHECK_TOKEN_MSG = "[" + ERROR_CHECK_TOKEN + "] " + ERROR_CHECK_TOKEN_DESCR;
+    public static final String ERROR_SOLUTION_NOT_FOUND_MSG = "[" + ERROR_SOLUTION_NOT_FOUND + "] " + ERROR_SOLUTION_NOT_FOUND_DESCR;
 
 }

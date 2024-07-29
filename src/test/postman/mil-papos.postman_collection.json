@@ -8,7 +8,7 @@
 	},
 	"item": [
 		{
-			"name": "1. Terminal",
+			"name": "0. Solution",
 			"item": [
 				{
 					"name": "0. Get Token",
@@ -198,7 +198,115 @@
 					]
 				},
 				{
-					"name": "1. Create Terminal",
+					"name": "1. Create Solution",
+					"item": [
+						{
+							"name": "Create New Solution",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.response.to.have.status(201);",
+											"    pm.environment.set(\"solutionId\", jsonData.id);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"pspId\": \"{{pspId}}\",\n  \"locationCode\": \"{{locationCode}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{MIL_PAPOS_BASE_URL}}/solutions",
+									"host": [
+										"{{MIL_PAPOS_BASE_URL}}"
+									],
+									"path": [
+										"solutions"
+									]
+								},
+								"description": "Creates a new terminal"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "2. Find Solution",
+					"item": [
+						{
+							"name": "Find Solution By Id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_PAPOS_BASE_URL}}/solutions/{{solutionId}}",
+									"host": [
+										"{{MIL_PAPOS_BASE_URL}}"
+									],
+									"path": [
+										"solutions",
+										"{{solutionId}}"
+									]
+								},
+								"description": "Returns a json with the status of bulk loading operation"
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "1. Terminal",
+			"item": [
+				{
+					"name": "0. Create Terminal",
 					"item": [
 						{
 							"name": "Create New Terminal",
@@ -238,7 +346,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"pspId\": \"{{pspId}}\",\n  \"terminalId\": \"{{terminalId}}\",\n  \"enabled\": \"{{enabled}}\",\n  \"payeeCode\": \"{{payeeCode}}\"\n}",
+									"raw": "{\n  \"solutionId\": \"{{solutionId}}\",\n  \"terminalId\": \"{{terminalId}}\",\n  \"enabled\": \"{{enabled}}\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -261,7 +369,7 @@
 					]
 				},
 				{
-					"name": "2. Bulkload",
+					"name": "1. Bulkload",
 					"item": [
 						{
 							"name": "Bulkload",
@@ -394,7 +502,7 @@
 					]
 				},
 				{
-					"name": "3. Find Terminal",
+					"name": "2. Find Terminal",
 					"item": [
 						{
 							"name": "Find By Payee Code",
@@ -603,7 +711,7 @@
 					]
 				},
 				{
-					"name": "4. Update Terminal",
+					"name": "3. Update Terminal",
 					"item": [
 						{
 							"name": "Update Workstations",
@@ -727,7 +835,7 @@
 					]
 				},
 				{
-					"name": "5. Delete Terminal",
+					"name": "4. Delete Terminal",
 					"item": [
 						{
 							"name": "Delete Terminal",
@@ -1295,6 +1403,11 @@
 		{
 			"key": "payeeCode",
 			"value": "06534340721",
+			"type": "string"
+		},
+		{
+			"key": "locationCode",
+			"value": "12704343560",
 			"type": "string"
 		},
 		{

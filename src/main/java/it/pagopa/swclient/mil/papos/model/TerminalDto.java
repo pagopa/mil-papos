@@ -7,9 +7,9 @@ import jakarta.validation.constraints.Pattern;
 
 import java.util.List;
 
-public record TerminalDto(@NotNull(message = ErrorCodes.ERROR_PSPID_MUST_NOT_BE_NULL_MSG)
-                          @Pattern(regexp = RegexPatterns.ASCII_PRINTABLE_1_TO_64_PATTERN)
-                          String pspId,
+public record TerminalDto(@NotNull(message = ErrorCodes.ERROR_SOLUTIONID_MUST_NOT_BE_NULL_MSG)
+                          @Pattern(regexp = RegexPatterns.MONGO_OBJECT_ID_PATTERN)
+                          String solutionId,
 
                           @NotNull(message = ErrorCodes.ERROR_TERMINALID_MUST_NOT_BE_NULL_MSG)
                           @Pattern(regexp = RegexPatterns.FOUR_TO_TWELVE_DIGITS_PATTERN)
@@ -17,10 +17,6 @@ public record TerminalDto(@NotNull(message = ErrorCodes.ERROR_PSPID_MUST_NOT_BE_
 
                           @NotNull(message = ErrorCodes.ERROR_ENABLED_MUST_NOT_BE_NULL_MSG)
                           Boolean enabled,
-
-                          @NotNull(message = ErrorCodes.ERROR_PAYEECODE_MUST_NOT_BE_NULL_MSG)
-                          @Pattern(regexp = RegexPatterns.EXACT_ELEVEN_NUM_PATTERN)
-                          String payeeCode,
 
                           List<String> workstations) {
 }

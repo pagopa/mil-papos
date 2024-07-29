@@ -185,9 +185,7 @@ class TransactionServiceTest {
 
     private List<TransactionEntity> mockedList() {
         TransactionEntity te1 = new TransactionEntity();
-        te1.setTransactionId("transactionId");
         TransactionEntity te2 = new TransactionEntity();
-        te2.setTransactionId("transactionId");
 
         return List.of(te1, te2);
     }

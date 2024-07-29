@@ -8,6 +8,7 @@ public class RegexPatterns {
     public static final String EXACT_ELEVEN_NUM_PATTERN = "^\\d{11}$";
     public static final String SORT_STRATEGY_PATTERN = "asc|desc";
     public static final String TRANSACTION_STATUS_PATTERN = "CLOSED_OK|ERROR_ON_PAYMENT|ABORT|CREATED";
+    public static final String MONGO_OBJECT_ID_PATTERN = "^[a-fA-F0-9]{24}$";
 
     private RegexPatterns() {
     }
