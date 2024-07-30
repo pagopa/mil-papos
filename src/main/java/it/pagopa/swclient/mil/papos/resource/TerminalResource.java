@@ -47,7 +47,7 @@ public class TerminalResource {
     @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({"pos_service_provider"})
     public Uni<Response> createTerminal(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -220,9 +220,10 @@ public class TerminalResource {
             @QueryParam("page") int pageNumber,
             @QueryParam("size") int pageSize) {
 
+        Log.debugf("TerminalResource -> findBy - Input requestId: %s, payeeCode: %s, pageNumber: %s, size: %s", requestId, payeeCode, pageNumber, pageSize);
         checkToken(payeeCode);
 
-        return findByAttribute(requestId, "payeeCode", payeeCode, pageNumber, pageSize);
+        return findByLocationOrPsp("locationCode", payeeCode, pageNumber, pageSize);
     }
 
     @GET
@@ -238,9 +239,10 @@ public class TerminalResource {
             @QueryParam("page") int pageNumber,
             @QueryParam("size") int pageSize) {
 
+        Log.debugf("TerminalResource -> findBy - Input requestId: %s, payeeCode: %s, pageNumber: %s, size: %s", requestId, pspId, pageNumber, pageSize);
         checkToken(pspId);
 
-        return findByAttribute(requestId, "pspId", pspId, pageNumber, pageSize);
+        return findByLocationOrPsp("pspId", pspId, pageNumber, pageSize);
     }
 
     @GET
@@ -402,9 +404,7 @@ public class TerminalResource {
         return terminalService.findTerminal(terminalUuid)
                 .onFailure()
                 .transform(err -> {
-                    Log.errorf(err,
-                            "TerminalResource -> deleteTerminal: error during search terminal with terminalUuid: [%s]",
-                            terminalUuid);
+                    Log.errorf(err, "TerminalResource -> deleteTerminal: error during search terminal with terminalUuid: [%s]", terminalUuid);
 
                     return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -414,9 +414,7 @@ public class TerminalResource {
                 .onItem()
                 .transformToUni(terminalEntity -> {
                     if (terminalEntity == null) {
-                        Log.errorf(
-                                "TerminalResource -> deleteTerminal: error 404 during searching terminal with terminalUuid: [%s, %s]",
-                                terminalUuid);
+                        Log.errorf("TerminalResource -> deleteTerminal: error 404 during searching terminal with terminalUuid: [%s]", terminalUuid);
 
                         return Uni.createFrom().failure(new NotFoundException(Response
                                 .status(Response.Status.NOT_FOUND)
@@ -427,9 +425,7 @@ public class TerminalResource {
                     return terminalService.deleteTerminal(terminalEntity)
                             .onFailure()
                             .transform(err -> {
-                                Log.errorf(err,
-                                        "TerminalResource -> deleteTerminal: error during deleting terminal [%s]",
-                                        terminalEntity);
+                                Log.errorf(err, "TerminalResource -> deleteTerminal: error during deleting terminal [%s]", terminalEntity);
 
                                 return new InternalServerErrorException(Response
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -445,6 +441,69 @@ public class TerminalResource {
                                         .status(Response.Status.NO_CONTENT)
                                         .build();
                             });
+                });
+    }
+
+    private Uni<Response> findByLocationOrPsp(String attributeName, String attributeValue, int pageNumber, int pageSize) {
+        return solutionService.findAllByLocationOrPsp(attributeName, attributeValue)
+                .onFailure()
+                .transform(err -> {
+                    Log.errorf(err, "TerminalResource -> findByLocationOrPsp: error during search solutions with" + attributeName + ": %s", attributeValue);
+
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                            .build());
+                })
+                .onItem()
+                .transformToUni(solutions -> {
+                    if (solutions.isEmpty()) {
+                        Log.errorf("TerminalResource -> findByLocationOrPsp: error 404 during searching solutions with locationCode" + attributeName + ": [%s]", attributeValue);
+
+                        return Uni.createFrom().failure(new NotFoundException(Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity(new Errors(ErrorCodes.ERROR_SOLUTION_NOT_FOUND, ErrorCodes.ERROR_SOLUTION_NOT_FOUND_MSG))
+                                .build()));
+                    }
+
+                    List<String> solutionIds = solutions.stream()
+                            .map(solution -> solution.id.toString())
+                            .toList();
+
+                    return terminalService.countBySolutionIds(solutionIds)
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err, "TerminalResource -> findByLocationOrPsp: error during search solutions with locationCode" + attributeName + ": [%s]", attributeValue);
+
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transformToUni(numberOfTerminals ->
+                                    terminalService.findBySolutionIds(solutionIds, pageNumber, pageSize)
+                                            .onFailure()
+                                            .transform(err -> {
+                                                Log.errorf(err, "TerminalResource -> findByLocationOrPsp: error during finding terminal with solutionIds [%s]", solutionIds);
+
+                                                return new InternalServerErrorException(Response
+                                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                                        .build());
+                                            })
+                                            .onItem()
+                                            .transform(terminalsPaged -> {
+                                                Log.debugf("TerminalResource -> findByLocationOrPsp: size of list of terminals paginated found: [%s]", terminalsPaged.size());
+
+                                                int totalPages = (int) Math.ceil((double) numberOfTerminals / pageSize);
+                                                PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfTerminals, totalPages);
+
+                                                return Response
+                                                        .status(Response.Status.OK)
+                                                        .entity(new TerminalPageResponse(terminalsPaged, pageMetadata))
+                                                        .build();
+                                            }));
                 });
     }
 

@@ -8,6 +8,8 @@ import it.pagopa.swclient.mil.papos.model.SolutionDto;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.bson.types.ObjectId;
 
+import java.util.List;
+
 @ApplicationScoped
 public class SolutionService {
 
@@ -47,5 +49,18 @@ public class SolutionService {
         Log.debugf("SolutionService -> findById - Input parameters: %s", solutionId);
 
         return solutionRepository.findById(new ObjectId(solutionId));
+    }
+
+    /**
+     * Find all solution equals to attributeValue given in input.
+     *
+     * @param attributeName  string representing the name of attribute to be filtered
+     * @param attributeValue value of attribute
+     * @return list of Solution found
+     */
+    public Uni<List<SolutionEntity>> findAllByLocationOrPsp(String attributeName, String attributeValue) {
+        Log.debugf("SolutionService -> findAllByLocationOrPsp - Input parameters: [%s, %s]", attributeName, attributeValue);
+
+        return solutionRepository.list(String.format("%s = ?1", attributeName), attributeValue);
     }
 }

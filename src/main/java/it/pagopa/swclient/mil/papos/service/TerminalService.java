@@ -219,6 +219,28 @@ public class TerminalService {
                 .transform(terminalDeleted -> terminalDeleted);
     }
 
+    /**
+     * Returns a number corresponding to the total number of terminal found.
+     *
+     * @param solutionIds list of Solution
+     * @return a number
+     */
+    public Uni<Long> countBySolutionIds(List<String> solutionIds) {
+        return terminalRepository.count("solutionId in (?1)", solutionIds);
+    }
+
+    /**
+     * Find all terminal equals to solutionIds given in input.
+     *
+     * @param solutionIds list of Solution
+     * @return Solutions found
+     */
+    public Uni<List<TerminalEntity>> findBySolutionIds(List<String> solutionIds, int pageIndex, int pageSize) {
+        return terminalRepository.find("solutionId in ?1", solutionIds)
+                .page(pageIndex, pageSize)
+                .list();
+    }
+
     private TerminalEntity createTerminalEntity(TerminalDto terminalDto, String terminalUuid) {
         Log.debugf("TerminalService -> createTerminalEntity: storing terminal [%s] on DB", terminalDto);
 
