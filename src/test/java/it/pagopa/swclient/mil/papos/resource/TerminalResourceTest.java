@@ -11,9 +11,11 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.papos.dao.BulkLoadStatusEntity;
+import it.pagopa.swclient.mil.papos.dao.SolutionEntity;
 import it.pagopa.swclient.mil.papos.dao.TerminalEntity;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
 import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
+import it.pagopa.swclient.mil.papos.service.SolutionService;
 import it.pagopa.swclient.mil.papos.service.TerminalService;
 import it.pagopa.swclient.mil.papos.util.TestData;
 import jakarta.ws.rs.WebApplicationException;
@@ -42,6 +44,9 @@ class TerminalResourceTest {
     @InjectMock
     static TerminalService terminalService;
 
+    @InjectMock
+    static SolutionService solutionService;
+
     static ObjectMapper objectMapper;
 
     static TerminalDto terminalDto;
@@ -52,21 +57,27 @@ class TerminalResourceTest {
 
     static BulkLoadStatusEntity bulkLoadStatusEntity;
 
+    static SolutionEntity solutionEntity;
+
     @BeforeAll
     static void createTestObjects() {
         terminalDto = TestData.getCorrectTerminalDto();
         workstationsDto = TestData.getCorrectWorkstationDto();
         terminalEntity = TestData.getCorrectTerminalEntity();
         bulkLoadStatusEntity = TestData.getCorrectBulkLoadStatusEntity();
+        solutionEntity = TestData.getCorrectSolutionEntity();
         objectMapper = new ObjectMapper();
     }
 
     @Test
     @TestSecurity(user = "testUser", roles = {"pos_service_provider"})
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "AGID_01")
+            @Claim(key = "sub", value = "TMIL0101")
     })
     void testCreateTerminalEndpoint_201() {
+        Mockito.when(solutionService.findById(any(String.class)))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
+
         Mockito.when(terminalService.createTerminal(any(TerminalDto.class)))
                 .thenReturn(Uni.createFrom().item(terminalEntity));
 
@@ -86,9 +97,12 @@ class TerminalResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = {"pos_service_provider"})
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "AGID_01")
+            @Claim(key = "sub", value = "TMIL0101")
     })
     void testCreateTerminalError_500() {
+        Mockito.when(solutionService.findById(any(String.class)))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
+
         Mockito.when(terminalService.createTerminal(any(TerminalDto.class)))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
 
@@ -111,6 +125,9 @@ class TerminalResourceTest {
             @Claim(key = "sub", value = "AsdID_01")
     })
     void testCreateTerminalEndpoint_401() {
+        Mockito.when(solutionService.findById(any(String.class)))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
+
         Mockito.when(terminalService.createTerminal(any(TerminalDto.class)))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
 
@@ -125,6 +142,30 @@ class TerminalResourceTest {
                 .extract().response();
 
         Assertions.assertEquals(401, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"pos_service_provider"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "TMIL0101")
+    })
+    void testCreateTerminalEndpoint_404() {
+        solutionEntity = null;
+        Mockito.when(solutionService.findById(any(String.class)))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(terminalDto)
+                .when()
+                .post("/")
+                .then()
+                .extract().response();
+
+        solutionEntity = TestData.getCorrectSolutionEntity();
+        Assertions.assertEquals(404, response.statusCode());
     }
 
     @Test

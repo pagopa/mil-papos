@@ -8,6 +8,7 @@ import it.pagopa.swclient.mil.papos.model.PageMetadata;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
 import it.pagopa.swclient.mil.papos.model.TerminalPageResponse;
 import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
+import it.pagopa.swclient.mil.papos.service.SolutionService;
 import it.pagopa.swclient.mil.papos.service.TerminalService;
 import it.pagopa.swclient.mil.papos.util.ErrorCodes;
 import it.pagopa.swclient.mil.papos.util.Errors;
@@ -29,13 +30,15 @@ import java.util.List;
 @Path("/terminals")
 public class TerminalResource {
     private final TerminalService terminalService;
+    private final SolutionService solutionService;
 
     private final JsonWebToken jwt;
 
     private final ObjectMapper objectMapper;
 
-    public TerminalResource(TerminalService terminalService, JsonWebToken jwt, ObjectMapper objectMapper) {
+    public TerminalResource(TerminalService terminalService, SolutionService solutionService, JsonWebToken jwt, ObjectMapper objectMapper) {
         this.terminalService = terminalService;
+        this.solutionService = solutionService;
         this.jwt = jwt;
         this.objectMapper = objectMapper;
     }
@@ -53,27 +56,36 @@ public class TerminalResource {
 
         Log.debugf("TerminalResource -> createTerminal - Input requestId, createTerminal: %s, %s", requestId, terminal);
 
-        checkToken(terminal.pspId());
-
-        return terminalService.createTerminal(terminal)
-                .onFailure()
-                .transform(err -> {
-                    Log.errorf(err,
-                            "TerminalResource -> createTerminal: unexpected error during persist for terminal [%s]",
-                            terminal);
-
-                    return new InternalServerErrorException(Response
-                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB,
-                                    ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
-                            .build());
-                })
+        return solutionService.findById(terminal.solutionId())
                 .onItem()
-                .transform(terminalSaved -> {
-                    Log.debugf("TerminalResource -> createTerminal: terminal saved correctly on DB [%s]",
-                            terminalSaved);
+                .transformToUni(solution -> {
+                    if (solution == null) {
+                        Log.errorf("TerminalResource -> createTerminal: error 404 during searching solution with solutionId: %s", terminal.solutionId());
 
-                    return Response.status(Response.Status.CREATED).build();
+                        return Uni.createFrom().failure(new NotFoundException(Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity(new Errors(ErrorCodes.ERROR_SOLUTION_NOT_FOUND, ErrorCodes.ERROR_SOLUTION_NOT_FOUND_MSG))
+                                .build()));
+                    }
+
+                    checkToken(solution.getPspId());
+
+                    return terminalService.createTerminal(terminal)
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err, "TerminalResource -> createTerminal: unexpected error during persist for terminal [%s]", terminal);
+
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transform(terminalSaved -> {
+                                Log.debugf("TerminalResource -> createTerminal: terminal saved correctly on DB [%s]", terminalSaved);
+
+                                return Response.status(Response.Status.CREATED).build();
+                            });
                 });
     }
 
@@ -81,7 +93,7 @@ public class TerminalResource {
     @Path("/bulkload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({"pos_service_provider"})
     public Uni<Response> bulkLoadTerminals(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -115,9 +127,9 @@ public class TerminalResource {
 
                     try {
                         List<TerminalDto> terminalRequests = objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(List.class, TerminalDto.class));
-                        for (TerminalDto terminal : terminalRequests) {
-                            checkToken(terminal.pspId());
-                        }
+//                        TODO: CHECK THIS for (TerminalDto terminal : terminalRequests) {
+//                            checkToken(terminal.pspId());
+//                        }
 
                         return terminalService.processBulkLoad(terminalRequests)
                                 .onFailure()
@@ -154,7 +166,7 @@ public class TerminalResource {
     @Path("/bulkload/{bulkLoadingId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({"pos_service_provider"})
     public Uni<Response> getBulkLoadingStatusFile(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -199,7 +211,7 @@ public class TerminalResource {
     @Path("/findByPayeeCode")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "public_administration" })
+    @RolesAllowed({"public_administration"})
     public Uni<Response> findByPayeeCode(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -217,7 +229,7 @@ public class TerminalResource {
     @Path("/findByPspId")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({"pos_service_provider"})
     public Uni<Response> findByPspId(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -235,7 +247,7 @@ public class TerminalResource {
     @Path("/findByWorkstation")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "public_administration" })
+    @RolesAllowed({"public_administration"})
     public Uni<Response> findByWorkstation(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -251,7 +263,7 @@ public class TerminalResource {
     @Path("/{terminalUuid}/updateWorkstations")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "public_administration" })
+    @RolesAllowed({"public_administration"})
     public Uni<Response> updateWorkstations(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -313,7 +325,7 @@ public class TerminalResource {
     @Path("/{terminalUuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({"pos_service_provider"})
     public Uni<Response> updateTerminal(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -323,7 +335,7 @@ public class TerminalResource {
 
         Log.debugf("TerminalResource -> updateTerminal - Input requestId, updateTerminal: %s, %s", requestId, terminal);
 
-        checkToken(terminal.pspId());
+//        TODO: CHECHK THIS checkToken(terminal.pspId());
 
         return terminalService.findTerminal(terminalUuid)
                 .onFailure()
@@ -377,7 +389,7 @@ public class TerminalResource {
     @Path("/{terminalUuid}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({"pos_service_provider"})
     public Uni<Response> deleteTerminal(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)

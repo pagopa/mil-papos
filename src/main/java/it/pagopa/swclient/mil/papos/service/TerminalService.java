@@ -95,7 +95,6 @@ public class TerminalService {
 
     }
 
-
     /**
      * Find first bulkLoad status equals to terminalUuid given in input.
      *
@@ -194,7 +193,7 @@ public class TerminalService {
         Log.debugf("TerminalService -> updateTerminal - Input parameters: %s, %s, %s", terminalUuid, terminalDto, oldTerminal);
 
         TerminalEntity entity = createTerminalEntity(terminalDto, terminalUuid);
-        entity.id = oldTerminal.id;
+        entity.setTerminalUuid(oldTerminal.getTerminalUuid());
         entity.setWorkstations(oldTerminal.getWorkstations());
 
         return terminalRepository.update(entity)
@@ -225,10 +224,9 @@ public class TerminalService {
 
         TerminalEntity terminalEntity = new TerminalEntity();
         terminalEntity.setTerminalUuid(terminalUuid);
-        terminalEntity.setPspId(terminalDto.pspId());
         terminalEntity.setTerminalId(terminalDto.terminalId());
         terminalEntity.setEnabled(terminalDto.enabled());
-        terminalEntity.setPayeeCode(terminalDto.payeeCode());
+        terminalEntity.setSolutionId(terminalDto.solutionId());
         terminalEntity.setWorkstations(terminalDto.workstations());
 
         return terminalEntity;

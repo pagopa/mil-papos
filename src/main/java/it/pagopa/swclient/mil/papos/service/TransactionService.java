@@ -31,7 +31,7 @@ public class TransactionService {
         Log.debugf("TransactionService -> createTransaction - Input parameters: %s", transactionDto);
 
         String transactionUuid = Utility.generateRandomUuid();
-        TransactionEntity entity = createTransactionEntity(transactionDto, transactionUuid);
+        TransactionEntity entity = createTransactionEntity(transactionDto);
 
         return transactionRepository.persist(entity)
                 .onFailure()
@@ -76,7 +76,7 @@ public class TransactionService {
     /**
      * Find first transaction equals to transactionId given in input.
      *
-     * @param transactionId uuid of transaction
+     * @param transactionId id of transaction
      * @return transaction found
      */
     public Uni<TransactionEntity> findTransaction(String transactionId) {
@@ -139,11 +139,8 @@ public class TransactionService {
                 .firstResult();
     }
 
-    private TransactionEntity createTransactionEntity(TransactionDto transactionDto, String uuid) {
+    private TransactionEntity createTransactionEntity(TransactionDto transactionDto) {
         TransactionEntity transactionEntity = new TransactionEntity();
-        transactionEntity.setTransactionId(uuid);
-        transactionEntity.setPspId(transactionDto.pspId());
-        transactionEntity.setTerminalId(transactionDto.terminalId());
         transactionEntity.setNoticeNumber(transactionDto.noticeNumber());
         transactionEntity.setPayeeCode(transactionDto.payeeCode());
         transactionEntity.setCreationTimestamp(new Date());

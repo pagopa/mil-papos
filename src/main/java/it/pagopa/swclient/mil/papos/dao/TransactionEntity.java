@@ -12,9 +12,7 @@ import java.util.Date;
 @MongoEntity(database = "mil", collection = "transactions")
 public class TransactionEntity extends PanacheMongoEntity {
 
-    private String transactionId;
-    private String pspId;
-    private String terminalId;
+    private String terminalUuid;
     private String noticeNumber;
     private String payeeCode;
     private Date creationTimestamp;

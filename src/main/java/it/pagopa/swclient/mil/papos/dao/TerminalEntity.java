@@ -12,10 +12,9 @@ import java.util.List;
 @MongoEntity(database = "mil", collection = "terminals")
 public class TerminalEntity extends PanacheMongoEntity {
 
-    private String pspId;
+    private String terminalUuid;
+    private String solutionId;
     private String terminalId;
     private Boolean enabled;
-    private String payeeCode;
-    private String terminalUuid;
     private List<String> workstations;
 }
