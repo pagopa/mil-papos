@@ -21,6 +21,8 @@ import org.mockito.Mockito;
 import static io.restassured.RestAssured.given;
 import static org.mockito.ArgumentMatchers.any;
 
+import java.util.ArrayList;
+
 @QuarkusTest
 @TestHTTPEndpoint(SolutionResource.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -135,4 +137,29 @@ class SolutionResourceTest {
         solutionEntity = TestData.getCorrectSolutionEntity();
         Assertions.assertEquals(404, response.statusCode());
     }
+
+
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"mil_papos_admin"})
+    void testFindAll_200() {
+        Mockito.when(solutionService.getSolutionsCount())
+                .thenReturn(Uni.createFrom().item(10L));
+
+        Mockito.when(solutionService.findSolutions("requestid", 0, 10))
+                .thenReturn(Uni.createFrom().item(new ArrayList<>()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(200, response.statusCode());
+    }
+
 }

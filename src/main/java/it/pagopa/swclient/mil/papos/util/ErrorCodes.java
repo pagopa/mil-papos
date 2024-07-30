@@ -31,6 +31,7 @@ public final class ErrorCodes {
     public static final String ERROR_AMOUNT_MUST_NOT_BE_NULL                                     = MODULE_ID + "000017";
     public static final String ERROR_STATUS_MUST_NOT_BE_NULL                                     = MODULE_ID + "000018";
     public static final String ERROR_SOLUTIONID_MUST_NOT_BE_NULL                                 = MODULE_ID + "000019";
+    
 
     /*
      * Service errors code from 000200 to 000500
@@ -47,6 +48,9 @@ public final class ErrorCodes {
     public static final String ERROR_TRANSACTION_NOT_FOUND                                       = MODULE_ID + "000209";
     public static final String ERROR_CHECK_TOKEN                                                 = MODULE_ID + "000210";
     public static final String ERROR_SOLUTION_NOT_FOUND                                          = MODULE_ID + "000211";
+    public static final String ERROR_LIST_SOLUTIONS                                              = MODULE_ID + "000212";
+    public static final String ERROR_COUNTING_SOLUTIONS                                             = MODULE_ID + "000213";
+
 
     /*
      * Error descriptions
@@ -72,7 +76,7 @@ public final class ErrorCodes {
     private static final String ERROR_SOLUTIONID_MUST_NOT_BE_NULL_DESCR = "solutionId must not be null";
 
     private static final String ERROR_GENERIC_FROM_DB_DESCR = "unexpected error from db";
-    private static final String ERROR_COUNTING_TERMINALS_DESCR = "error occurred while counting terminal";
+    private static final String ERROR_COUNTING_TERMINALS_DESCR = "error occurred while counting terminals";
     private static final String ERROR_LIST_TERMINALS_DESCR = "error occurred while retrieving list of paginated terminals";
     private static final String ERROR_TERMINAL_NOT_FOUND_DESCR = "terminal not found on db";
     private static final String ERROR_BULKLOADSTATUS_NOT_FOUND_DESCR = "bulkLoadStatus not found on db";
@@ -83,6 +87,10 @@ public final class ErrorCodes {
     private static final String ERROR_TRANSACTION_NOT_FOUND_DESCR = "transaction not found on db";
     private static final String ERROR_CHECK_TOKEN_DESCR = "check token fails, subject differs from pspId/payeeCode";
     private static final String ERROR_SOLUTION_NOT_FOUND_DESCR = "solution not found on db";
+    private static final String ERROR_LIST_SOLUTIONS_DESCR = "error occurred while retrieving list of paginated solutions";
+    private static final String ERROR_COUNTING_SOLUTIONS_DESCR = "error occurred while counting solutions";
+
+
 
     /*
      * Error complete message
@@ -119,5 +127,8 @@ public final class ErrorCodes {
     public static final String ERROR_TRANSACTION_NOT_FOUND_MSG = "[" + ERROR_TRANSACTION_NOT_FOUND + "] " + ERROR_TRANSACTION_NOT_FOUND_DESCR;
     public static final String ERROR_CHECK_TOKEN_MSG = "[" + ERROR_CHECK_TOKEN + "] " + ERROR_CHECK_TOKEN_DESCR;
     public static final String ERROR_SOLUTION_NOT_FOUND_MSG = "[" + ERROR_SOLUTION_NOT_FOUND + "] " + ERROR_SOLUTION_NOT_FOUND_DESCR;
+    public static final String ERROR_LIST_SOLUTIONS_MSG = "[" + ERROR_LIST_SOLUTIONS + "] " + ERROR_LIST_SOLUTIONS_DESCR;
+    public static final String ERROR_COUNTING_SOLUTIONS_MSG = "[" + ERROR_COUNTING_SOLUTIONS + "] " + ERROR_COUNTING_SOLUTIONS_DESCR;
+
 
 }

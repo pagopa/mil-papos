@@ -8,6 +8,8 @@ import it.pagopa.swclient.mil.papos.model.SolutionDto;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.bson.types.ObjectId;
 
+import java.util.List;
+
 @ApplicationScoped
 public class SolutionService {
 
@@ -36,6 +38,17 @@ public class SolutionService {
                 .onItem()
                 .transform(terminalSaved -> terminalSaved);
     }
+    
+     /**
+     * Find all the solutions.
+     *
+     * @param requestId
+     * @return Solutions found
+     */
+    public Uni<List<SolutionEntity>> findSolutions(String requestId, int pageNumber, int pageSize) {
+        Log.debugf("SolutionService -> findSolutions - Input requestId: %s, pageNumber: %s, size: %s", requestId, pageNumber, pageSize);
+        return solutionRepository.findAll().page(pageNumber,pageSize).list();
+    }
 
     /**
      * Find first solution equals to solutionId given in input.
@@ -47,5 +60,17 @@ public class SolutionService {
         Log.debugf("SolutionService -> findById - Input parameters: %s", solutionId);
 
         return solutionRepository.findById(new ObjectId(solutionId));
+    }
+
+
+    /**
+     * Returns a number corresponding to the total number of solutions found.
+     *
+     * @return a number
+     */
+    public Uni<Long> getSolutionsCount() {
+        Log.debugf("SolutionService -> getSolutionsCount");
+        
+        return solutionRepository.count();
     }
 }
