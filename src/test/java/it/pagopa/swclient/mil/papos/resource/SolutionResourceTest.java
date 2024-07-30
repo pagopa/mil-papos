@@ -76,4 +76,63 @@ class SolutionResourceTest {
 
         Assertions.assertEquals(500, response.statusCode());
     }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"mil_papos_admin"})
+    void testFindByIdSolutionEndpoint_201() {
+        Mockito.when(solutionService.findById(any(String.class)))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(solutionDto)
+                .when()
+                .get("/66a79a4624356b00da07cfbf")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(200, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"mil_papos_admin"})
+    void testFindByIdSolutionEndpoint_500() {
+        Mockito.when(solutionService.findById(any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(solutionDto)
+                .when()
+                .get("/66a79a4624356b00da07cfbf")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"mil_papos_admin"})
+    void testFindByIdSolutionEndpoint_404() {
+        solutionEntity = null;
+        Mockito.when(solutionService.findById(any(String.class)))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(solutionDto)
+                .when()
+                .get("/66a79a4624356b00da07cfbf")
+                .then()
+                .extract().response();
+
+        solutionEntity = TestData.getCorrectSolutionEntity();
+        Assertions.assertEquals(404, response.statusCode());
+    }
 }
