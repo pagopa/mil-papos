@@ -1,11 +1,13 @@
 package it.pagopa.swclient.mil.papos.service;
 
+import io.quarkus.mongodb.panache.reactive.ReactivePanacheQuery;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
 import it.pagopa.swclient.mil.papos.dao.SolutionEntity;
 import it.pagopa.swclient.mil.papos.dao.SolutionRepository;
+import it.pagopa.swclient.mil.papos.dao.TransactionEntity;
 import it.pagopa.swclient.mil.papos.model.SolutionDto;
 import it.pagopa.swclient.mil.papos.util.TestData;
 import jakarta.ws.rs.InternalServerErrorException;
@@ -16,7 +18,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 
+import static io.restassured.RestAssured.when;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+
+import java.util.List;
 
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -73,5 +80,42 @@ class SolutionServiceTest {
                 .subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
                 .assertItem(solutionEntity);
+    }
+
+
+    @Test
+    void testGetSolutionsCount_Success() {
+        Long countNumber = 10L;
+        Mockito.when(solutionRepository.count())
+                .thenReturn(Uni.createFrom().item(countNumber));
+
+        Uni<Long> result = solutionService.getSolutionsCount();
+
+        result.subscribe()
+                .with(count -> Assertions.assertEquals(countNumber, count));
+    }
+
+    @Test
+    void testFindSolutions_Success() {
+
+        SolutionEntity te1 = new SolutionEntity();
+        te1.setPspId("uuid1");
+        SolutionEntity te2 = new SolutionEntity();
+        te2.setPspId("uuid2");
+        List<SolutionEntity> mockedSolutionsList = List.of(te1, te2);
+
+        ReactivePanacheQuery<SolutionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
+        Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
+        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedSolutionsList));
+
+        Mockito.when(solutionRepository.findAll())
+                .thenReturn(query);
+
+        Uni<List<SolutionEntity>> solutionsEntityUni = solutionService.findSolutions("requestid", 1, 10);
+
+        solutionsEntityUni
+                .subscribe()
+                .with(list -> Assertions.assertEquals(mockedSolutionsList, list));
+
     }
 }

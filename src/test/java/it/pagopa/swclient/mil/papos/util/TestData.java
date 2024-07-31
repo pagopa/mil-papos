@@ -78,7 +78,7 @@ public final class TestData {
 
         return List.of(te1, te2);
     }
-
+    
     public static List<TerminalDto> mockedListTerminalDto() {
         TerminalDto td1 = new TerminalDto("66a79a4624356b00da07cfbf", "34523860", true, null);
         TerminalDto td2 = new TerminalDto("66a79a4624356b00da07cfbf", "34523861", false, null);

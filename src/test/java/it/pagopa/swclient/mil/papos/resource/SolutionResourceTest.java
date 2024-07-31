@@ -20,6 +20,8 @@ import org.mockito.Mockito;
 
 import static io.restassured.RestAssured.given;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 
 import java.util.ArrayList;
 
@@ -161,5 +163,27 @@ class SolutionResourceTest {
 
         Assertions.assertEquals(200, response.statusCode());
     }
+
+
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"mil_papos_admin"})
+    void testFindSolutionsEndpoint_500() {
+        Mockito.when(solutionService.findSolutions(anyString(), anyInt(),anyInt()))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(solutionDto)
+                .when()
+                .get("/")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
 
 }
