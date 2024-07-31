@@ -63,4 +63,20 @@ public class SolutionService {
 
         return solutionRepository.list(String.format("%s = ?1", attributeName), attributeValue);
     }
+
+    /**
+     * Find all solution equals to pspId and solutionId given in input.
+     *
+     * @param pspId ID of the POS service provider
+     * @param solutionIds id of the solution
+     * @return list of Solution found
+     */
+    public Uni<List<SolutionEntity>> findAllByPspAndSolutionId(String pspId, List<String> solutionIds) {
+        Log.debugf("SolutionService -> findAllByPspAndSolutionId - Input parameters: [%s, %s]", pspId, solutionIds);
+        List<ObjectId> solutionObjectIds = solutionIds.stream()
+                .map(ObjectId::new)
+                .toList();
+
+        return solutionRepository.list("pspId = ?1 and _id in ?2", pspId, solutionObjectIds);
+    }
 }

@@ -88,4 +88,18 @@ class SolutionServiceTest {
         result.subscribe()
                 .with(list -> Assertions.assertEquals(mockedListSolution(), list));
     }
+
+    @Test
+    void testFindAllByPspAndSolutionId_Success() {
+        List<String> solutionIds = List.of("66a79a4624356b00da07cfbf", "66a79a4624346b20da01cfbf");
+        List<ObjectId> solutionObjectIds = solutionIds.stream().map(ObjectId::new).toList();
+
+        Mockito.when(solutionRepository.list("pspId = ?1 and _id in ?2", "TMIL0101", solutionObjectIds))
+                .thenReturn(Uni.createFrom().item(mockedListSolution()));
+
+        Uni<List<SolutionEntity>> result = solutionService.findAllByPspAndSolutionId("TMIL0101", solutionIds);
+
+        result.subscribe()
+                .with(list -> Assertions.assertEquals(mockedListSolution(), list));
+    }
 }

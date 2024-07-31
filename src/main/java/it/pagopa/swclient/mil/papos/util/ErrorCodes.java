@@ -47,6 +47,7 @@ public final class ErrorCodes {
     public static final String ERROR_TRANSACTION_NOT_FOUND                                       = MODULE_ID + "000209";
     public static final String ERROR_CHECK_TOKEN                                                 = MODULE_ID + "000210";
     public static final String ERROR_SOLUTION_NOT_FOUND                                          = MODULE_ID + "000211";
+    public static final String ERROR_NO_SOLUTIONS_FOUND                                          = MODULE_ID + "000212";
 
     /*
      * Error descriptions
@@ -83,6 +84,7 @@ public final class ErrorCodes {
     private static final String ERROR_TRANSACTION_NOT_FOUND_DESCR = "transaction not found on db";
     private static final String ERROR_CHECK_TOKEN_DESCR = "check token fails, subject differs from pspId/payeeCode";
     private static final String ERROR_SOLUTION_NOT_FOUND_DESCR = "solution not found on db";
+    private static final String ERROR_NO_SOLUTIONS_FOUND_DESCR = "no solutions found with given pspId and solutionIds";
 
     /*
      * Error complete message
@@ -119,5 +121,6 @@ public final class ErrorCodes {
     public static final String ERROR_TRANSACTION_NOT_FOUND_MSG = "[" + ERROR_TRANSACTION_NOT_FOUND + "] " + ERROR_TRANSACTION_NOT_FOUND_DESCR;
     public static final String ERROR_CHECK_TOKEN_MSG = "[" + ERROR_CHECK_TOKEN + "] " + ERROR_CHECK_TOKEN_DESCR;
     public static final String ERROR_SOLUTION_NOT_FOUND_MSG = "[" + ERROR_SOLUTION_NOT_FOUND + "] " + ERROR_SOLUTION_NOT_FOUND_DESCR;
+    public static final String ERROR_NO_SOLUTIONS_FOUND_MSG = "[" + ERROR_NO_SOLUTIONS_FOUND + "] " + ERROR_NO_SOLUTIONS_FOUND_DESCR;
 
 }

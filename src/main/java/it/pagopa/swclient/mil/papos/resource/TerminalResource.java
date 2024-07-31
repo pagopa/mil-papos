@@ -26,6 +26,8 @@ import org.jboss.resteasy.reactive.RestForm;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Path("/terminals")
 public class TerminalResource {
@@ -127,11 +129,11 @@ public class TerminalResource {
 
                     try {
                         List<TerminalDto> terminalRequests = objectMapper.readValue(file, objectMapper.getTypeFactory().constructCollectionType(List.class, TerminalDto.class));
-//                        TODO: CHECK THIS for (TerminalDto terminal : terminalRequests) {
-//                            checkToken(terminal.pspId());
-//                        }
+                        List<String> solutionIds = terminalRequests.stream()
+                                .map(TerminalDto::solutionId)
+                                .toList();
 
-                        return terminalService.processBulkLoad(terminalRequests)
+                        return solutionService.findAllByPspAndSolutionId(jwt.getSubject(), solutionIds)
                                 .onFailure()
                                 .transform(err -> {
                                     Log.errorf(err, "TerminalResource -> bulkLoadTerminals: error during bulkLoad process with file: length [%d] bytes", file.length);
@@ -142,16 +144,47 @@ public class TerminalResource {
                                             .build());
                                 })
                                 .onItem()
-                                .transform(bulkLoadStatus -> {
-                                    Log.debugf("TerminalResource -> bulkLoadTerminals: bulkLoad terminals completed [%s]", bulkLoadStatus);
+                                .transformToUni(solutionEntities -> {
+                                    if (solutionEntities.isEmpty()) {
+                                        Log.errorf("TerminalResource -> bulkLoadTerminals: no solutions found for pspId %s and solutionIds %s", jwt.getSubject(), solutionIds);
 
-                                    return Response
-                                            .status(Response.Status.ACCEPTED)
-                                            .entity(bulkLoadStatus)
-                                            .build();
+                                        return Uni.createFrom().item(() ->
+                                                Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                        .entity(new Errors(ErrorCodes.ERROR_NO_SOLUTIONS_FOUND, ErrorCodes.ERROR_NO_SOLUTIONS_FOUND_MSG))
+                                                        .build()
+                                        );
+                                    }
+
+                                    Set<String> uniqueSolutions = solutionEntities.stream()
+                                            .map(solution -> solution.id.toString())
+                                            .collect(Collectors.toSet());
+
+                                    List<TerminalDto> filteredTerminals = terminalRequests.stream()
+                                            .filter(terminal -> uniqueSolutions.contains(terminal.solutionId()))
+                                            .toList();
+
+                                    return terminalService.processBulkLoad(filteredTerminals, terminalRequests.size())
+                                            .onFailure()
+                                            .transform(err -> {
+                                                Log.errorf(err, "TerminalResource -> bulkLoadTerminals: error during bulkLoad process with file: length [%d] bytes", file.length);
+
+                                                return new InternalServerErrorException(Response
+                                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                                        .build());
+                                            })
+                                            .onItem()
+                                            .transform(bulkLoadStatus -> {
+                                                Log.debugf("TerminalResource -> bulkLoadTerminals: bulkLoad terminals completed [%s]", bulkLoadStatus);
+
+                                                return Response
+                                                        .status(Response.Status.ACCEPTED)
+                                                        .entity(bulkLoadStatus)
+                                                        .build();
+                                            });
                                 });
                     } catch (IOException e) {
-                        Log.error("TerminalService -> processBulkLoad: Error processing file", e);
+                        Log.error("TerminalService -> bulkLoadTerminals: Error processing file", e);
 
                         return Uni.createFrom().failure(new InternalServerErrorException(Response
                                 .status(Response.Status.INTERNAL_SERVER_ERROR)
