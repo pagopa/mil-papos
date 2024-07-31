@@ -4,6 +4,8 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
+import io.quarkus.test.security.jwt.Claim;
+import io.quarkus.test.security.jwt.JwtSecurity;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.smallrye.mutiny.Uni;
@@ -44,7 +46,7 @@ class SolutionResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = {"mil_papos_admin"})
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
     void testCreateSolutionEndpoint_201() {
         Mockito.when(solutionService.createSolution(any(SolutionDto.class)))
                 .thenReturn(Uni.createFrom().item(solutionEntity));
@@ -63,7 +65,7 @@ class SolutionResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = {"mil_papos_admin"})
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
     void testCreateSolutionError_500() {
         Mockito.when(solutionService.createSolution(solutionDto))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
@@ -82,7 +84,7 @@ class SolutionResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = {"mil_papos_admin"})
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
     void testFindByIdSolutionEndpoint_201() {
         Mockito.when(solutionService.findById(any(String.class)))
                 .thenReturn(Uni.createFrom().item(solutionEntity));
@@ -101,7 +103,7 @@ class SolutionResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = {"mil_papos_admin"})
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
     void testFindByIdSolutionEndpoint_500() {
         Mockito.when(solutionService.findById(any(String.class)))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
@@ -120,7 +122,7 @@ class SolutionResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = {"mil_papos_admin"})
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
     void testFindByIdSolutionEndpoint_404() {
         solutionEntity = null;
         Mockito.when(solutionService.findById(any(String.class)))
@@ -140,10 +142,8 @@ class SolutionResourceTest {
         Assertions.assertEquals(404, response.statusCode());
     }
 
-
-
     @Test
-    @TestSecurity(user = "testUser", roles = {"mil_papos_admin"})
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
     void testFindAll_200() {
         Mockito.when(solutionService.getSolutionsCount())
                 .thenReturn(Uni.createFrom().item(10L));
@@ -164,12 +164,10 @@ class SolutionResourceTest {
         Assertions.assertEquals(200, response.statusCode());
     }
 
-
-
     @Test
-    @TestSecurity(user = "testUser", roles = {"mil_papos_admin"})
-    void testFindSolutionsEndpoint_500() {
-        Mockito.when(solutionService.findSolutions(anyString(), anyInt(),anyInt()))
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
+    void testFindSolutionsEndpoint_500TC() {
+        Mockito.when(solutionService.getSolutionsCount())
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
 
         Response response = given()
@@ -185,5 +183,26 @@ class SolutionResourceTest {
         Assertions.assertEquals(500, response.statusCode());
     }
 
+    @Test
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
+    void testFindSolutionsEndpoint_500TLP() {
+        Mockito.when(solutionService.getSolutionsCount())
+                .thenReturn(Uni.createFrom().item(10L));
+
+        Mockito.when(solutionService.findSolutions(anyString(), anyInt(), anyInt()))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
 
 }
