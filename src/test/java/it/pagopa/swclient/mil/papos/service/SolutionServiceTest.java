@@ -7,7 +7,6 @@ import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
 import it.pagopa.swclient.mil.papos.dao.SolutionEntity;
 import it.pagopa.swclient.mil.papos.dao.SolutionRepository;
-import it.pagopa.swclient.mil.papos.dao.TransactionEntity;
 import it.pagopa.swclient.mil.papos.model.SolutionDto;
 import it.pagopa.swclient.mil.papos.util.TestData;
 import jakarta.ws.rs.InternalServerErrorException;
@@ -18,10 +17,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 
-import static io.restassured.RestAssured.when;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 
 import java.util.List;
 
