@@ -115,4 +115,38 @@ class SolutionServiceTest {
                 .with(list -> Assertions.assertEquals(mockedSolutionsList, list));
 
     }
+
+    @Test
+    void testGetSolutionByAttributeCount_Success() {
+        Mockito.when(solutionRepository.count("pspId", "pspId"))
+                .thenReturn(Uni.createFrom().item(10L));
+
+        var solutionCount = solutionService.getSolutionCountByAttribute("pspId", "pspId");
+
+        solutionCount
+                .subscribe()
+                .withSubscriber(UniAssertSubscriber.create())
+                .assertItem(10L);
+    }
+
+    @Test
+    void testGetSolutionsList_Success() {
+
+        SolutionEntity te1 = new SolutionEntity();
+        te1.setPspId("uuid1");
+        SolutionEntity te2 = new SolutionEntity();
+        te2.setPspId("uuid2");
+        List<SolutionEntity> mockedSolutionsList = List.of(te1, te2);
+
+        ReactivePanacheQuery<SolutionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
+        Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
+        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedSolutionsList));
+        Mockito.when(solutionRepository.find(String.format("%s = ?1", "pspId"), "pspId")).thenReturn(query);
+
+        Uni<List<SolutionEntity>> result = solutionService.getSolutionsListPagedByAttribute("pspId", "pspId", 0, 10);
+
+        result.subscribe()
+                .with(list -> Assertions.assertEquals(mockedSolutionsList, list));
+    }
+
 }

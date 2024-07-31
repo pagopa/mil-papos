@@ -36,7 +36,7 @@ public class SolutionService {
                 .onFailure()
                 .transform(error -> error)
                 .onItem()
-                .transform(terminalSaved -> terminalSaved);
+                .transform(solutionSaved -> solutionSaved);
     }
     
      /**
@@ -73,4 +73,46 @@ public class SolutionService {
         
         return solutionRepository.count();
     }
+
+
+    /**
+     * Returns a number corresponding to the total number of solutions found.
+     *
+     * @param attributeName  name of the attribute
+     * @param attributeValue value of the attribute
+     * @return a number
+     */
+    public Uni<Long> getSolutionCountByAttribute(String attributeName, String attributeValue) {
+        Log.debugf("SolutionService -> getSolutionCountByAttribute - Input parameters: %s, %s", attributeName, attributeValue);
+
+        if (attributeName.equals("workstation")) {
+            return solutionRepository.count("{ 'workstations': ?1 }", attributeValue);
+        }
+        return solutionRepository.count(attributeName, attributeValue);
+    }
+
+      /**
+     * Returns a list of solutions paginated. The query filters on attributeName.
+     *
+     * @param attributeName  string representing the name of attribute to be filtered
+     * @param attributeValue value of attribute
+     * @param pageIndex      0-based page index
+     * @param pageSize       page size
+     * @return a list of solutions
+     */
+    public Uni<List<SolutionEntity>> getSolutionsListPagedByAttribute(String attributeName, String attributeValue, int pageIndex, int pageSize) {
+        Log.debugf("SolutionService -> getSolutionListPagedByAttribute - Input parameters: %s, %s, %s, %s", attributeName, attributeValue, pageIndex, pageSize);
+
+        if (attributeName.equals("workstation")) {
+            return solutionRepository
+                    .find("{ 'workstations': ?1 }", attributeValue)
+                    .page(pageIndex, pageSize)
+                    .list();
+        }
+        return solutionRepository
+                .find(String.format("%s = ?1", attributeName), attributeValue)
+                .page(pageIndex, pageSize)
+                .list();
+    }
+
 }

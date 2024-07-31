@@ -205,4 +205,81 @@ class SolutionResourceTest {
         Assertions.assertEquals(500, response.statusCode());
     }
 
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "AGID_01")
+    })
+    void testFindByPspId_200() {
+        Mockito.when(solutionService.getSolutionCountByAttribute("AGID_01", "AGID_01"))
+                .thenReturn(Uni.createFrom().item(10L));
+
+        Mockito.when(solutionService.getSolutionsListPagedByAttribute("AGID_01", "AGID_01", 0, 10))
+                .thenReturn(Uni.createFrom().item(new ArrayList<>()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("pspId", "AGID_01")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/findByPspId")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(200, response.statusCode());
+    }
+
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "AGID_01")
+    })
+    void testFindByPspId_500TC() {
+        Mockito.when(solutionService.getSolutionCountByAttribute(anyString(), anyString()))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("pspId", "AGID_01")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/findByPspId")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "AGID_01")
+    })
+    void testFindByPspId_500TLP() {
+        Mockito.when(solutionService.getSolutionCountByAttribute(anyString(), anyString()))
+                .thenReturn(Uni.createFrom().item(10L));
+
+        Mockito.when(solutionService.getSolutionsListPagedByAttribute(anyString(), anyString(), anyInt(), anyInt()))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("pspId", "AGID_01")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/findByPspId")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
 }
