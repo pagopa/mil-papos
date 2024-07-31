@@ -148,7 +148,7 @@ class SolutionResourceTest {
         Mockito.when(solutionService.getSolutionsCount())
                 .thenReturn(Uni.createFrom().item(10L));
 
-        Mockito.when(solutionService.findSolutions("requestid", 0, 10))
+        Mockito.when(solutionService.findSolutions(anyString(), anyInt(), anyInt()))
                 .thenReturn(Uni.createFrom().item(new ArrayList<>()));
 
         Response response = given()
@@ -175,8 +175,8 @@ class SolutionResourceTest {
         Response response = given()
                 .contentType(ContentType.JSON)
                 .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
-                .and()
-                .body(solutionDto)
+                .queryParam("page", 0)
+                .queryParam("size", 10)
                 .when()
                 .get("/")
                 .then()
