@@ -4,10 +4,7 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
-import it.pagopa.swclient.mil.papos.dao.BulkLoadStatusEntity;
-import it.pagopa.swclient.mil.papos.dao.BulkLoadStatusRepository;
-import it.pagopa.swclient.mil.papos.dao.TerminalEntity;
-import it.pagopa.swclient.mil.papos.dao.TerminalRepository;
+import it.pagopa.swclient.mil.papos.dao.*;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
 import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
 import it.pagopa.swclient.mil.papos.util.TestData;
@@ -18,10 +15,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
+
+import java.util.Arrays;
 import java.util.List;
 
-import static it.pagopa.swclient.mil.papos.util.TestData.mockedList;
-import static it.pagopa.swclient.mil.papos.util.TestData.mockedListTerminalDto;
+import static it.pagopa.swclient.mil.papos.util.TestData.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 
@@ -134,42 +132,16 @@ class TerminalServiceTest {
     }
 
     @Test
-    void testGetTerminalCount_Success() {
-        Mockito.when(terminalRepository.count("pspId", "pspId"))
-                .thenReturn(Uni.createFrom().item(10L));
-
-        var terminalCount = terminalService.getTerminalCountByAttribute("pspId", "pspId");
-
-        terminalCount
-                .subscribe()
-                .withSubscriber(UniAssertSubscriber.create())
-                .assertItem(10L);
-    }
-
-    @Test
     void testGetTerminalCountWorkstation_Success() {
         Mockito.when(terminalRepository.count("{ 'workstations': ?1 }", "workstation"))
                 .thenReturn(Uni.createFrom().item(10L));
 
-        var terminalCount = terminalService.getTerminalCountByAttribute("workstation", "workstation");
+        var terminalCount = terminalService.getTerminalCountByWorkstation("workstation");
 
         terminalCount
                 .subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
                 .assertItem(10L);
-    }
-
-    @Test
-    void testGetTerminalList_Success() {
-        ReactivePanacheQuery<TerminalEntity> query = Mockito.mock(ReactivePanacheQuery.class);
-        Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
-        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedList()));
-        Mockito.when(terminalRepository.find(String.format("%s = ?1", "pspId"), "pspId")).thenReturn(query);
-
-        Uni<List<TerminalEntity>> result = terminalService.getTerminalListPagedByAttribute("pspId", "pspId", 0, 10);
-
-        result.subscribe()
-                .with(list -> Assertions.assertEquals(mockedList(), list));
     }
 
     @Test
@@ -179,7 +151,7 @@ class TerminalServiceTest {
         Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedList()));
         Mockito.when(terminalRepository.find("{ 'workstations': ?1 }", "workstation")).thenReturn(query);
 
-        Uni<List<TerminalEntity>> result = terminalService.getTerminalListPagedByAttribute("workstation", "workstation", 0, 10);
+        Uni<List<TerminalEntity>> result = terminalService.getTerminalListPagedByWorkstation("workstation", 0, 10);
 
         result.subscribe()
                 .with(list -> Assertions.assertEquals(mockedList(), list));
@@ -266,5 +238,31 @@ class TerminalServiceTest {
         result.subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
                 .assertFailedWith(WebApplicationException.class);
+    }
+
+    @Test
+    void testCountBySolutionIds_Success() {
+        Mockito.when(terminalRepository.count("solutionId in (?1)", Arrays.asList("66a79a4624356b00da07cfbf", "16a79a4624356b00da07cfbf")))
+                .thenReturn(Uni.createFrom().item(10L));
+
+        var terminalCount = terminalService.countBySolutionIds(Arrays.asList("66a79a4624356b00da07cfbf", "16a79a4624356b00da07cfbf"));
+
+        terminalCount
+                .subscribe()
+                .withSubscriber(UniAssertSubscriber.create())
+                .assertItem(10L);
+    }
+
+    @Test
+    void testFindBySolutionIds_Success() {
+        ReactivePanacheQuery<TerminalEntity> query = Mockito.mock(ReactivePanacheQuery.class);
+        Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
+        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedList()));
+        Mockito.when(terminalRepository.find("solutionId in ?1", Arrays.asList("66a79a4624356b00da07cfbf", "16a79a4624356b00da07cfbf"))).thenReturn(query);
+
+        Uni<List<TerminalEntity>> result = terminalService.findBySolutionIds(Arrays.asList("66a79a4624356b00da07cfbf", "16a79a4624356b00da07cfbf"), 0, 10);
+
+        result.subscribe()
+                .with(list -> Assertions.assertEquals(mockedList(), list));
     }
 }

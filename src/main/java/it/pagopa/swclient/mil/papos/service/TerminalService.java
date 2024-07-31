@@ -112,39 +112,28 @@ public class TerminalService {
     /**
      * Returns a number corresponding to the total number of terminal found.
      *
-     * @param attributeName  name of the attribute
-     * @param attributeValue value of the attribute
+     * @param workstation name of workstation
      * @return a number
      */
-    public Uni<Long> getTerminalCountByAttribute(String attributeName, String attributeValue) {
-        Log.debugf("TerminalService -> getTerminalCountByAttribute - Input parameters: %s, %s", attributeName, attributeValue);
+    public Uni<Long> getTerminalCountByWorkstation(String workstation) {
+        Log.debugf("TerminalService -> getTerminalCountByWorkstation - Input parameter: %s", workstation);
 
-        if (attributeName.equals("workstation")) {
-            return terminalRepository.count("{ 'workstations': ?1 }", attributeValue);
-        }
-        return terminalRepository.count(attributeName, attributeValue);
+        return terminalRepository.count("{ 'workstations': ?1 }", workstation);
     }
 
     /**
      * Returns a list of terminals paginated. The query filters on attributeName.
      *
-     * @param attributeName  string representing the name of attribute to be filtered
-     * @param attributeValue value of attribute
-     * @param pageIndex      0-based page index
-     * @param pageSize       page size
+     * @param workstation name of workstation
+     * @param pageIndex   0-based page index
+     * @param pageSize    page size
      * @return a list of terminals
      */
-    public Uni<List<TerminalEntity>> getTerminalListPagedByAttribute(String attributeName, String attributeValue, int pageIndex, int pageSize) {
-        Log.debugf("TerminalService -> getTerminalListPagedByAttribute - Input parameters: %s, %s, %s, %s", attributeName, attributeValue, pageIndex, pageSize);
+    public Uni<List<TerminalEntity>> getTerminalListPagedByWorkstation(String workstation, int pageIndex, int pageSize) {
+        Log.debugf("TerminalService -> getTerminalListPagedByWorkstation - Input parameters: %s, %s, %s", workstation, pageIndex, pageSize);
 
-        if (attributeName.equals("workstation")) {
-            return terminalRepository
-                    .find("{ 'workstations': ?1 }", attributeValue)
-                    .page(pageIndex, pageSize)
-                    .list();
-        }
         return terminalRepository
-                .find(String.format("%s = ?1", attributeName), attributeValue)
+                .find("{ 'workstations': ?1 }", workstation)
                 .page(pageIndex, pageSize)
                 .list();
     }

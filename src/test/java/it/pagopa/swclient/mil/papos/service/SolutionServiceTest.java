@@ -16,6 +16,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 
+import java.util.List;
+
+import static it.pagopa.swclient.mil.papos.util.TestData.mockedListSolution;
 import static org.mockito.ArgumentMatchers.any;
 
 @QuarkusTest
@@ -73,5 +76,16 @@ class SolutionServiceTest {
                 .subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
                 .assertItem(solutionEntity);
+    }
+
+    @Test
+    void testFindBy_Success() {
+        Mockito.when(solutionRepository.list(String.format("%s = ?1", "locationCode"), "12704343560"))
+                .thenReturn(Uni.createFrom().item(mockedListSolution()));
+
+        Uni<List<SolutionEntity>> result = solutionService.findAllByLocationOrPsp("locationCode", "12704343560");
+
+        result.subscribe()
+                .with(list -> Assertions.assertEquals(mockedListSolution(), list));
     }
 }

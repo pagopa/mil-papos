@@ -258,7 +258,45 @@ public class TerminalResource {
             @QueryParam("page") int pageNumber,
             @QueryParam("size") int pageSize) {
 
-        return findByAttribute(requestId, "workstation", workstation, pageNumber, pageSize);
+        Log.debugf("TerminalResource -> findByWorkstation - Input requestId: %s, workstation: %s, pageNumber: %s, size: %s", requestId, workstation, pageNumber, pageSize);
+
+        return terminalService.getTerminalCountByWorkstation(workstation)
+                .onFailure()
+                .transform(err -> {
+                    Log.errorf(err, "TerminalResource -> findByWorkstation: error while counting terminals for [%s]", workstation);
+
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(ErrorCodes.ERROR_COUNTING_TERMINALS, ErrorCodes.ERROR_COUNTING_TERMINALS_MSG))
+                            .build());
+                })
+                .onItem()
+                .transformToUni(numberOfTerminals -> {
+                    Log.debugf("TerminalResource -> findByWorkstation: found a total count of [%s] terminals", numberOfTerminals);
+
+                    return terminalService.getTerminalListPagedByWorkstation(workstation, pageNumber, pageSize)
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err, "TerminalResource -> findByWorkstation: Error while retrieving list of terminals for workstation [%s], index and size [%s, %s]", workstation, pageNumber, pageSize);
+
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(ErrorCodes.ERROR_LIST_TERMINALS, ErrorCodes.ERROR_LIST_TERMINALS_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transform(terminalsPaged -> {
+                                Log.debugf("TerminalResource -> findByWorkstation: size of list of terminals paginated found: [%s]", terminalsPaged.size());
+
+                                int totalPages = (int) Math.ceil((double) numberOfTerminals / pageSize);
+                                PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfTerminals, totalPages);
+
+                                return Response
+                                        .status(Response.Status.OK)
+                                        .entity(new TerminalPageResponse(terminalsPaged, pageMetadata))
+                                        .build();
+                            });
+                });
     }
 
     @PATCH
@@ -504,48 +542,6 @@ public class TerminalResource {
                                                         .entity(new TerminalPageResponse(terminalsPaged, pageMetadata))
                                                         .build();
                                             }));
-                });
-    }
-
-    private Uni<Response> findByAttribute(String requestId, String attributeName, String attributeValue, int pageNumber, int pageSize) {
-        Log.debugf("TerminalResource -> findBy - Input requestId: %s, attributeName: %s, attributeValue: %s, pageNumber: %s, size: %s", requestId, attributeName, attributeValue, pageNumber, pageSize);
-
-        return terminalService.getTerminalCountByAttribute(attributeName, attributeValue)
-                .onFailure()
-                .transform(err -> {
-                    Log.errorf(err, "TerminalResource -> findBy: error while counting terminals for [%s, %s]", attributeName, attributeValue);
-
-                    return new InternalServerErrorException(Response
-                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(ErrorCodes.ERROR_COUNTING_TERMINALS, ErrorCodes.ERROR_COUNTING_TERMINALS_MSG))
-                            .build());
-                })
-                .onItem()
-                .transformToUni(numberOfTerminals -> {
-                    Log.debugf("TerminalResource -> findBy: found a total count of [%s] terminals", numberOfTerminals);
-
-                    return terminalService.getTerminalListPagedByAttribute(attributeName, attributeValue, pageNumber, pageSize)
-                            .onFailure()
-                            .transform(err -> {
-                                Log.errorf(err, "TerminalResource -> findBy: Error while retrieving list of terminals for [%s, %s], index and size [%s, %s]", attributeName, attributeValue, pageNumber, pageSize);
-
-                                return new InternalServerErrorException(Response
-                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                        .entity(new Errors(ErrorCodes.ERROR_LIST_TERMINALS, ErrorCodes.ERROR_LIST_TERMINALS_MSG))
-                                        .build());
-                            })
-                            .onItem()
-                            .transform(terminalsPaged -> {
-                                Log.debugf("TerminalResource -> findBy: size of list of terminals paginated found: [%s]", terminalsPaged.size());
-
-                                int totalPages = (int) Math.ceil((double) numberOfTerminals / pageSize);
-                                PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfTerminals, totalPages);
-
-                                return Response
-                                        .status(Response.Status.OK)
-                                        .entity(new TerminalPageResponse(terminalsPaged, pageMetadata))
-                                        .build();
-                            });
                 });
     }
 
