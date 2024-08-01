@@ -19,7 +19,10 @@ import org.mockito.Mockito;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static it.pagopa.swclient.mil.papos.util.TestData.mockedSolutionEntityList;
 
+import java.text.ParseException;
 import java.util.List;
 
 @QuarkusTest
@@ -95,15 +98,9 @@ class SolutionServiceTest {
     @Test
     void testFindSolutions_Success() {
 
-        SolutionEntity te1 = new SolutionEntity();
-        te1.setPspId("uuid1");
-        SolutionEntity te2 = new SolutionEntity();
-        te2.setPspId("uuid2");
-        List<SolutionEntity> mockedSolutionsList = List.of(te1, te2);
-
         ReactivePanacheQuery<SolutionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
         Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
-        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedSolutionsList));
+        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedSolutionEntityList()));
 
         Mockito.when(solutionRepository.findAll())
                 .thenReturn(query);
@@ -112,7 +109,7 @@ class SolutionServiceTest {
 
         solutionsEntityUni
                 .subscribe()
-                .with(list -> Assertions.assertEquals(mockedSolutionsList, list));
+                .with(list -> Assertions.assertEquals(mockedSolutionEntityList(), list));
 
     }
 
@@ -132,21 +129,15 @@ class SolutionServiceTest {
     @Test
     void testGetSolutionsList_Success() {
 
-        SolutionEntity te1 = new SolutionEntity();
-        te1.setPspId("uuid1");
-        SolutionEntity te2 = new SolutionEntity();
-        te2.setPspId("uuid2");
-        List<SolutionEntity> mockedSolutionsList = List.of(te1, te2);
-
         ReactivePanacheQuery<SolutionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
         Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
-        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedSolutionsList));
+        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedSolutionEntityList()));
         Mockito.when(solutionRepository.find(String.format("%s = ?1", "pspId"), "pspId")).thenReturn(query);
 
         Uni<List<SolutionEntity>> result = solutionService.getSolutionsListPagedByAttribute("pspId", "pspId", 0, 10);
 
         result.subscribe()
-                .with(list -> Assertions.assertEquals(mockedSolutionsList, list));
+                .with(list -> Assertions.assertEquals(mockedSolutionEntityList(), list));
     }
 
 }

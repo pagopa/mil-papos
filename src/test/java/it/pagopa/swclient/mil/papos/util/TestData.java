@@ -78,6 +78,17 @@ public final class TestData {
 
         return List.of(te1, te2);
     }
+
+
+    public static List<SolutionEntity> mockedSolutionEntityList() {
+        
+        SolutionEntity te1 = new SolutionEntity();
+        te1.setPspId("uuid1");
+        SolutionEntity te2 = new SolutionEntity();
+        te2.setPspId("uuid2");
+        return List.of(te1, te2);
+    }
+
     
     public static List<TerminalDto> mockedListTerminalDto() {
         TerminalDto td1 = new TerminalDto("66a79a4624356b00da07cfbf", "34523860", true, null);

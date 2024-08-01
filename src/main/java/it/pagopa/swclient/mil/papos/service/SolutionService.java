@@ -85,9 +85,6 @@ public class SolutionService {
     public Uni<Long> getSolutionCountByAttribute(String attributeName, String attributeValue) {
         Log.debugf("SolutionService -> getSolutionCountByAttribute - Input parameters: %s, %s", attributeName, attributeValue);
 
-        if (attributeName.equals("workstation")) {
-            return solutionRepository.count("{ 'workstations': ?1 }", attributeValue);
-        }
         return solutionRepository.count(attributeName, attributeValue);
     }
 
@@ -103,12 +100,6 @@ public class SolutionService {
     public Uni<List<SolutionEntity>> getSolutionsListPagedByAttribute(String attributeName, String attributeValue, int pageIndex, int pageSize) {
         Log.debugf("SolutionService -> getSolutionListPagedByAttribute - Input parameters: %s, %s, %s, %s", attributeName, attributeValue, pageIndex, pageSize);
 
-        if (attributeName.equals("workstation")) {
-            return solutionRepository
-                    .find("{ 'workstations': ?1 }", attributeValue)
-                    .page(pageIndex, pageSize)
-                    .list();
-        }
         return solutionRepository
                 .find(String.format("%s = ?1", attributeName), attributeValue)
                 .page(pageIndex, pageSize)
