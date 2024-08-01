@@ -235,6 +235,25 @@ public class SolutionResource {
                 });
     }
 
+
+    @GET
+    @Path("/findByPayeeCode")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "mil_papos_admin" })
+    public Uni<Response> findByPayeeCode(
+            @HeaderParam("RequestId")
+            @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
+            @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
+            @QueryParam("payeeCode") String payeeCode,
+            @QueryParam("page") int pageNumber,
+            @QueryParam("size") int pageSize) {
+
+        checkToken(payeeCode);
+
+        return findByAttribute(requestId, "payeeCode", payeeCode, pageNumber, pageSize);
+    }
+
     private void checkToken(String toCheck) {
         Log.debugf("SolutionResource -> checkToken: sub [%s], pspId/payeeCode: [%s]", jwt.getSubject(), toCheck);
 
