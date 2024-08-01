@@ -327,7 +327,7 @@ public class TransactionResource {
         return transactionService.findTransaction(transactionId)
                 .onFailure()
                 .transform(err -> {
-                    Log.errorf(err, "TransactionResource -> " + calledBy + ": error during search transaction with transactionId: [%s]", transactionId);
+                    Log.errorf(err, "TransactionResource ->  %s : error during search transaction with transactionId: [%s]",calledBy, transactionId);
 
                     return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -337,7 +337,7 @@ public class TransactionResource {
                 .onItem()
                 .transformToUni(transactionEntity -> {
                     if (transactionEntity == null) {
-                        Log.errorf("TransactionResource -> " + calledBy + ": error 404 during searching transaction with transactionId: [%s]", transactionId);
+                        Log.errorf("TransactionResource -> %s : error 404 during searching transaction with transactionId: [%s]", calledBy, transactionId);
 
                         return Uni.createFrom().failure(new NotFoundException(Response
                                 .status(Response.Status.NOT_FOUND)

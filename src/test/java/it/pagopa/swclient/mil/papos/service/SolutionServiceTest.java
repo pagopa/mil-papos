@@ -1,5 +1,6 @@
 package it.pagopa.swclient.mil.papos.service;
 
+import io.quarkus.mongodb.panache.reactive.ReactivePanacheQuery;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.Uni;
@@ -15,11 +16,12 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
-
-import java.util.List;
-
 import static it.pagopa.swclient.mil.papos.util.TestData.mockedListSolution;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static it.pagopa.swclient.mil.papos.util.TestData.mockedSolutionEntityList;
+
+import java.util.List;
 
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -76,6 +78,64 @@ class SolutionServiceTest {
                 .subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
                 .assertItem(solutionEntity);
+    }
+
+
+    @Test
+    void testGetSolutionsCount_Success() {
+        Long countNumber = 10L;
+        Mockito.when(solutionRepository.count())
+                .thenReturn(Uni.createFrom().item(countNumber));
+
+        Uni<Long> result = solutionService.getSolutionsCount();
+
+        result.subscribe()
+                .with(count -> Assertions.assertEquals(countNumber, count));
+    }
+
+    @Test
+    void testFindSolutions_Success() {
+
+        ReactivePanacheQuery<SolutionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
+        Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
+        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedSolutionEntityList()));
+
+        Mockito.when(solutionRepository.findAll())
+                .thenReturn(query);
+
+        Uni<List<SolutionEntity>> solutionsEntityUni = solutionService.findSolutions("requestid", 1, 10);
+
+        solutionsEntityUni
+                .subscribe()
+                .with(list -> Assertions.assertEquals(mockedSolutionEntityList(), list));
+
+    }
+
+    @Test
+    void testGetSolutionByAttributeCount_Success() {
+        Mockito.when(solutionRepository.count("pspId", "pspId"))
+                .thenReturn(Uni.createFrom().item(10L));
+
+        var solutionCount = solutionService.getSolutionCountByAttribute("pspId", "pspId");
+
+        solutionCount
+                .subscribe()
+                .withSubscriber(UniAssertSubscriber.create())
+                .assertItem(10L);
+    }
+
+    @Test
+    void testGetSolutionsList_Success() {
+
+        ReactivePanacheQuery<SolutionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
+        Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
+        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedSolutionEntityList()));
+        Mockito.when(solutionRepository.find(String.format("%s = ?1", "pspId"), "pspId")).thenReturn(query);
+
+        Uni<List<SolutionEntity>> result = solutionService.getSolutionsListPagedByAttribute("pspId", "pspId", 0, 10);
+
+        result.subscribe()
+                .with(list -> Assertions.assertEquals(mockedSolutionEntityList(), list));
     }
 
     @Test
