@@ -19,10 +19,8 @@ import org.mockito.Mockito;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static it.pagopa.swclient.mil.papos.util.TestData.mockedSolutionEntityList;
 
-import java.text.ParseException;
 import java.util.List;
 
 @QuarkusTest
