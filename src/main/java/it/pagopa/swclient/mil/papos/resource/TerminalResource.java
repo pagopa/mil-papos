@@ -163,7 +163,7 @@ public class TerminalResource {
                                             .filter(terminal -> uniqueSolutions.contains(terminal.solutionId()))
                                             .toList();
 
-                                    return terminalService.processBulkLoad(filteredTerminals, terminalRequests.size())
+                                    return terminalService.processBulkLoad(filteredTerminals, terminalRequests.size(), jwt.getSubject())
                                             .onFailure()
                                             .transform(err -> {
                                                 Log.errorf(err, "TerminalResource -> bulkLoadTerminals: error during bulkLoad process with file: length [%d] bytes", file.length);
@@ -232,6 +232,7 @@ public class TerminalResource {
                                 .entity(new Errors(ErrorCodes.ERROR_BULKLOADSTATUS_NOT_FOUND, ErrorCodes.ERROR_BULKLOADSTATUS_NOT_FOUND_MSG))
                                 .build()));
                     }
+                    checkToken(bulkLoadStatus.getPspId());
 
                     return Uni.createFrom().item(Response
                             .status(Response.Status.OK)
@@ -349,9 +350,7 @@ public class TerminalResource {
         return terminalService.findTerminal(terminalUuid)
                 .onFailure()
                 .transform(err -> {
-                    Log.errorf(err,
-                            "TerminalResource -> updateWorkstations: error during search terminal with terminalUuid: [%s]",
-                            terminalUuid);
+                    Log.errorf(err, "TerminalResource -> updateWorkstations: error during search terminal with terminalUuid: [%s]", terminalUuid);
 
                     return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -361,9 +360,7 @@ public class TerminalResource {
                 .onItem()
                 .transformToUni(terminalEntity -> {
                     if (terminalEntity == null) {
-                        Log.errorf(
-                                "TerminalResource -> updateWorkstations: error 404 during searching terminal with terminalUuid: [%s]",
-                                terminalUuid);
+                        Log.errorf("TerminalResource -> updateWorkstations: error 404 during searching terminal with terminalUuid: [%s]", terminalUuid);
 
                         return Uni.createFrom().failure(new NotFoundException(Response
                                 .status(Response.Status.NOT_FOUND)
@@ -371,11 +368,10 @@ public class TerminalResource {
                                 .build()));
                     }
 
-                    return terminalService.updateWorkstations(workstations, terminalEntity)
+                    return solutionService.findById(terminalEntity.getSolutionId())
                             .onFailure()
                             .transform(err -> {
-                                Log.errorf(err, "TerminalResource -> updateWorkstations: error during update workstations of terminalUuid: [%s]",
-                                        terminalUuid);
+                                Log.errorf(err, "TerminalResource -> updateWorkstations: error during find solution with id: [%s]", terminalEntity.getSolutionId());
 
                                 return new InternalServerErrorException(Response
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -383,13 +379,28 @@ public class TerminalResource {
                                         .build());
                             })
                             .onItem()
-                            .transform(terminalUpdated -> {
-                                Log.debugf("TerminalResource -> updateWorkstations: workstations updated correctly on DB [%s]",
-                                        terminalUpdated);
+                            .transformToUni(solutionFound -> {
+                                Log.debugf("TerminalResource -> updateWorkstations: solution found correctly on DB [%s]", solutionFound);
+                                checkToken(solutionFound.getPspId());
 
-                                return Response
-                                        .status(Response.Status.NO_CONTENT)
-                                        .build();
+                                return terminalService.updateWorkstations(workstations, terminalEntity)
+                                        .onFailure()
+                                        .transform(err -> {
+                                            Log.errorf(err, "TerminalResource -> updateWorkstations: error during update workstations of terminalUuid: [%s]", terminalUuid);
+
+                                            return new InternalServerErrorException(Response
+                                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                    .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                                    .build());
+                                        })
+                                        .onItem()
+                                        .transform(terminalUpdated -> {
+                                            Log.debugf("TerminalResource -> updateWorkstations: workstations updated correctly on DB [%s]", terminalUpdated);
+
+                                            return Response
+                                                    .status(Response.Status.NO_CONTENT)
+                                                    .build();
+                                        });
                             });
                 });
     }

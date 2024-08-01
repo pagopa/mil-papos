@@ -18,6 +18,7 @@ public final class TestData {
 
     public static TerminalEntity getCorrectTerminalEntity() {
         TerminalEntity terminalEntity = new TerminalEntity();
+        terminalEntity.setSolutionId("66a79a4624356b00da07cfbf");
         terminalEntity.setTerminalUuid("74a7c24f-5c64-41c2-aeac-d1fae93bff49");
         terminalEntity.setTerminalId("34523860");
         terminalEntity.setEnabled(true);
@@ -28,6 +29,7 @@ public final class TestData {
     public static BulkLoadStatusEntity getCorrectBulkLoadStatusEntity() {
         BulkLoadStatusEntity bulkLoadStatusEntity = new BulkLoadStatusEntity();
         bulkLoadStatusEntity.setBulkLoadingId("74a7c24f-5c64-41c2-aeac-d1fae93bff49");
+        bulkLoadStatusEntity.setPspId("AGID_01");
         bulkLoadStatusEntity.setSuccessRecords(5);
         bulkLoadStatusEntity.setFailedRecords(0);
         bulkLoadStatusEntity.setTotalRecords(5);

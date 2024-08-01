@@ -52,12 +52,13 @@ public class TerminalService {
      * @param terminalRequests file json containing a set of terminals
      * @return list of terminal created
      */
-    public Uni<BulkLoadStatusEntity> processBulkLoad(List<TerminalDto> terminalRequests, int totalRecords) {
+    public Uni<BulkLoadStatusEntity> processBulkLoad(List<TerminalDto> terminalRequests, int totalRecords, String pspId) {
         Log.debugf("TerminalService -> processBulkLoad - Input parameters: file content length: %d bytes", terminalRequests.size());
 
         String bulkLoadingId = Utility.generateRandomUuid();
         BulkLoadStatus bulkLoadStatus = new BulkLoadStatus(bulkLoadingId, totalRecords);
         bulkLoadStatus.setFailedRecords(totalRecords - terminalRequests.size());
+        bulkLoadStatus.setPspId(pspId);
         List<Uni<Void>> terminalCreationUnis = new ArrayList<>();
 
         for (TerminalDto terminal : terminalRequests) {

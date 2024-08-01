@@ -82,7 +82,7 @@ class TerminalServiceTest {
         Mockito.when(bulkLoadStatusRepository.persist(any(BulkLoadStatusEntity.class)))
                 .thenReturn(Uni.createFrom().item(new BulkLoadStatusEntity()));
 
-        Uni<BulkLoadStatusEntity> result = terminalService.processBulkLoad(mockedListTerminalDto(), 2);
+        Uni<BulkLoadStatusEntity> result = terminalService.processBulkLoad(mockedListTerminalDto(), 2, "AGID_01");
 
         result.subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
@@ -96,7 +96,7 @@ class TerminalServiceTest {
         Mockito.when(bulkLoadStatusRepository.persist(any(BulkLoadStatusEntity.class)))
                 .thenReturn(Uni.createFrom().item(new BulkLoadStatusEntity()));
 
-        Uni<BulkLoadStatusEntity> result = terminalService.processBulkLoad(mockedListTerminalDto(), 2);
+        Uni<BulkLoadStatusEntity> result = terminalService.processBulkLoad(mockedListTerminalDto(), 2, "AGID_01");
 
         result.subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
@@ -124,7 +124,7 @@ class TerminalServiceTest {
         Mockito.when(bulkLoadStatusRepository.persist(any(BulkLoadStatusEntity.class)))
                 .thenReturn(Uni.createFrom().failure(new RuntimeException("Error persisting bulk load status")));
 
-        Uni<BulkLoadStatusEntity> result = terminalService.processBulkLoad(mockedListTerminalDto(), 2);
+        Uni<BulkLoadStatusEntity> result = terminalService.processBulkLoad(mockedListTerminalDto(), 2, "AGID_01");
 
         result.subscribe()
                 .withSubscriber(UniAssertSubscriber.create())

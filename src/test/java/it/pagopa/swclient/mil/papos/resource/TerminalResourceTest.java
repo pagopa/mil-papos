@@ -182,7 +182,7 @@ class TerminalResourceTest {
         Mockito.when(solutionService.findAllByPspAndSolutionId("TMIL0101", Arrays.asList("66a79a4624356b00da07cfbf", "66a79a4624346b20da01cfbf")))
                 .thenReturn(Uni.createFrom().item(mockedListSolution()));
 
-        Mockito.when(terminalService.processBulkLoad(anyList(), eq(2)))
+        Mockito.when(terminalService.processBulkLoad(anyList(), eq(2), anyString()))
                 .thenReturn(Uni.createFrom().item(new BulkLoadStatusEntity()));
 
         Response response = given()
@@ -288,7 +288,7 @@ class TerminalResourceTest {
         byte[] fileContent = "malformed content".getBytes();
         InputStream fileInputStream = new ByteArrayInputStream(fileContent);
 
-        Mockito.when(terminalService.processBulkLoad(mockedListTerminalDto(), 2))
+        Mockito.when(terminalService.processBulkLoad(mockedListTerminalDto(), 2, "AGID_01"))
                 .thenReturn(Uni.createFrom().failure(new RuntimeException("Service error")));
 
         Response response = given()
@@ -327,7 +327,7 @@ class TerminalResourceTest {
                 .filter(terminal -> uniqueSolutions.contains(terminal.solutionId()))
                 .toList();
 
-        Mockito.when(terminalService.processBulkLoad(filteredTerminals, filteredTerminals.size()))
+        Mockito.when(terminalService.processBulkLoad(filteredTerminals, filteredTerminals.size(), "TMIL0101"))
                 .thenReturn(Uni.createFrom().failure(new InternalServerErrorException()));
 
         Response response = given()
@@ -652,11 +652,14 @@ class TerminalResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = {"public_administration"})
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "AGID_01")
+            @Claim(key = "sub", value = "TMIL0101")
     })
     void testUpdateWorkstations_204() {
         Mockito.when(terminalService.findTerminal(any(String.class)))
                 .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Mockito.when(solutionService.findById(terminalEntity.getSolutionId()))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
 
         Mockito.when(terminalService.updateWorkstations(any(WorkstationsDto.class), any(TerminalEntity.class)))
                 .thenReturn(Uni.createFrom().item(terminalEntity));
@@ -672,6 +675,31 @@ class TerminalResourceTest {
                 .extract().response();
 
         Assertions.assertEquals(204, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"public_administration"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "AGID_01")
+    })
+    void testUpdateWorkstations_401() {
+        Mockito.when(terminalService.findTerminal(any(String.class)))
+                .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Mockito.when(solutionService.findById(terminalEntity.getSolutionId()))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(workstationsDto)
+                .when()
+                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa/updateWorkstations")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(401, response.statusCode());
     }
 
     @Test
@@ -723,11 +751,39 @@ class TerminalResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = {"public_administration"})
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "AGID_01")
+            @Claim(key = "sub", value = "TMIL0101")
+    })
+    void testUpdateWorkstations_500SI() {
+        Mockito.when(terminalService.findTerminal(any(String.class)))
+                .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Mockito.when(solutionService.findById(terminalEntity.getSolutionId()))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(workstationsDto)
+                .when()
+                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa/updateWorkstations")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"public_administration"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "TMIL0101")
     })
     void testUpdateWorkstations_500UT() {
         Mockito.when(terminalService.findTerminal(any(String.class)))
                 .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Mockito.when(solutionService.findById(terminalEntity.getSolutionId()))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
 
         Mockito.when(terminalService.updateWorkstations(any(WorkstationsDto.class), any(TerminalEntity.class)))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));

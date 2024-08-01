@@ -12,6 +12,7 @@ import java.util.List;
 @ToString
 public class BulkLoadStatus {
     private String bulkLoadingId;
+    private String pspId;
     private int totalRecords;
     private int successRecords;
     private int failedRecords;
