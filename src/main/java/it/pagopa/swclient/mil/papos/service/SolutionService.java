@@ -63,6 +63,24 @@ public class SolutionService {
     }
 
 
+
+    /**
+     * Delete solution starting from a solutionEntity.
+     *
+     * @param solution solution to be deleted
+     * @return void
+     */
+    public Uni<Void> deleteSolution(SolutionEntity solution) {
+        Log.debugf("SolutionService -> deleteSolution - Input parameters: %s", solution);
+
+        return solutionRepository.delete(solution)
+                .onFailure()
+                .transform(error -> error)
+                .onItem()
+                .transform(solutionDeleted -> solutionDeleted);
+    }
+
+  
     /**
      * Returns a number corresponding to the total number of solutions found.
      *

@@ -25,6 +25,7 @@ public final class TestData {
 
         return terminalEntity;
     }
+    
 
     public static BulkLoadStatusEntity getCorrectBulkLoadStatusEntity() {
         BulkLoadStatusEntity bulkLoadStatusEntity = new BulkLoadStatusEntity();

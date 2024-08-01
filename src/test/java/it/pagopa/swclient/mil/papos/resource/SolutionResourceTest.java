@@ -311,23 +311,23 @@ class SolutionResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "payeeCode")
+            @Claim(key = "sub", value = "locationCode")
     })
-    void testFindByPayeeCode_200() {
-        Mockito.when(solutionService.getSolutionCountByAttribute("payeeCode", "payeeCode"))
+    void testFindByLocationCode_200() {
+        Mockito.when(solutionService.getSolutionCountByAttribute("locationCode", "locationCode"))
                 .thenReturn(Uni.createFrom().item(10L));
 
-        Mockito.when(solutionService.getSolutionsListPagedByAttribute("payeeCode", "payeeCode", 0, 10))
+        Mockito.when(solutionService.getSolutionsListPagedByAttribute("locationCode", "locationCode", 0, 10))
                 .thenReturn(Uni.createFrom().item(new ArrayList<>()));
 
         Response response = given()
                 .contentType(ContentType.JSON)
                 .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
-                .queryParam("payeeCode", "payeeCode")
+                .queryParam("locationCode", "locationCode")
                 .queryParam("page", 0)
                 .queryParam("size", 10)
                 .when()
-                .get("/findByPayeeCode")
+                .get("/findByLocationCode")
                 .then()
                 .extract().response();
 
@@ -337,20 +337,20 @@ class SolutionResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "payeeCode")
+            @Claim(key = "sub", value = "locationCode")
     })
-    void testFindByPayeeCode_500TC() {
-        Mockito.when(solutionService.getSolutionCountByAttribute("payeeCode", "payeeCode"))
+    void testFindByLocationCode_500TC() {
+        Mockito.when(solutionService.getSolutionCountByAttribute("locationCode", "locationCode"))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
 
         Response response = given()
                 .contentType(ContentType.JSON)
                 .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
-                .queryParam("payeeCode", "payeeCode")
+                .queryParam("locationCode", "locationCode")
                 .queryParam("page", 0)
                 .queryParam("size", 10)
                 .when()
-                .get("/findByPayeeCode")
+                .get("/findByLocationCode")
                 .then()
                 .extract().response();
 
@@ -360,23 +360,118 @@ class SolutionResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "payeeCode")
+            @Claim(key = "sub", value = "locationCode")
     })
-    void testFindByPayeeCode_500TLP() {
-        Mockito.when(solutionService.getSolutionCountByAttribute("payeeCode", "payeeCode"))
+    void testFindByLocationCode_500TLP() {
+        Mockito.when(solutionService.getSolutionCountByAttribute("locationCode", "locationCode"))
                 .thenReturn(Uni.createFrom().item(10L));
 
-        Mockito.when(solutionService.getSolutionsListPagedByAttribute("payeeCode", "payeeCode", 0, 10))
+        Mockito.when(solutionService.getSolutionsListPagedByAttribute("locationCode", "locationCode", 0, 10))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
 
         Response response = given()
                 .contentType(ContentType.JSON)
                 .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
-                .queryParam("payeeCode", "payeeCode")
+                .queryParam("locationCode", "locationCode")
                 .queryParam("page", 0)
                 .queryParam("size", 10)
                 .when()
-                .get("/findByPayeeCode")
+                .get("/findByLocationCode")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "AGID_01")
+    })
+    void testDeleteSolution_204() {
+        Mockito.when(solutionService.findById(any(String.class)))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
+
+        Mockito.when(solutionService.deleteSolution(any(SolutionEntity.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .when()
+                .delete("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(204, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "AGID_01")
+    })
+    void testDeleteSolution_404() {
+        solutionEntity = null;
+        Mockito.when(solutionService.findById(any(String.class)))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(solutionDto)
+                .when()
+                .delete("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .then()
+                .extract().response();
+
+        solutionEntity = TestData.getCorrectSolutionEntity();
+        Assertions.assertEquals(404, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "AGID_01")
+    })
+    void testDeleteSolution_500FT() {
+        Mockito.when(solutionService.findById(any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(solutionDto)
+                .when()
+                .delete("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "AGID_01")
+    })
+    void testDeleteSolution_500UT() {
+        Mockito.when(solutionService.findById(any(String.class)))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
+
+        Mockito.when(solutionService.deleteSolution(any(SolutionEntity.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(solutionDto)
+                .when()
+                .delete("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
                 .then()
                 .extract().response();
 

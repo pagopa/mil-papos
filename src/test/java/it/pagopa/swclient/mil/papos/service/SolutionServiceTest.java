@@ -10,6 +10,8 @@ import it.pagopa.swclient.mil.papos.dao.SolutionRepository;
 import it.pagopa.swclient.mil.papos.model.SolutionDto;
 import it.pagopa.swclient.mil.papos.util.TestData;
 import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.WebApplicationException;
+
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -71,9 +73,9 @@ class SolutionServiceTest {
         Mockito.when(solutionRepository.findById(new ObjectId("66a79a4624356b00da07cfbf")))
                 .thenReturn(Uni.createFrom().item(solutionEntity));
 
-        Uni<SolutionEntity> terminalEntityUni = solutionService.findById("66a79a4624356b00da07cfbf");
+        Uni<SolutionEntity> solutionEntityUni = solutionService.findById("66a79a4624356b00da07cfbf");
 
-        terminalEntityUni
+        solutionEntityUni
                 .subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
                 .assertItem(solutionEntity);
@@ -158,6 +160,30 @@ class SolutionServiceTest {
 
         result.subscribe()
                 .with(list -> Assertions.assertEquals(mockedListSolution(), list));
+    }
+
+
+    @Test
+    void testDeleteSolution_Success() {
+        Mockito.when(solutionRepository.delete(any(SolutionEntity.class)))
+                .thenReturn(Uni.createFrom().voidItem());
+
+        Uni<Void> result = solutionService.deleteSolution(solutionEntity);
+
+        result.subscribe()
+                .with(Assertions::assertNull);
+    }
+
+    @Test
+    void testDeleteSolution_Failure() {
+        Mockito.when(solutionRepository.delete(any(SolutionEntity.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Uni<Void> result = solutionService.deleteSolution(solutionEntity);
+
+        result.subscribe()
+                .withSubscriber(UniAssertSubscriber.create())
+                .assertFailedWith(WebApplicationException.class);
     }
 
     @Test
