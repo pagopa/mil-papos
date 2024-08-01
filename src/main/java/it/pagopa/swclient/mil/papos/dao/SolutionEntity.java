@@ -12,4 +12,5 @@ public class SolutionEntity extends PanacheMongoEntity {
 
     private String pspId;
     private String locationCode;
+
 }

@@ -1,6 +1,5 @@
 package it.pagopa.swclient.mil.papos.resource;
 
-
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import io.quarkus.logging.Log;
@@ -235,31 +234,91 @@ public class SolutionResource {
                 });
     }
 
-
     @GET
-    @Path("/findByPayeeCode")
+    @Path("/findByLocationCode")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({ "mil_papos_admin" })
-    public Uni<Response> findByPayeeCode(
-            @HeaderParam("RequestId")
-            @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
-            @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
-            @QueryParam("payeeCode") String payeeCode,
+    public Uni<Response> findByLocationCode(
+            @HeaderParam("RequestId") @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG) @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
+            @QueryParam("locationCode") String locationCode,
             @QueryParam("page") int pageNumber,
             @QueryParam("size") int pageSize) {
 
-        checkToken(payeeCode);
+        checkToken(locationCode);
 
-        return findByAttribute(requestId, "payeeCode", payeeCode, pageNumber, pageSize);
+        return findByAttribute(requestId, "locationCode", locationCode, pageNumber, pageSize);
+    }
+
+    @DELETE
+    @Path("/{solutionId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "mil_papos_admin" })
+    public Uni<Response> deleteSolution(
+            @HeaderParam("RequestId") @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG) @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
+            @PathParam(value = "solutionId") String solutionId) {
+
+        Log.debugf("SolutionResource -> deleteSolution - Input requestId, solutionId: %s, %s", requestId,
+            solutionId);
+
+        return solutionService.findById(solutionId)
+                .onFailure()
+                .transform(err -> {
+                    Log.errorf(err,
+                            "SolutionResource -> deleteSolution: error during search solution with solutionId: [%s]",
+                            solutionId);
+
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                            .build());
+                })
+                .onItem()
+                .transformToUni(solutionEntity -> {
+                    if (solutionEntity == null) {
+                        Log.errorf(
+                                "SolutionResource -> deleteSolution: error 404 during searching solution with solutionId: [%s, %s]",
+                                solutionId);
+
+                        return Uni.createFrom().failure(new NotFoundException(Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity(new Errors(ErrorCodes.ERROR_SOLUTION_NOT_FOUND,
+                                        ErrorCodes.ERROR_SOLUTION_NOT_FOUND_MSG))
+                                .build()));
+                    }
+
+                    return solutionService.deleteSolution(solutionEntity)
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err,
+                                        "SolutionResource -> deleteSolution: error during deleting solution [%s]",
+                                        solutionEntity);
+
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB,
+                                                ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transform(solutionUpdate -> {
+                                Log.debugf("SolutionResource -> deleteSolution: solution deleted correctly on DB [%s]",
+                                        solutionUpdate);
+
+                                return Response
+                                        .status(Response.Status.NO_CONTENT)
+                                        .build();
+                            });
+                });
     }
 
     private void checkToken(String toCheck) {
-        Log.debugf("SolutionResource -> checkToken: sub [%s], pspId/payeeCode: [%s]", jwt.getSubject(), toCheck);
+        Log.debugf("SolutionResource -> checkToken: sub [%s], pspId/locationCode: [%s]", jwt.getSubject(), toCheck);
 
         if (!jwt.getSubject().equals(toCheck)) {
             Log.errorf(
-                    "SolutionResource -> checkToken: Error while checking token, subject not equals to pspId/payeeCode [%s, %s]",
+                    "SolutionResource -> checkToken: Error while checking token, subject not equals to pspId/locationCode [%s, %s]",
                     jwt.getSubject(), toCheck);
 
             throw new WebApplicationException(Response

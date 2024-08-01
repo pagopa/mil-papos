@@ -49,7 +49,7 @@ public final class ErrorCodes {
     public static final String ERROR_CHECK_TOKEN                                                 = MODULE_ID + "000210";
     public static final String ERROR_SOLUTION_NOT_FOUND                                          = MODULE_ID + "000211";
     public static final String ERROR_LIST_SOLUTIONS                                              = MODULE_ID + "000212";
-    public static final String ERROR_COUNTING_SOLUTIONS                                             = MODULE_ID + "000213";
+    public static final String ERROR_COUNTING_SOLUTIONS                                          = MODULE_ID + "000213";
 
 
     /*
