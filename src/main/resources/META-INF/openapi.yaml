@@ -143,16 +143,16 @@ paths:
         default:
           description: Unexpected error
   
-  /solutions/findByPayeeCode:
+  /solutions/findByLocationCode:
     parameters:
       - $ref: '#/components/parameters/RequestId'
     
     get:
-      operationId: getSolutionsByPayee
-      description: Returns all solutions for a given Payee
+      operationId: getSolutionsByLocationCode
+      description: Returns all solutions for a given LocationCode
       tags: [ solutions, admin, pa ]
       parameters:
-        - $ref: '#/components/parameters/PayeeCode'
+        - $ref: '#/components/parameters/LocationCode'
         - $ref: '#/components/parameters/PageNumber'
         - $ref: '#/components/parameters/PageSize'
       responses:
@@ -942,7 +942,7 @@ components:
       example: 12345
 
     LocationCode:
-      description: Fiscal code of the subject that helds the terminal
+      description: Fiscal code of the subject that held the terminal
       type: string
       pattern: "^\\d{11}$"
       minLength: 11
@@ -1676,6 +1676,15 @@ components:
       schema:
         $ref: '#/components/schemas/PayeeCode'
 
+
+    LocationCode:
+      name: locationCode
+      in: query
+      description: Fiscal code of the subject that held the terminal
+      required: true
+      schema:
+        $ref: '#/components/schemas/LocationCode'
+      
     PspId:
       name: pspId
       in: query
