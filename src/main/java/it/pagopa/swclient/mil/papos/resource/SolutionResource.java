@@ -1,7 +1,11 @@
 package it.pagopa.swclient.mil.papos.resource;
 
+
+import org.eclipse.microprofile.jwt.JsonWebToken;
+
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
+
 import it.pagopa.swclient.mil.papos.model.PageMetadata;
 import it.pagopa.swclient.mil.papos.model.SolutionDto;
 import it.pagopa.swclient.mil.papos.model.SolutionPageResponse;
@@ -20,9 +24,11 @@ import jakarta.ws.rs.core.Response;
 @Path("/solutions")
 public class SolutionResource {
     private final SolutionService solutionService;
+    private final JsonWebToken jwt;
 
-    public SolutionResource(SolutionService solutionService) {
+    public SolutionResource(SolutionService solutionService, JsonWebToken jwt) {
         this.solutionService = solutionService;
+        this.jwt = jwt;
     }
 
     @POST
@@ -159,4 +165,89 @@ public class SolutionResource {
                             .build());
                 });
     }
+
+    @GET
+    @Path("/findByPspId")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "mil_papos_admin" })
+    public Uni<Response> findByPspId(
+            @HeaderParam("RequestId") @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG) @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
+            @QueryParam("pspId") String pspId,
+            @QueryParam("page") int pageNumber,
+            @QueryParam("size") int pageSize) {
+
+        checkToken(pspId);
+
+        return findByAttribute(requestId, "pspId", pspId, pageNumber, pageSize);
+    }
+
+    private Uni<Response> findByAttribute(String requestId, String attributeName, String attributeValue, int pageNumber,
+            int pageSize) {
+        Log.debugf(
+                "SolutionResource -> findBy - Input requestId: %s, attributeName: %s, attributeValue: %s, pageNumber: %s, size: %s",
+                requestId, attributeName, attributeValue, pageNumber, pageSize);
+
+        return solutionService.getSolutionCountByAttribute(attributeName, attributeValue)
+                .onFailure()
+                .transform(err -> {
+                    Log.errorf(err, "SolutionResource -> findBy: error while counting solutions for [%s, %s]",
+                            attributeName, attributeValue);
+
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(ErrorCodes.ERROR_COUNTING_SOLUTIONS,
+                                    ErrorCodes.ERROR_COUNTING_SOLUTIONS_MSG))
+                            .build());
+                })
+                .onItem()
+                .transformToUni(numberOfSolutions -> {
+                    Log.debugf("SolutionResource -> findBy: found a total count of [%s] solutions", numberOfSolutions);
+
+                    return solutionService
+                            .getSolutionsListPagedByAttribute(attributeName, attributeValue, pageNumber, pageSize)
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err,
+                                        "SolutionResource -> findBy: Error while retrieving list of solutions for [%s, %s], index and size [%s, %s]",
+                                        attributeName, attributeValue, pageNumber, pageSize);
+
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(ErrorCodes.ERROR_LIST_SOLUTIONS,
+                                                ErrorCodes.ERROR_LIST_SOLUTIONS_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transform(solutionPaged -> {
+                                Log.debugf(
+                                        "SolutionResource -> findBy: size of list of solutions paginated found: [%s]",
+                                        solutionPaged.size());
+
+                                int totalPages = (int) Math.ceil((double) numberOfSolutions / pageSize);
+                                PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfSolutions, totalPages);
+
+                                return Response
+                                        .status(Response.Status.OK)
+                                        .entity(new SolutionPageResponse(solutionPaged, pageMetadata))
+                                        .build();
+                            });
+                });
+    }
+
+    private void checkToken(String toCheck) {
+        Log.debugf("SolutionResource -> checkToken: sub [%s], pspId/payeeCode: [%s]", jwt.getSubject(), toCheck);
+
+        if (!jwt.getSubject().equals(toCheck)) {
+            Log.errorf(
+                    "SolutionResource -> checkToken: Error while checking token, subject not equals to pspId/payeeCode [%s, %s]",
+                    jwt.getSubject(), toCheck);
+
+            throw new WebApplicationException(Response
+                    .status(Response.Status.UNAUTHORIZED)
+                    .entity(new Errors(ErrorCodes.ERROR_CHECK_TOKEN, ErrorCodes.ERROR_CHECK_TOKEN_MSG))
+                    .build());
+        }
+    }
+
 }
