@@ -289,12 +289,14 @@ public class TerminalResource {
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
             @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
             @QueryParam("workstation") String workstation,
+            @QueryParam("payeeCode") String payeeCode,
             @QueryParam("page") int pageNumber,
             @QueryParam("size") int pageSize) {
 
         Log.debugf("TerminalResource -> findByWorkstation - Input requestId: %s, workstation: %s, pageNumber: %s, size: %s", requestId, workstation, pageNumber, pageSize);
+        checkToken(payeeCode);
 
-        return terminalService.getTerminalCountByWorkstation(workstation)
+        return solutionService.getSolutionsListByLocationCode(payeeCode)
                 .onFailure()
                 .transform(err -> {
                     Log.errorf(err, "TerminalResource -> findByWorkstation: error while counting terminals for [%s]", workstation);
@@ -305,30 +307,58 @@ public class TerminalResource {
                             .build());
                 })
                 .onItem()
-                .transformToUni(numberOfTerminals -> {
-                    Log.debugf("TerminalResource -> findByWorkstation: found a total count of [%s] terminals", numberOfTerminals);
+                .transformToUni(solutionEntities -> {
+                    if (solutionEntities.isEmpty()) {
+                        Log.errorf("TerminalResource -> findByWorkstation: no solutions found for payeeCode %s", payeeCode);
 
-                    return terminalService.getTerminalListPagedByWorkstation(workstation, pageNumber, pageSize)
+                        return Uni.createFrom().item(() -> Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity(new Errors(ErrorCodes.ERROR_NO_SOLUTIONS_FOUND, ErrorCodes.ERROR_NO_SOLUTIONS_FOUND_PAYEE_MSG))
+                                .build()
+                        );
+                    }
+                    Log.debugf("TerminalResource -> findByWorkstation: found a total count of [%s] solutions associated to payeeCode [%s]", solutionEntities.size(), payeeCode);
+
+                    List<String> solutionIds = solutionEntities.stream()
+                            .map(solution -> solution.id.toString())
+                            .toList();
+
+                    return terminalService.getTerminalCountByWorkstation(workstation, solutionIds)
                             .onFailure()
                             .transform(err -> {
-                                Log.errorf(err, "TerminalResource -> findByWorkstation: Error while retrieving list of terminals for workstation [%s], index and size [%s, %s]", workstation, pageNumber, pageSize);
+                                Log.errorf(err, "TerminalResource -> findByWorkstation: error while counting terminals for [%s]", workstation);
 
                                 return new InternalServerErrorException(Response
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                        .entity(new Errors(ErrorCodes.ERROR_LIST_TERMINALS, ErrorCodes.ERROR_LIST_TERMINALS_MSG))
+                                        .entity(new Errors(ErrorCodes.ERROR_COUNTING_TERMINALS, ErrorCodes.ERROR_COUNTING_TERMINALS_MSG))
                                         .build());
                             })
                             .onItem()
-                            .transform(terminalsPaged -> {
-                                Log.debugf("TerminalResource -> findByWorkstation: size of list of terminals paginated found: [%s]", terminalsPaged.size());
+                            .transformToUni(numberOfTerminals -> {
+                                Log.debugf("TerminalResource -> findByWorkstation: found a total count of [%s] terminals", numberOfTerminals);
 
-                                int totalPages = (int) Math.ceil((double) numberOfTerminals / pageSize);
-                                PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfTerminals, totalPages);
+                                return terminalService.getTerminalListPagedByWorkstation(workstation, pageNumber, pageSize, solutionIds)
+                                        .onFailure()
+                                        .transform(err -> {
+                                            Log.errorf(err, "TerminalResource -> findByWorkstation: Error while retrieving list of terminals for workstation [%s], index and size [%s, %s]", workstation, pageNumber, pageSize);
 
-                                return Response
-                                        .status(Response.Status.OK)
-                                        .entity(new TerminalPageResponse(terminalsPaged, pageMetadata))
-                                        .build();
+                                            return new InternalServerErrorException(Response
+                                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                    .entity(new Errors(ErrorCodes.ERROR_LIST_TERMINALS, ErrorCodes.ERROR_LIST_TERMINALS_MSG))
+                                                    .build());
+                                        })
+                                        .onItem()
+                                        .transform(terminalsPaged -> {
+                                            Log.debugf("TerminalResource -> findByWorkstation: size of list of terminals paginated found: [%s]", terminalsPaged.size());
+
+                                            int totalPages = (int) Math.ceil((double) numberOfTerminals / pageSize);
+                                            PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfTerminals, totalPages);
+
+                                            return Response
+                                                    .status(Response.Status.OK)
+                                                    .entity(new TerminalPageResponse(terminalsPaged, pageMetadata))
+                                                    .build();
+                                        });
                             });
                 });
     }

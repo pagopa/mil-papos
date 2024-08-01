@@ -89,6 +89,7 @@ public final class ErrorCodes {
     private static final String ERROR_LIST_SOLUTIONS_DESCR = "error occurred while retrieving list of paginated solutions";
     private static final String ERROR_COUNTING_SOLUTIONS_DESCR = "error occurred while counting solutions";
     private static final String ERROR_NO_SOLUTIONS_FOUND_DESCR = "no solutions found with given pspId and solutionIds";
+    private static final String ERROR_NO_SOLUTIONS_FOUND_PAYEE_DESCR = "no solutions found with given payeeCode";
 
     /*
      * Error complete message
@@ -128,5 +129,6 @@ public final class ErrorCodes {
     public static final String ERROR_LIST_SOLUTIONS_MSG = "[" + ERROR_LIST_SOLUTIONS + "] " + ERROR_LIST_SOLUTIONS_DESCR;
     public static final String ERROR_COUNTING_SOLUTIONS_MSG = "[" + ERROR_COUNTING_SOLUTIONS + "] " + ERROR_COUNTING_SOLUTIONS_DESCR;
     public static final String ERROR_NO_SOLUTIONS_FOUND_MSG = "[" + ERROR_NO_SOLUTIONS_FOUND + "] " + ERROR_NO_SOLUTIONS_FOUND_DESCR;
+    public static final String ERROR_NO_SOLUTIONS_FOUND_PAYEE_MSG = "[" + ERROR_NO_SOLUTIONS_FOUND + "] " + ERROR_NO_SOLUTIONS_FOUND_PAYEE_DESCR;
 
 }

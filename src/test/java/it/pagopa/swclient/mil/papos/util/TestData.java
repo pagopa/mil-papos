@@ -85,11 +85,11 @@ public final class TestData {
         SolutionEntity se1 = new SolutionEntity();
         se1.id = new ObjectId("66a79a4624356b00da07cfbf");
         se1.setPspId("TMIL0101");
-        se1.setPspId("location1");
+        se1.setLocationCode("06534340721");
         SolutionEntity se2 = new SolutionEntity();
         se2.id = new ObjectId("66a79a4624346b20da01cfbf");
         se2.setPspId("TMIL0101");
-        se2.setPspId("location2");
+        se2.setLocationCode("06534340721");
 
         return List.of(se1, se2);
     }

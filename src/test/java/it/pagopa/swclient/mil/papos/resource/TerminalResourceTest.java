@@ -580,16 +580,20 @@ class TerminalResourceTest {
             @Claim(key = "sub", value = "AGID_01")
     })
     void testFindByWorkstation_200() {
-        Mockito.when(terminalService.getTerminalCountByWorkstation("workstation"))
+        Mockito.when(solutionService.getSolutionsListByLocationCode(anyString()))
+                .thenReturn(Uni.createFrom().item(mockedListSolution()));
+
+        Mockito.when(terminalService.getTerminalCountByWorkstation("workstation", Arrays.asList("66a79a4624356b00da07cfbf", "16a79a4624356b00da07cfbf")))
                 .thenReturn(Uni.createFrom().item(10L));
 
-        Mockito.when(terminalService.getTerminalListPagedByWorkstation("workstation", 0, 10))
+        Mockito.when(terminalService.getTerminalListPagedByWorkstation("workstation", 0, 10, Arrays.asList("66a79a4624356b00da07cfbf", "16a79a4624356b00da07cfbf")))
                 .thenReturn(Uni.createFrom().item(new ArrayList<>()));
 
         Response response = given()
                 .contentType(ContentType.JSON)
                 .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
                 .queryParam("workstation", "workstation")
+                .queryParam("payeeCode", "AGID_01")
                 .queryParam("page", 0)
                 .queryParam("size", 10)
                 .when()
@@ -605,14 +609,15 @@ class TerminalResourceTest {
     @JwtSecurity(claims = {
             @Claim(key = "sub", value = "AGID_01")
     })
-    void testFindByWorkstation_500() {
-        Mockito.when(terminalService.getTerminalCountByWorkstation("workstation"))
+    void testFindByWorkstation_500SL() {
+        Mockito.when(solutionService.getSolutionsListByLocationCode(anyString()))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
 
         Response response = given()
                 .contentType(ContentType.JSON)
                 .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
                 .queryParam("workstation", "workstation")
+                .queryParam("payeeCode", "AGID_01")
                 .queryParam("page", 0)
                 .queryParam("size", 10)
                 .when()
@@ -628,17 +633,75 @@ class TerminalResourceTest {
     @JwtSecurity(claims = {
             @Claim(key = "sub", value = "AGID_01")
     })
-    void testFindByWorkstation_500TLP() {
-        Mockito.when(terminalService.getTerminalCountByWorkstation("workstation"))
-                .thenReturn(Uni.createFrom().item(10L));
+    void testFindByWorkstation_404() {
+        List<SolutionEntity> empty = new ArrayList<>();
+        Mockito.when(solutionService.getSolutionsListByLocationCode(anyString()))
+                .thenReturn(Uni.createFrom().item(empty));
 
-        Mockito.when(terminalService.getTerminalListPagedByWorkstation("workstation", 0, 10))
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("workstation", "workstation")
+                .queryParam("payeeCode", "AGID_01")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/findByWorkstation")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(404, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"public_administration"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "06534340721")
+    })
+    void testFindByWorkstation_500TC() {
+        Mockito.when(solutionService.getSolutionsListByLocationCode("06534340721"))
+                .thenReturn(Uni.createFrom().item(mockedListSolution()));
+
+        List<String> solutionIds = mockedListSolution().stream().map(solution -> solution.id.toString()).toList();
+        Mockito.when(terminalService.getTerminalCountByWorkstation("workstation", solutionIds))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
 
         Response response = given()
                 .contentType(ContentType.JSON)
                 .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
                 .queryParam("workstation", "workstation")
+                .queryParam("payeeCode", "06534340721")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/findByWorkstation")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"public_administration"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "06534340721")
+    })
+    void testFindByWorkstation_500TLP() {
+        Mockito.when(solutionService.getSolutionsListByLocationCode("06534340721"))
+                .thenReturn(Uni.createFrom().item(mockedListSolution()));
+
+        List<String> solutionIds = mockedListSolution().stream().map(solution -> solution.id.toString()).toList();
+        Mockito.when(terminalService.getTerminalCountByWorkstation("workstation", solutionIds))
+                .thenReturn(Uni.createFrom().item(10L));
+
+        Mockito.when(terminalService.getTerminalListPagedByWorkstation("workstation", 0, 10, solutionIds))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("workstation", "workstation")
+                .queryParam("payeeCode", "06534340721")
                 .queryParam("page", 0)
                 .queryParam("size", 10)
                 .when()

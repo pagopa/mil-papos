@@ -133,10 +133,10 @@ class TerminalServiceTest {
 
     @Test
     void testGetTerminalCountWorkstation_Success() {
-        Mockito.when(terminalRepository.count("{ 'workstations': ?1 }", "workstation"))
+        Mockito.when(terminalRepository.count("{ 'workstations': ?1, solutionId in ?2 }", "workstation", Arrays.asList("66a79a4624356b00da07cfbf", "16a79a4624356b00da07cfbf")))
                 .thenReturn(Uni.createFrom().item(10L));
 
-        var terminalCount = terminalService.getTerminalCountByWorkstation("workstation");
+        var terminalCount = terminalService.getTerminalCountByWorkstation("workstation", Arrays.asList("66a79a4624356b00da07cfbf", "16a79a4624356b00da07cfbf"));
 
         terminalCount
                 .subscribe()
@@ -149,9 +149,9 @@ class TerminalServiceTest {
         ReactivePanacheQuery<TerminalEntity> query = Mockito.mock(ReactivePanacheQuery.class);
         Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
         Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedList()));
-        Mockito.when(terminalRepository.find("{ 'workstations': ?1 }", "workstation")).thenReturn(query);
+        Mockito.when(terminalRepository.find("{ 'workstations': ?1, solutionId in ?2 }", "workstation", Arrays.asList("66a79a4624356b00da07cfbf", "16a79a4624356b00da07cfbf"))).thenReturn(query);
 
-        Uni<List<TerminalEntity>> result = terminalService.getTerminalListPagedByWorkstation("workstation", 0, 10);
+        Uni<List<TerminalEntity>> result = terminalService.getTerminalListPagedByWorkstation("workstation", 0, 10, Arrays.asList("66a79a4624356b00da07cfbf", "16a79a4624356b00da07cfbf"));
 
         result.subscribe()
                 .with(list -> Assertions.assertEquals(mockedList(), list));

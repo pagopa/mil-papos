@@ -106,6 +106,19 @@ public class SolutionService {
                 .list();
     }
 
+    /**
+     * Returns a list of solutions. The query filters on locationCode.
+     *
+     * @param locationCode  of the solution to be filtered
+     * @return a list of solutions
+     */
+    public Uni<List<SolutionEntity>> getSolutionsListByLocationCode(String locationCode) {
+        Log.debugf("SolutionService -> getSolutionsListByLocationCode - Input parameters: %s", locationCode);
+
+        return solutionRepository
+                .find("locationCode = ?1", locationCode)
+                .list();
+    }
 
     /**
      * Find all solution equals to attributeValue given in input.

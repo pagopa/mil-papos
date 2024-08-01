@@ -1,5 +1,6 @@
 package it.pagopa.swclient.mil.papos.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.papos.dao.BulkLoadStatusEntity;
@@ -11,6 +12,7 @@ import it.pagopa.swclient.mil.papos.model.TerminalDto;
 import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
 import it.pagopa.swclient.mil.papos.util.Utility;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.InternalServerErrorException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -115,10 +117,17 @@ public class TerminalService {
      * @param workstation name of workstation
      * @return a number
      */
-    public Uni<Long> getTerminalCountByWorkstation(String workstation) {
+    public Uni<Long> getTerminalCountByWorkstation(String workstation, List<String> solutionIds) {
         Log.debugf("TerminalService -> getTerminalCountByWorkstation - Input parameter: %s", workstation);
+        String solutionIdsJson;
+        try {
+            solutionIdsJson = new ObjectMapper().writeValueAsString(solutionIds);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new InternalServerErrorException(e);
+        }
+        String query = String.format("{ 'workstations': ?1, 'solutionId': { '$in': %s } }", solutionIdsJson);
 
-        return terminalRepository.count("{ 'workstations': ?1 }", workstation);
+        return terminalRepository.count(query, workstation);
     }
 
     /**
@@ -129,11 +138,18 @@ public class TerminalService {
      * @param pageSize    page size
      * @return a list of terminals
      */
-    public Uni<List<TerminalEntity>> getTerminalListPagedByWorkstation(String workstation, int pageIndex, int pageSize) {
-        Log.debugf("TerminalService -> getTerminalListPagedByWorkstation - Input parameters: %s, %s, %s", workstation, pageIndex, pageSize);
+    public Uni<List<TerminalEntity>> getTerminalListPagedByWorkstation(String workstation, int pageIndex, int pageSize, List<String> solutionIds) {
+        Log.debugf("TerminalService -> getTerminalListPagedByWorkstation - Input parameters: %s, %s, %s, %s", workstation, pageIndex, pageSize, solutionIds);
+        String solutionIdsJson;
+        try {
+            solutionIdsJson = new ObjectMapper().writeValueAsString(solutionIds);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new InternalServerErrorException(e);
+        }
+        String query = String.format("{ 'workstations': ?1, 'solutionId': { '$in': %s } }", solutionIdsJson);
 
         return terminalRepository
-                .find("{ 'workstations': ?1 }", workstation)
+                .find(query, workstation)
                 .page(pageIndex, pageSize)
                 .list();
     }
