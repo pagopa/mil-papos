@@ -31,7 +31,6 @@ public final class ErrorCodes {
     public static final String ERROR_AMOUNT_MUST_NOT_BE_NULL                                     = MODULE_ID + "000017";
     public static final String ERROR_STATUS_MUST_NOT_BE_NULL                                     = MODULE_ID + "000018";
     public static final String ERROR_SOLUTIONID_MUST_NOT_BE_NULL                                 = MODULE_ID + "000019";
-    
 
     /*
      * Service errors code from 000200 to 000500
@@ -50,7 +49,7 @@ public final class ErrorCodes {
     public static final String ERROR_SOLUTION_NOT_FOUND                                          = MODULE_ID + "000211";
     public static final String ERROR_LIST_SOLUTIONS                                              = MODULE_ID + "000212";
     public static final String ERROR_COUNTING_SOLUTIONS                                          = MODULE_ID + "000213";
-
+    public static final String ERROR_NO_SOLUTIONS_FOUND                                          = MODULE_ID + "000214";
 
     /*
      * Error descriptions
@@ -89,8 +88,8 @@ public final class ErrorCodes {
     private static final String ERROR_SOLUTION_NOT_FOUND_DESCR = "solution not found on db";
     private static final String ERROR_LIST_SOLUTIONS_DESCR = "error occurred while retrieving list of paginated solutions";
     private static final String ERROR_COUNTING_SOLUTIONS_DESCR = "error occurred while counting solutions";
-
-
+    private static final String ERROR_NO_SOLUTIONS_FOUND_DESCR = "no solutions found with given pspId and solutionIds";
+    private static final String ERROR_NO_SOLUTIONS_FOUND_PAYEE_DESCR = "no solutions found with given payeeCode";
 
     /*
      * Error complete message
@@ -129,6 +128,7 @@ public final class ErrorCodes {
     public static final String ERROR_SOLUTION_NOT_FOUND_MSG = "[" + ERROR_SOLUTION_NOT_FOUND + "] " + ERROR_SOLUTION_NOT_FOUND_DESCR;
     public static final String ERROR_LIST_SOLUTIONS_MSG = "[" + ERROR_LIST_SOLUTIONS + "] " + ERROR_LIST_SOLUTIONS_DESCR;
     public static final String ERROR_COUNTING_SOLUTIONS_MSG = "[" + ERROR_COUNTING_SOLUTIONS + "] " + ERROR_COUNTING_SOLUTIONS_DESCR;
-
+    public static final String ERROR_NO_SOLUTIONS_FOUND_MSG = "[" + ERROR_NO_SOLUTIONS_FOUND + "] " + ERROR_NO_SOLUTIONS_FOUND_DESCR;
+    public static final String ERROR_NO_SOLUTIONS_FOUND_PAYEE_MSG = "[" + ERROR_NO_SOLUTIONS_FOUND + "] " + ERROR_NO_SOLUTIONS_FOUND_PAYEE_DESCR;
 
 }

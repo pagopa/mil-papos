@@ -18,10 +18,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
-
+import static it.pagopa.swclient.mil.papos.util.TestData.mockedListSolution;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static it.pagopa.swclient.mil.papos.util.TestData.mockedSolutionEntityList;
 
 import java.util.List;
 
@@ -97,19 +96,18 @@ class SolutionServiceTest {
 
     @Test
     void testFindSolutions_Success() {
-
         ReactivePanacheQuery<SolutionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
         Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
-        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedSolutionEntityList()));
+        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedListSolution()));
 
         Mockito.when(solutionRepository.findAll())
                 .thenReturn(query);
 
-        Uni<List<SolutionEntity>> solutionsEntityUni = solutionService.findSolutions("requestid", 1, 10);
+        Uni<List<SolutionEntity>> solutionsEntityUni = solutionService.findSolutions(1, 10);
 
         solutionsEntityUni
                 .subscribe()
-                .with(list -> Assertions.assertEquals(mockedSolutionEntityList(), list));
+                .with(list -> Assertions.assertEquals(mockedListSolution(), list));
 
     }
 
@@ -128,16 +126,40 @@ class SolutionServiceTest {
 
     @Test
     void testGetSolutionsList_Success() {
-
         ReactivePanacheQuery<SolutionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
         Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
-        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedSolutionEntityList()));
+        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedListSolution()));
         Mockito.when(solutionRepository.find(String.format("%s = ?1", "pspId"), "pspId")).thenReturn(query);
 
         Uni<List<SolutionEntity>> result = solutionService.getSolutionsListPagedByAttribute("pspId", "pspId", 0, 10);
 
         result.subscribe()
-                .with(list -> Assertions.assertEquals(mockedSolutionEntityList(), list));
+                .with(list -> Assertions.assertEquals(mockedListSolution(), list));
+    }
+
+    @Test
+    void testFindBy_Success() {
+        Mockito.when(solutionRepository.list(String.format("%s = ?1", "locationCode"), "12704343560"))
+                .thenReturn(Uni.createFrom().item(mockedListSolution()));
+
+        Uni<List<SolutionEntity>> result = solutionService.findAllByLocationOrPsp("locationCode", "12704343560");
+
+        result.subscribe()
+                .with(list -> Assertions.assertEquals(mockedListSolution(), list));
+    }
+
+    @Test
+    void testFindAllByPspAndSolutionId_Success() {
+        List<String> solutionIds = List.of("66a79a4624356b00da07cfbf", "66a79a4624346b20da01cfbf");
+        List<ObjectId> solutionObjectIds = solutionIds.stream().map(ObjectId::new).toList();
+
+        Mockito.when(solutionRepository.list("pspId = ?1 and _id in ?2", "TMIL0101", solutionObjectIds))
+                .thenReturn(Uni.createFrom().item(mockedListSolution()));
+
+        Uni<List<SolutionEntity>> result = solutionService.findAllByPspAndSolutionId("TMIL0101", solutionIds);
+
+        result.subscribe()
+                .with(list -> Assertions.assertEquals(mockedListSolution(), list));
     }
 
 
@@ -164,4 +186,16 @@ class SolutionServiceTest {
                 .assertFailedWith(WebApplicationException.class);
     }
 
+    @Test
+    void testFindByLocationCode_Success() {
+        ReactivePanacheQuery<SolutionEntity> mockQuery = Mockito.mock(ReactivePanacheQuery.class);
+        Mockito.when(mockQuery.list()).thenReturn(Uni.createFrom().item(mockedListSolution()));
+        Mockito.when(solutionRepository.find("locationCode = ?1", "06534340721"))
+                .thenReturn(mockQuery);
+
+        Uni<List<SolutionEntity>> result = solutionService.getSolutionsListByLocationCode("06534340721");
+
+        result.subscribe()
+                .with(list -> Assertions.assertEquals(mockedListSolution(), list));
+    }
 }

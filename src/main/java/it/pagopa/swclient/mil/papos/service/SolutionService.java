@@ -38,16 +38,20 @@ public class SolutionService {
                 .onItem()
                 .transform(solutionSaved -> solutionSaved);
     }
-    
-     /**
+
+    /**
      * Find all the solutions.
      *
-     * @param requestId
+     * @param pageNumber   0-based page index
+     * @param pageSize    page size
      * @return Solutions found
      */
-    public Uni<List<SolutionEntity>> findSolutions(String requestId, int pageNumber, int pageSize) {
-        Log.debugf("SolutionService -> findSolutions - Input requestId: %s, pageNumber: %s, size: %s", requestId, pageNumber, pageSize);
-        return solutionRepository.findAll().page(pageNumber,pageSize).list();
+    public Uni<List<SolutionEntity>> findSolutions(int pageNumber, int pageSize) {
+        Log.debugf("SolutionService -> findSolutions - Input pageNumber: %s, size: %s", pageNumber, pageSize);
+
+        return solutionRepository.findAll()
+                .page(pageNumber, pageSize)
+                .list();
     }
 
     /**
@@ -61,8 +65,6 @@ public class SolutionService {
 
         return solutionRepository.findById(new ObjectId(solutionId));
     }
-
-
 
     /**
      * Delete solution starting from a solutionEntity.
@@ -80,7 +82,6 @@ public class SolutionService {
                 .transform(solutionDeleted -> solutionDeleted);
     }
 
-  
     /**
      * Returns a number corresponding to the total number of solutions found.
      *
@@ -88,10 +89,9 @@ public class SolutionService {
      */
     public Uni<Long> getSolutionsCount() {
         Log.debugf("SolutionService -> getSolutionsCount");
-        
+
         return solutionRepository.count();
     }
-
 
     /**
      * Returns a number corresponding to the total number of solutions found.
@@ -106,7 +106,7 @@ public class SolutionService {
         return solutionRepository.count(attributeName, attributeValue);
     }
 
-      /**
+    /**
      * Returns a list of solutions paginated. The query filters on attributeName.
      *
      * @param attributeName  string representing the name of attribute to be filtered
@@ -124,4 +124,46 @@ public class SolutionService {
                 .list();
     }
 
+    /**
+     * Returns a list of solutions. The query filters on locationCode.
+     *
+     * @param locationCode of the solution to be filtered
+     * @return a list of solutions
+     */
+    public Uni<List<SolutionEntity>> getSolutionsListByLocationCode(String locationCode) {
+        Log.debugf("SolutionService -> getSolutionsListByLocationCode - Input parameters: %s", locationCode);
+
+        return solutionRepository
+                .find("locationCode = ?1", locationCode)
+                .list();
+    }
+
+    /**
+     * Find all solution equals to attributeValue given in input.
+     *
+     * @param attributeName  string representing the name of attribute to be filtered
+     * @param attributeValue value of attribute
+     * @return list of Solution found
+     */
+    public Uni<List<SolutionEntity>> findAllByLocationOrPsp(String attributeName, String attributeValue) {
+        Log.debugf("SolutionService -> findAllByLocationOrPsp - Input parameters: [%s, %s]", attributeName, attributeValue);
+
+        return solutionRepository.list(String.format("%s = ?1", attributeName), attributeValue);
+    }
+
+    /**
+     * Find all solution equals to pspId and solutionId given in input.
+     *
+     * @param pspId       ID of the POS service provider
+     * @param solutionIds id of the solution
+     * @return list of Solution found
+     */
+    public Uni<List<SolutionEntity>> findAllByPspAndSolutionId(String pspId, List<String> solutionIds) {
+        Log.debugf("SolutionService -> findAllByPspAndSolutionId - Input parameters: [%s, %s]", pspId, solutionIds);
+        List<ObjectId> solutionObjectIds = solutionIds.stream()
+                .map(ObjectId::new)
+                .toList();
+
+        return solutionRepository.list("pspId = ?1 and _id in ?2", pspId, solutionObjectIds);
+    }
 }

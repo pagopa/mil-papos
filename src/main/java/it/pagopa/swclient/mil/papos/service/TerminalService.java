@@ -52,13 +52,13 @@ public class TerminalService {
      * @param terminalRequests file json containing a set of terminals
      * @return list of terminal created
      */
-    public Uni<BulkLoadStatusEntity> processBulkLoad(List<TerminalDto> terminalRequests) {
+    public Uni<BulkLoadStatusEntity> processBulkLoad(List<TerminalDto> terminalRequests, int totalRecords, String pspId) {
         Log.debugf("TerminalService -> processBulkLoad - Input parameters: file content length: %d bytes", terminalRequests.size());
 
         String bulkLoadingId = Utility.generateRandomUuid();
-        BulkLoadStatus bulkLoadStatus = new BulkLoadStatus(bulkLoadingId, 0);
-
-        bulkLoadStatus.setTotalRecords(terminalRequests.size());
+        BulkLoadStatus bulkLoadStatus = new BulkLoadStatus(bulkLoadingId, totalRecords);
+        bulkLoadStatus.setFailedRecords(totalRecords - terminalRequests.size());
+        bulkLoadStatus.setPspId(pspId);
         List<Uni<Void>> terminalCreationUnis = new ArrayList<>();
 
         for (TerminalDto terminal : terminalRequests) {
@@ -112,39 +112,28 @@ public class TerminalService {
     /**
      * Returns a number corresponding to the total number of terminal found.
      *
-     * @param attributeName  name of the attribute
-     * @param attributeValue value of the attribute
+     * @param workstation name of workstation
      * @return a number
      */
-    public Uni<Long> getTerminalCountByAttribute(String attributeName, String attributeValue) {
-        Log.debugf("TerminalService -> getTerminalCountByAttribute - Input parameters: %s, %s", attributeName, attributeValue);
+    public Uni<Long> getTerminalCountByWorkstation(String workstation, List<String> solutionIds) {
+        Log.debugf("TerminalService -> getTerminalCountByWorkstation - Input parameter: %s", workstation);
 
-        if (attributeName.equals("workstation")) {
-            return terminalRepository.count("{ 'workstations': ?1 }", attributeValue);
-        }
-        return terminalRepository.count(attributeName, attributeValue);
+        return terminalRepository.count("workstations = ?1 and solutionId in ?2", workstation, solutionIds);
     }
 
     /**
      * Returns a list of terminals paginated. The query filters on attributeName.
      *
-     * @param attributeName  string representing the name of attribute to be filtered
-     * @param attributeValue value of attribute
-     * @param pageIndex      0-based page index
-     * @param pageSize       page size
+     * @param workstation name of workstation
+     * @param pageIndex   0-based page index
+     * @param pageSize    page size
      * @return a list of terminals
      */
-    public Uni<List<TerminalEntity>> getTerminalListPagedByAttribute(String attributeName, String attributeValue, int pageIndex, int pageSize) {
-        Log.debugf("TerminalService -> getTerminalListPagedByAttribute - Input parameters: %s, %s, %s, %s", attributeName, attributeValue, pageIndex, pageSize);
+    public Uni<List<TerminalEntity>> getTerminalListPagedByWorkstation(String workstation, int pageIndex, int pageSize, List<String> solutionIds) {
+        Log.debugf("TerminalService -> getTerminalListPagedByWorkstation - Input parameters: %s, %s, %s, %s", workstation, pageIndex, pageSize, solutionIds);
 
-        if (attributeName.equals("workstation")) {
-            return terminalRepository
-                    .find("{ 'workstations': ?1 }", attributeValue)
-                    .page(pageIndex, pageSize)
-                    .list();
-        }
         return terminalRepository
-                .find(String.format("%s = ?1", attributeName), attributeValue)
+                .find("workstations = ?1 and solutionId in ?2", workstation, solutionIds)
                 .page(pageIndex, pageSize)
                 .list();
     }
@@ -217,6 +206,28 @@ public class TerminalService {
                 .transform(error -> error)
                 .onItem()
                 .transform(terminalDeleted -> terminalDeleted);
+    }
+
+    /**
+     * Returns a number corresponding to the total number of terminal found.
+     *
+     * @param solutionIds list of Solution
+     * @return a number
+     */
+    public Uni<Long> countBySolutionIds(List<String> solutionIds) {
+        return terminalRepository.count("solutionId in (?1)", solutionIds);
+    }
+
+    /**
+     * Find all terminal equals to solutionIds given in input.
+     *
+     * @param solutionIds list of Solution
+     * @return Solutions found
+     */
+    public Uni<List<TerminalEntity>> findBySolutionIds(List<String> solutionIds, int pageIndex, int pageSize) {
+        return terminalRepository.find("solutionId in ?1", solutionIds)
+                .page(pageIndex, pageSize)
+                .list();
     }
 
     private TerminalEntity createTerminalEntity(TerminalDto terminalDto, String terminalUuid) {

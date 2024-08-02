@@ -71,9 +71,12 @@ public class SolutionResource {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({ "mil_papos_admin" })
     public Uni<Response> getSolutions(
-            @HeaderParam("RequestId") @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG) @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
+            @HeaderParam("RequestId") @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
+            @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
             @QueryParam("page") int pageNumber,
             @QueryParam("size") int pageSize) {
+
+        Log.debugf("SolutionResource -> getSolutions - Input requestId, pageNumber, pageSize: %s, %s, %s", requestId, pageNumber, pageSize);
 
         return solutionService
                 .getSolutionsCount()
@@ -91,7 +94,7 @@ public class SolutionResource {
                 .transformToUni(numberOfSolutions -> {
                     Log.debugf("SolutionResource -> findAll: found a total count of [%s] solutions", numberOfSolutions);
 
-                    return solutionService.findSolutions(requestId, pageNumber, pageSize)
+                    return solutionService.findSolutions(pageNumber, pageSize)
                             .onFailure()
                             .transform(err -> {
                                 Log.errorf(err,

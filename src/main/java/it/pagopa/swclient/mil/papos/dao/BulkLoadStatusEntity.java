@@ -13,6 +13,7 @@ import java.util.List;
 public class BulkLoadStatusEntity extends PanacheMongoEntity {
 
     private String bulkLoadingId;
+    private String pspId;
     private int totalRecords;
     private int successRecords;
     private int failedRecords;

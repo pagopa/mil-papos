@@ -18,6 +18,7 @@ public final class TestData {
 
     public static TerminalEntity getCorrectTerminalEntity() {
         TerminalEntity terminalEntity = new TerminalEntity();
+        terminalEntity.setSolutionId("66a79a4624356b00da07cfbf");
         terminalEntity.setTerminalUuid("74a7c24f-5c64-41c2-aeac-d1fae93bff49");
         terminalEntity.setTerminalId("34523860");
         terminalEntity.setEnabled(true);
@@ -29,6 +30,7 @@ public final class TestData {
     public static BulkLoadStatusEntity getCorrectBulkLoadStatusEntity() {
         BulkLoadStatusEntity bulkLoadStatusEntity = new BulkLoadStatusEntity();
         bulkLoadStatusEntity.setBulkLoadingId("74a7c24f-5c64-41c2-aeac-d1fae93bff49");
+        bulkLoadStatusEntity.setPspId("AGID_01");
         bulkLoadStatusEntity.setSuccessRecords(5);
         bulkLoadStatusEntity.setFailedRecords(0);
         bulkLoadStatusEntity.setTotalRecords(5);
@@ -80,17 +82,19 @@ public final class TestData {
         return List.of(te1, te2);
     }
 
+    public static List<SolutionEntity> mockedListSolution() {
+        SolutionEntity se1 = new SolutionEntity();
+        se1.id = new ObjectId("66a79a4624356b00da07cfbf");
+        se1.setPspId("TMIL0101");
+        se1.setLocationCode("06534340721");
+        SolutionEntity se2 = new SolutionEntity();
+        se2.id = new ObjectId("66a79a4624346b20da01cfbf");
+        se2.setPspId("TMIL0101");
+        se2.setLocationCode("06534340721");
 
-    public static List<SolutionEntity> mockedSolutionEntityList() {
-        
-        SolutionEntity te1 = new SolutionEntity();
-        te1.setPspId("uuid1");
-        SolutionEntity te2 = new SolutionEntity();
-        te2.setPspId("uuid2");
-        return List.of(te1, te2);
+        return List.of(se1, se2);
     }
 
-    
     public static List<TerminalDto> mockedListTerminalDto() {
         TerminalDto td1 = new TerminalDto("66a79a4624356b00da07cfbf", "34523860", true, null);
         TerminalDto td2 = new TerminalDto("66a79a4624356b00da07cfbf", "34523861", false, null);
