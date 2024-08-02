@@ -1,6 +1,5 @@
 package it.pagopa.swclient.mil.papos.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.papos.dao.BulkLoadStatusEntity;
@@ -12,7 +11,6 @@ import it.pagopa.swclient.mil.papos.model.TerminalDto;
 import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
 import it.pagopa.swclient.mil.papos.util.Utility;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.InternalServerErrorException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -119,15 +117,8 @@ public class TerminalService {
      */
     public Uni<Long> getTerminalCountByWorkstation(String workstation, List<String> solutionIds) {
         Log.debugf("TerminalService -> getTerminalCountByWorkstation - Input parameter: %s", workstation);
-        String solutionIdsJson;
-        try {
-            solutionIdsJson = new ObjectMapper().writeValueAsString(solutionIds);
-        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-            throw new InternalServerErrorException(e);
-        }
-        String query = String.format("{ 'workstations': ?1, 'solutionId': { '$in': %s } }", solutionIdsJson);
 
-        return terminalRepository.count(query, workstation);
+        return terminalRepository.count("workstations = ?1 and solutionId in ?2", workstation, solutionIds);
     }
 
     /**
@@ -140,16 +131,9 @@ public class TerminalService {
      */
     public Uni<List<TerminalEntity>> getTerminalListPagedByWorkstation(String workstation, int pageIndex, int pageSize, List<String> solutionIds) {
         Log.debugf("TerminalService -> getTerminalListPagedByWorkstation - Input parameters: %s, %s, %s, %s", workstation, pageIndex, pageSize, solutionIds);
-        String solutionIdsJson;
-        try {
-            solutionIdsJson = new ObjectMapper().writeValueAsString(solutionIds);
-        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-            throw new InternalServerErrorException(e);
-        }
-        String query = String.format("{ 'workstations': ?1, 'solutionId': { '$in': %s } }", solutionIdsJson);
 
         return terminalRepository
-                .find(query, workstation)
+                .find("workstations = ?1 and solutionId in ?2", workstation, solutionIds)
                 .page(pageIndex, pageSize)
                 .list();
     }

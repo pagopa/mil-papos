@@ -228,7 +228,9 @@ jobs:
             --env-var "clientIdPsp=${{ secrets.NEWMAN_IT__PA_TOKEN_CLIENT_ID }}" \
             --env-var "clientSecretPsp=${{ secrets.NEWMAN_IT_PA_TOKEN_CLIENT_SECRET }}" \
             --env-var "clientIdPa=${{ secrets.NEWMAN_IT__PSP_TOKEN_CLIENT_ID }}" \
-            --env-var "clientSecretPa=${{ secrets.NEWMAN_IT_PSP_TOKEN_CLIENT_SECRET }}"
+            --env-var "clientSecretPa=${{ secrets.NEWMAN_IT_PSP_TOKEN_CLIENT_SECRET }}" \
+            --env-var "clientIdAdm=${{ secrets.NEWMAN_IT__PAPOS_ADMIN_TOKEN_CLIENT_ID }}" \
+            --env-var "clientSecretAdm=${{ secrets.NEWMAN_IT_PAPOS_ADMIN_TOKEN_CLIENT_SECRET }}"
 
       #
       # STABLE - Update of pom.xml with the new version.

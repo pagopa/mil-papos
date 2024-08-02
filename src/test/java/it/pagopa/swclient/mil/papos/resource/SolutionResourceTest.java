@@ -148,7 +148,7 @@ class SolutionResourceTest {
         Mockito.when(solutionService.getSolutionsCount())
                 .thenReturn(Uni.createFrom().item(10L));
 
-        Mockito.when(solutionService.findSolutions(anyString(), anyInt(), anyInt()))
+        Mockito.when(solutionService.findSolutions(anyInt(), anyInt()))
                 .thenReturn(Uni.createFrom().item(new ArrayList<>()));
 
         Response response = given()
@@ -189,7 +189,7 @@ class SolutionResourceTest {
         Mockito.when(solutionService.getSolutionsCount())
                 .thenReturn(Uni.createFrom().item(10L));
 
-        Mockito.when(solutionService.findSolutions(anyString(), anyInt(), anyInt()))
+        Mockito.when(solutionService.findSolutions(anyInt(), anyInt()))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
 
         Response response = given()

@@ -62,7 +62,7 @@ public class TerminalResource {
                 .onItem()
                 .transformToUni(solution -> {
                     if (solution == null) {
-                        Log.errorf("TerminalResource -> createTerminal: error 404 during searching solution with solutionId: %s", terminal.solutionId());
+                        Log.errorf("TerminalResource -> createTerminal: error 404 during searching solution with solutionId: [%s]", terminal.solutionId());
 
                         return Uni.createFrom().failure(new NotFoundException(Response
                                 .status(Response.Status.NOT_FOUND)
@@ -449,38 +449,23 @@ public class TerminalResource {
 
         Log.debugf("TerminalResource -> updateTerminal - Input requestId, updateTerminal: %s, %s", requestId, terminal);
 
-//        TODO: CHECHK THIS checkToken(terminal.pspId());
-
-        return terminalService.findTerminal(terminalUuid)
-                .onFailure()
-                .transform(err -> {
-                    Log.errorf(err,
-                            "TerminalResource -> updateTerminal: error during search terminal with terminalUuid: [%s]",
-                            terminalUuid);
-
-                    return new InternalServerErrorException(Response
-                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
-                            .build());
-                })
+        return solutionService.findById(terminal.solutionId())
                 .onItem()
-                .transformToUni(terminalEntity -> {
-                    if (terminalEntity == null) {
-                        Log.errorf(
-                                "TerminalResource -> updateTerminal: error 404 during searching terminal with terminalUuid: [%s]",
-                                terminalUuid);
+                .transformToUni(solution -> {
+                    if (solution == null) {
+                        Log.errorf("TerminalResource -> createTerminal: error 404 during searching solution with solutionId: %s", terminal.solutionId());
 
                         return Uni.createFrom().failure(new NotFoundException(Response
                                 .status(Response.Status.NOT_FOUND)
-                                .entity(new Errors(ErrorCodes.ERROR_TERMINAL_NOT_FOUND, ErrorCodes.ERROR_TERMINAL_NOT_FOUND_MSG))
+                                .entity(new Errors(ErrorCodes.ERROR_SOLUTION_NOT_FOUND, ErrorCodes.ERROR_SOLUTION_NOT_FOUND_MSG))
                                 .build()));
                     }
 
-                    return terminalService.updateTerminal(terminalUuid, terminal, terminalEntity)
+                    checkToken(solution.getPspId());
+                    return terminalService.findTerminal(terminalUuid)
                             .onFailure()
                             .transform(err -> {
-                                Log.errorf(err, "TerminalResource -> updateTerminal: error during update terminal [%s]",
-                                        terminal);
+                                Log.errorf(err, "TerminalResource -> updateTerminal: error during search terminal with terminalUuid: [%s]", terminalUuid);
 
                                 return new InternalServerErrorException(Response
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -488,13 +473,34 @@ public class TerminalResource {
                                         .build());
                             })
                             .onItem()
-                            .transform(terminalUpdated -> {
-                                Log.debugf("TerminalResource -> updateTerminal: terminal updated correctly on DB [%s]",
-                                        terminalUpdated);
+                            .transformToUni(terminalEntity -> {
+                                if (terminalEntity == null) {
+                                    Log.errorf("TerminalResource -> updateTerminal: error 404 during searching terminal with terminalUuid: [%s]", terminalUuid);
 
-                                return Response
-                                        .status(Response.Status.NO_CONTENT)
-                                        .build();
+                                    return Uni.createFrom().failure(new NotFoundException(Response
+                                            .status(Response.Status.NOT_FOUND)
+                                            .entity(new Errors(ErrorCodes.ERROR_TERMINAL_NOT_FOUND, ErrorCodes.ERROR_TERMINAL_NOT_FOUND_MSG))
+                                            .build()));
+                                }
+
+                                return terminalService.updateTerminal(terminalUuid, terminal, terminalEntity)
+                                        .onFailure()
+                                        .transform(err -> {
+                                            Log.errorf(err, "TerminalResource -> updateTerminal: error during update terminal [%s]", terminal);
+
+                                            return new InternalServerErrorException(Response
+                                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                    .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                                    .build());
+                                        })
+                                        .onItem()
+                                        .transform(terminalUpdated -> {
+                                            Log.debugf("TerminalResource -> updateTerminal: terminal updated correctly on DB [%s]", terminalUpdated);
+
+                                            return Response
+                                                    .status(Response.Status.NO_CONTENT)
+                                                    .build();
+                                        });
                             });
                 });
     }
@@ -534,24 +540,38 @@ public class TerminalResource {
                                 .build()));
                     }
 
-                    return terminalService.deleteTerminal(terminalEntity)
-                            .onFailure()
-                            .transform(err -> {
-                                Log.errorf(err, "TerminalResource -> deleteTerminal: error during deleting terminal [%s]", terminalEntity);
-
-                                return new InternalServerErrorException(Response
-                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
-                                        .build());
-                            })
+                    return solutionService.findById(terminalEntity.getSolutionId())
                             .onItem()
-                            .transform(terminalUpdated -> {
-                                Log.debugf("TerminalResource -> deleteTerminal: terminal deleted correctly on DB [%s]",
-                                        terminalUpdated);
+                            .transformToUni(solution -> {
+                                if (solution == null) {
+                                    Log.errorf("TerminalResource -> createTerminal: error 404 during searching solution with solutionId: %s", terminalEntity.getSolutionId());
 
-                                return Response
-                                        .status(Response.Status.NO_CONTENT)
-                                        .build();
+                                    return Uni.createFrom().failure(new NotFoundException(Response
+                                            .status(Response.Status.NOT_FOUND)
+                                            .entity(new Errors(ErrorCodes.ERROR_SOLUTION_NOT_FOUND, ErrorCodes.ERROR_SOLUTION_NOT_FOUND_MSG))
+                                            .build()));
+                                }
+
+                                checkToken(solution.getPspId());
+                                return terminalService.deleteTerminal(terminalEntity)
+                                        .onFailure()
+                                        .transform(err -> {
+                                            Log.errorf(err, "TerminalResource -> deleteTerminal: error during deleting terminal [%s]", terminalEntity);
+
+                                            return new InternalServerErrorException(Response
+                                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                    .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                                    .build());
+                                        })
+                                        .onItem()
+                                        .transform(terminalUpdated -> {
+                                            Log.debugf("TerminalResource -> deleteTerminal: terminal deleted correctly on DB [%s]",
+                                                    terminalUpdated);
+
+                                            return Response
+                                                    .status(Response.Status.NO_CONTENT)
+                                                    .build();
+                                        });
                             });
                 });
     }

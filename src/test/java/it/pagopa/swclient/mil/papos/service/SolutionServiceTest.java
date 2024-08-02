@@ -103,7 +103,7 @@ class SolutionServiceTest {
         Mockito.when(solutionRepository.findAll())
                 .thenReturn(query);
 
-        Uni<List<SolutionEntity>> solutionsEntityUni = solutionService.findSolutions("requestid", 1, 10);
+        Uni<List<SolutionEntity>> solutionsEntityUni = solutionService.findSolutions(1, 10);
 
         solutionsEntityUni
                 .subscribe()
