@@ -198,4 +198,29 @@ class SolutionServiceTest {
         result.subscribe()
                 .with(list -> Assertions.assertEquals(mockedListSolution(), list));
     }
-}
+
+
+    @Test
+    void testUpdateSolution_Success() {
+        Mockito.when(solutionRepository.update(any(SolutionEntity.class)))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
+
+        Uni<SolutionEntity> result = solutionService.updateSolution("solutionId", solutionDto, solutionEntity);
+
+        result.subscribe()
+                .with(entity -> Assertions.assertEquals(solutionEntity, entity));
+    }
+
+    @Test
+    void testUpdateSolution_Failure() {
+        Mockito.when(solutionRepository.update(any(SolutionEntity.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Uni<SolutionEntity> result = solutionService.updateSolution("solutionId", solutionDto, solutionEntity);
+
+        result.subscribe()
+                .withSubscriber(UniAssertSubscriber.create())
+                .assertFailedWith(WebApplicationException.class);
+    }
+
+} 
