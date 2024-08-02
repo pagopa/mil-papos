@@ -218,6 +218,10 @@ public class TerminalService {
         return terminalRepository.count("solutionId in (?1)", solutionIds);
     }
 
+    public Uni<List<TerminalEntity>> findAllBySolutionIds(List<String> solutionIds) {
+        return terminalRepository.find("solutionId in ?1", solutionIds).list();
+    }
+
     /**
      * Find all terminal equals to solutionIds given in input.
      *

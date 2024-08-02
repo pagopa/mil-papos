@@ -3,8 +3,11 @@ package it.pagopa.swclient.mil.papos.resource;
 import io.quarkus.logging.Log;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
+import it.pagopa.swclient.mil.papos.dao.TerminalEntity;
 import it.pagopa.swclient.mil.papos.dao.TransactionEntity;
 import it.pagopa.swclient.mil.papos.model.*;
+import it.pagopa.swclient.mil.papos.service.SolutionService;
+import it.pagopa.swclient.mil.papos.service.TerminalService;
 import it.pagopa.swclient.mil.papos.service.TransactionService;
 import it.pagopa.swclient.mil.papos.util.ErrorCodes;
 import it.pagopa.swclient.mil.papos.util.Errors;
@@ -19,18 +22,26 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
-import java.time.format.DateTimeParseException;
 import java.util.Date;
+import java.util.List;
 
 @Path("/transactions")
 public class TransactionResource {
 
     private final TransactionService transactionService;
 
+    private final TerminalService terminalService;
+
+    private final SolutionService solutionService;
+
     private final JsonWebToken jwt;
 
-    public TransactionResource(TransactionService transactionService, JsonWebToken jwt) {
+    private static final String CREATION_TIMESTAMP = "creationTimestamp";
+
+    public TransactionResource(TransactionService transactionService, TerminalService terminalService, SolutionService solutionService, JsonWebToken jwt) {
         this.transactionService = transactionService;
+        this.terminalService = terminalService;
+        this.solutionService = solutionService;
         this.jwt = jwt;
     }
 
@@ -38,7 +49,7 @@ public class TransactionResource {
     @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "public_administration" })
+    @RolesAllowed({"public_administration"})
     public Uni<Response> createTransaction(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -49,7 +60,7 @@ public class TransactionResource {
 
         checkToken(transaction.payeeCode());
 
-        return transactionService.createTransaction(transaction)
+        return terminalService.findTerminal(transaction.terminalUuid())
                 .onFailure()
                 .transform(err -> {
                     Log.errorf(err, "TransactionResource -> createTransaction: unexpected error during persist for transaction [%s]", transaction);
@@ -60,10 +71,32 @@ public class TransactionResource {
                             .build());
                 })
                 .onItem()
-                .transform(transactionSaved -> {
-                    Log.debugf("TransactionResource -> createTransaction: transaction saved correctly on DB [%s]", transactionSaved);
+                .transformToUni(terminalFound -> {
+                    if (terminalFound == null) {
+                        Log.errorf("TransactionResource -> createTransaction: no terminal found for terminalUuid [%s]", transaction.terminalUuid());
 
-                    return Response.status(Response.Status.NO_CONTENT).build();
+                        return Uni.createFrom().failure(new NotFoundException(Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity(new Errors(ErrorCodes.ERROR_TERMINAL_NOT_FOUND, ErrorCodes.ERROR_TERMINAL_NOT_FOUND_MSG))
+                                .build()));
+                    }
+
+                    return transactionService.createTransaction(transaction)
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err, "TransactionResource -> createTransaction: unexpected error during persist for transaction [%s]", transaction);
+
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transform(transactionSaved -> {
+                                Log.debugf("TransactionResource -> createTransaction: transaction saved correctly on DB [%s]", transactionSaved);
+
+                                return Response.status(Response.Status.NO_CONTENT).build();
+                            });
                 });
     }
 
@@ -71,7 +104,7 @@ public class TransactionResource {
     @Path("/findByPayeeCode")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "public_administration" })
+    @RolesAllowed({"public_administration"})
     public Uni<Response> findByPayeeCode(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -88,14 +121,51 @@ public class TransactionResource {
 
         checkToken(payeeCode);
 
-        return findByAttribute("payeeCode", payeeCode, startDate, endDate, sortStrategy, pageNumber, pageSize);
+        Date convertedStartDate = Utility.convertStringToDate(startDate, true);
+        Date convertedEndDate = Utility.convertStringToDate(endDate, false);
+        Sort sort = Sort.by(CREATION_TIMESTAMP, "asc".equalsIgnoreCase(sortStrategy) ? Sort.Direction.Ascending : Sort.Direction.Descending);
+
+        return transactionService.getTransactionCountByAttribute("payeeCode", payeeCode)
+                .onFailure()
+                .transform(err -> {
+                    Log.errorf(err, "TransactionResource -> findBy: error while counting transactions for payeeCode", payeeCode);
+
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(ErrorCodes.ERROR_COUNTING_TRANSACTIONS, ErrorCodes.ERROR_COUNTING_TRANSACTIONS_MSG))
+                            .build());
+                })
+                .onItem()
+                .transformToUni(numberOfTransactions ->
+                        transactionService.getTransactionListPagedByAttribute("payeeCode", payeeCode, convertedStartDate, convertedEndDate, sort, pageNumber, pageSize)
+                                .onFailure()
+                                .transform(err -> {
+                                    Log.errorf(err, "TransactionResource -> findBy: Error while retrieving list of transactions for payeeCode [%s], index and size [%s, %s]", payeeCode, pageNumber, pageSize);
+
+                                    return new InternalServerErrorException(Response
+                                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                            .entity(new Errors(ErrorCodes.ERROR_LIST_TRANSACTIONS, ErrorCodes.ERROR_LIST_TRANSACTIONS_MSG))
+                                            .build());
+                                })
+                                .onItem()
+                                .transform(transactionsPaged -> {
+                                    Log.debugf("TransactionResource -> findBy: size of list of transactions paginated found: [%s]", transactionsPaged.size());
+
+                                    int totalPages = (int) Math.ceil((double) numberOfTransactions / pageSize);
+                                    PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfTransactions, totalPages);
+
+                                    return Response
+                                            .status(Response.Status.OK)
+                                            .entity(new TransactionPageResponse(transactionsPaged, pageMetadata))
+                                            .build();
+                                }));
     }
 
     @GET
     @Path("/findByPspId")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({"pos_service_provider"})
     public Uni<Response> findByPspId(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -110,16 +180,99 @@ public class TransactionResource {
 
         Log.debugf("TransactionResource -> findByPspId - Input requestId, pspId, startDate, endDate, sortStrategy, page, size: %s, %s, %s, %s, %s, %s, %s", requestId, pspId, startDate, endDate, sortStrategy, pageNumber, pageSize);
 
-        checkToken(pspId);
+        return solutionService.findAllByLocationOrPsp("pspId", pspId)
+                .onFailure()
+                .transform(err -> {
+                    Log.errorf(err, "TransactionResource -> findByPspId: unexpected error during finding solution with pspId [%s]", pspId);
 
-        return findByAttribute("pspId", pspId, startDate, endDate, sortStrategy, pageNumber, pageSize);
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                            .build());
+                })
+                .onItem()
+                .transformToUni(solutionEntities -> {
+                    Log.debugf("TransactionResource -> findByPspId: solution found by pspId [%s]: %s", pspId, solutionEntities);
+
+                    List<String> solutionIds = solutionEntities.stream()
+                            .map(solution -> solution.id.toString())
+                            .toList();
+
+                    return terminalService.findAllBySolutionIds(solutionIds)
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err, "TransactionResource -> findByPspId: unexpected error during find all terminal by solutionIds [%s]", solutionIds);
+
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transformToUni(terminalEntities -> {
+                                Log.debugf("TransactionResource -> findByPspId: terminals found by solutionIds [%s]: %s", solutionIds, terminalEntities);
+
+                                List<String> terminalUuids = terminalEntities.stream()
+                                        .map(TerminalEntity::getTerminalUuid)
+                                        .toList();
+
+                                return transactionService.getTransactionCountByTerminals(terminalUuids)
+                                        .onFailure()
+                                        .transform(err -> {
+                                            Log.errorf(err, "TransactionResource -> findByPspId: unexpected error during count transaction by terminalUuid [%s]", terminalUuids);
+
+                                            return new InternalServerErrorException(Response
+                                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                    .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                                    .build());
+                                        })
+                                        .onItem()
+                                        .transformToUni(numberOfTransactions -> {
+                                            if (numberOfTransactions == 0) {
+                                                Log.errorf("TransactionResource -> findByPspId: no transaction found on db by terminalUuids [%s]", terminalUuids);
+
+                                                return Uni.createFrom().failure(new NotFoundException(Response
+                                                        .status(Response.Status.NOT_FOUND)
+                                                        .entity(new Errors(ErrorCodes.ERROR_TRANSACTION_NOT_FOUND, terminalUuids.toString()))
+                                                        .build()));
+                                            }
+
+                                            Date convertedStartDate = Utility.convertStringToDate(startDate, true);
+                                            Date convertedEndDate = Utility.convertStringToDate(endDate, false);
+                                            Sort sort = Sort.by(CREATION_TIMESTAMP, "asc".equalsIgnoreCase(sortStrategy) ? Sort.Direction.Ascending : Sort.Direction.Descending);
+
+                                            return transactionService.getTransactionListPagedByTerminals(terminalUuids, convertedStartDate, convertedEndDate, sort, pageNumber, pageSize)
+                                                    .onFailure()
+                                                    .transform(err -> {
+                                                        Log.errorf(err, "TransactionResource -> findByPspId: unexpected error during find all terminal by solutionIds [%s]", solutionIds);
+
+                                                        return new InternalServerErrorException(Response
+                                                                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                                .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                                                .build());
+                                                    })
+                                                    .onItem()
+                                                    .transformToUni(transactionsPaged -> {
+                                                        Log.debugf("TransactionResource -> findBy: size of list of transactions paginated found: [%s]", transactionsPaged.size());
+
+                                                        int totalPages = (int) Math.ceil((double) numberOfTransactions / pageSize);
+                                                        PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfTransactions, totalPages);
+
+                                                        return Uni.createFrom().item(Response
+                                                                .status(Response.Status.OK)
+                                                                .entity(new TransactionPageResponse(transactionsPaged, pageMetadata))
+                                                                .build());
+                                                    });
+                                        });
+                            });
+                });
     }
 
     @DELETE
     @Path("/{transactionId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "public_administration" })
+    @RolesAllowed({"public_administration"})
     public Uni<Response> deleteTransaction(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -157,12 +310,11 @@ public class TransactionResource {
                 );
     }
 
-
     @PATCH
     @Path("/{transactionId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "public_administration" })
+    @RolesAllowed({"public_administration"})
     public Uni<Response> updateTransaction(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -203,7 +355,7 @@ public class TransactionResource {
     @Path("/{transactionId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "pos_service_provider", "public_administration" })
+    @RolesAllowed({"pos_service_provider", "public_administration"})
     public Uni<Response> getTransaction(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -227,7 +379,7 @@ public class TransactionResource {
     @Path("/latest")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "pos_service_provider" })
+    @RolesAllowed({"pos_service_provider"})
     public Uni<Response> getLatestTransaction(
             @HeaderParam("RequestId")
             @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
@@ -237,8 +389,7 @@ public class TransactionResource {
             @QueryParam("status") String status) {
 
         Log.debugf("TransactionResource -> getLatestTransaction - Input requestId, pspId, terminalId, status: %s, %s, %s, %s", requestId, pspId, terminalId, status);
-        Sort sort = Sort.by("creationTimestamp", Sort.Direction.Descending);
-
+        Sort sort = Sort.by(CREATION_TIMESTAMP, Sort.Direction.Descending);
         checkToken(pspId);
 
         return transactionService.latestTransaction(pspId, terminalId, status, sort)
@@ -270,64 +421,11 @@ public class TransactionResource {
                 });
     }
 
-    private Uni<Response> findByAttribute(String attributeName, String attributeValue, String startDate, String endDate, String sortStrategy, int pageNumber, int pageSize) {
-        Date convertedStartDate;
-        Date convertedEndDate;
-        Sort sort = Sort.by("creationTimestamp", "asc".equalsIgnoreCase(sortStrategy) ? Sort.Direction.Ascending : Sort.Direction.Descending);
-
-        try {
-            convertedStartDate = Utility.convertStringToDate(startDate, true);
-            convertedEndDate = Utility.convertStringToDate(endDate, false);
-        } catch (DateTimeParseException err) {
-            Log.errorf(err, "TransactionResource -> findBy: error during parsing date from string [%s, %s]", startDate, endDate);
-
-            return Uni.createFrom().failure(new InternalServerErrorException(Response
-                    .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new Errors(ErrorCodes.ERROR_PARSING_DATE, ErrorCodes.ERROR_PARSING_DATE_MSG))
-                    .build()));
-        }
-
-        return transactionService.getTransactionCountByAttribute(attributeName, attributeValue)
-                .onFailure()
-                .transform(err -> {
-                    Log.errorf(err, "TransactionResource -> findBy: error while counting transactions for [%s, %s]", attributeName, attributeValue);
-
-                    return new InternalServerErrorException(Response
-                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(ErrorCodes.ERROR_COUNTING_TRANSACTIONS, ErrorCodes.ERROR_COUNTING_TRANSACTIONS_MSG))
-                            .build());
-                })
-                .onItem()
-                .transformToUni(numberOfTransactions ->
-                        transactionService.getTransactionListPagedByAttribute(attributeName, attributeValue, convertedStartDate, convertedEndDate, sort, pageNumber, pageSize)
-                                .onFailure()
-                                .transform(err -> {
-                                    Log.errorf(err, "TransactionResource -> findBy: Error while retrieving list of transactions for [%s, %s], index and size [%s, %s]", attributeName, attributeValue, pageNumber, pageSize);
-
-                                    return new InternalServerErrorException(Response
-                                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity(new Errors(ErrorCodes.ERROR_LIST_TRANSACTIONS, ErrorCodes.ERROR_LIST_TRANSACTIONS_MSG))
-                                            .build());
-                                })
-                                .onItem()
-                                .transform(transactionsPaged -> {
-                                    Log.debugf("TransactionResource -> findBy: size of list of transactions paginated found: [%s]", transactionsPaged.size());
-
-                                    int totalPages = (int) Math.ceil((double) numberOfTransactions / pageSize);
-                                    PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfTransactions, totalPages);
-
-                                    return Response
-                                            .status(Response.Status.OK)
-                                            .entity(new TransactionPageResponse(transactionsPaged, pageMetadata))
-                                            .build();
-                                }));
-    }
-
     private Uni<TransactionEntity> findTransactionGeneric(String transactionId, String calledBy) {
         return transactionService.findTransaction(transactionId)
                 .onFailure()
                 .transform(err -> {
-                    Log.errorf(err, "TransactionResource ->  %s : error during search transaction with transactionId: [%s]",calledBy, transactionId);
+                    Log.errorf(err, "TransactionResource ->  %s : error during search transaction with transactionId: [%s]", calledBy, transactionId);
 
                     return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)

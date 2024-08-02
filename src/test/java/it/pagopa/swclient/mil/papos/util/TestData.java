@@ -44,7 +44,7 @@ public final class TestData {
     }
 
     public static TransactionDto getCorrectTransactionDto() {
-        return new TransactionDto("AGID_01", "34523860", "123456789123456789",
+        return new TransactionDto("22dd2aad-6dcd-41c9-91c4-2552f11d098f", "485564829563528563",
                 "06534340721");
     }
 

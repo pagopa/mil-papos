@@ -7,7 +7,6 @@ import it.pagopa.swclient.mil.papos.dao.TransactionEntity;
 import it.pagopa.swclient.mil.papos.dao.TransactionRepository;
 import it.pagopa.swclient.mil.papos.model.TransactionDto;
 import it.pagopa.swclient.mil.papos.model.UpdateTransactionDto;
-import it.pagopa.swclient.mil.papos.util.Utility;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.Date;
@@ -30,7 +29,6 @@ public class TransactionService {
     public Uni<TransactionEntity> createTransaction(TransactionDto transactionDto) {
         Log.debugf("TransactionService -> createTransaction - Input parameters: %s", transactionDto);
 
-        String transactionUuid = Utility.generateRandomUuid();
         TransactionEntity entity = createTransactionEntity(transactionDto);
 
         return transactionRepository.persist(entity)
@@ -69,6 +67,37 @@ public class TransactionService {
 
         return transactionRepository
                 .find(query, sortStrategy, attributeValue, startDate, endDate)
+                .page(pageIndex, pageSize)
+                .list();
+    }
+
+    /**
+     * Returns a number corresponding to the total number of transaction found.
+     *
+     * @param terminalUuids list of uuid of terminal associated to pspId of the solution
+     * @return a number
+     */
+    public Uni<Long> getTransactionCountByTerminals(List<String> terminalUuids) {
+        Log.debugf("TransactionService -> getTransactionCountByAttribute - Input parameters: %s", terminalUuids);
+
+        return transactionRepository.count("terminalUuid in ?1", terminalUuids);
+    }
+
+    /**
+     * Returns a list of transactions paginated. The query filters on pspId.
+     *
+     * @param terminalUuids list of uuid of terminal associated to pspId of the solution
+     * @param pageIndex     0-based page index
+     * @param pageSize      page size
+     * @return a list of transactions
+     */
+    public Uni<List<TransactionEntity>> getTransactionListPagedByTerminals(List<String> terminalUuids, Date startDate, Date endDate, Sort sortStrategy, int pageIndex, int pageSize) {
+        Log.debugf("TransactionService -> getTransactionListPagedByTerminals - Input parameters: %s, %s, %s, %s, %s, %s", terminalUuids, startDate, endDate, sortStrategy, pageIndex, pageSize);
+
+        String query = "{ 'creationTimestamp': { '$gte': ?2, '$lte': ?3 }, 'terminalUuid': { '$in': [?1] } }";
+
+        return transactionRepository
+                .find(query, sortStrategy, terminalUuids, startDate, endDate)
                 .page(pageIndex, pageSize)
                 .list();
     }
@@ -141,6 +170,7 @@ public class TransactionService {
 
     private TransactionEntity createTransactionEntity(TransactionDto transactionDto) {
         TransactionEntity transactionEntity = new TransactionEntity();
+        transactionEntity.setTerminalUuid(transactionDto.terminalUuid());
         transactionEntity.setNoticeNumber(transactionDto.noticeNumber());
         transactionEntity.setPayeeCode(transactionDto.payeeCode());
         transactionEntity.setCreationTimestamp(new Date());
