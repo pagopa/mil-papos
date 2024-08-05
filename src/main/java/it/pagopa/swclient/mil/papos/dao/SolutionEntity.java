@@ -9,7 +9,6 @@ import lombok.Setter;
 @Setter
 @MongoEntity(database = "mil", collection = "solutions")
 public class SolutionEntity extends PanacheMongoEntity {
-
     private String pspId;
     private String locationCode;
 
