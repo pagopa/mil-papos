@@ -265,4 +265,26 @@ class TerminalServiceTest {
         result.subscribe()
                 .with(list -> Assertions.assertEquals(mockedList(), list));
     }
+
+    @Test
+    void testFindAllBySolutionIds_Success() {
+        ReactivePanacheQuery<TerminalEntity> query = Mockito.mock(ReactivePanacheQuery.class);
+        Mockito.when(terminalRepository.find("solutionId in ?1", Arrays.asList("66a79a4624356b00da07cfbf", "16a79a4624356b00da07cfbf"))).thenReturn(query);
+
+        Uni<List<TerminalEntity>> result = terminalService.findAllBySolutionIds(Arrays.asList("66a79a4624356b00da07cfbf", "16a79a4624356b00da07cfbf"));
+
+        result.subscribe()
+                .with(list -> Assertions.assertEquals(mockedList(), list));
+    }
+
+    @Test
+    void testFindAllBySolutionIdAndTerminalId_Success() {
+        ReactivePanacheQuery<TerminalEntity> query = Mockito.mock(ReactivePanacheQuery.class);
+        Mockito.when(terminalRepository.find("solutionId in ?1 and terminalId = ?2", List.of("16a79a4624356b00da07cfbf"), "34523860")).thenReturn(query);
+
+        Uni<List<TerminalEntity>> result = terminalService.findAllBySolutionIdAndTerminalId(List.of("16a79a4624356b00da07cfbf"), "34523860");
+
+        result.subscribe()
+                .with(list -> Assertions.assertEquals(mockedList(), list));
+    }
 }

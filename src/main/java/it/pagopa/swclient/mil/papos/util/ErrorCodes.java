@@ -32,8 +32,7 @@ public final class ErrorCodes {
     public static final String ERROR_STATUS_MUST_NOT_BE_NULL                                     = MODULE_ID + "000018";
     public static final String ERROR_SOLUTIONID_MUST_NOT_BE_NULL                                 = MODULE_ID + "000019";
     public static final String ERROR_LOCATIONCODE_MUST_NOT_BE_NULL                               = MODULE_ID + "000020";
-
-    
+    public static final String ERROR_TERMINALUUID_MUST_NOT_BE_NULL                               = MODULE_ID + "000021";
 
     /*
      * Service errors code from 000200 to 000500
@@ -53,6 +52,7 @@ public final class ErrorCodes {
     public static final String ERROR_LIST_SOLUTIONS                                              = MODULE_ID + "000212";
     public static final String ERROR_COUNTING_SOLUTIONS                                          = MODULE_ID + "000213";
     public static final String ERROR_NO_SOLUTIONS_FOUND                                          = MODULE_ID + "000214";
+    public static final String ERROR_NO_TERMINALS_FOUND                                          = MODULE_ID + "000215";
 
     /*
      * Error descriptions
@@ -77,6 +77,7 @@ public final class ErrorCodes {
     private static final String ERROR_STATUS_MUST_NOT_BE_NULL_DESCR = "status must not be null";
     private static final String ERROR_SOLUTIONID_MUST_NOT_BE_NULL_DESCR = "solutionId must not be null";
     private static final String ERROR_LOCATIONCODE_MUST_NOT_BE_NULL_DESCR = "locationCode must not be null";
+    private static final String ERROR_TERMINALUUID_MUST_NOT_BE_NULL_DESCR  = "terminalUuId must not be null";
 
     private static final String ERROR_GENERIC_FROM_DB_DESCR = "unexpected error from db";
     private static final String ERROR_COUNTING_TERMINALS_DESCR = "error occurred while counting terminals";
@@ -94,6 +95,7 @@ public final class ErrorCodes {
     private static final String ERROR_COUNTING_SOLUTIONS_DESCR = "error occurred while counting solutions";
     private static final String ERROR_NO_SOLUTIONS_FOUND_DESCR = "no solutions found with given pspId and solutionIds";
     private static final String ERROR_NO_SOLUTIONS_FOUND_PAYEE_DESCR = "no solutions found with given payeeCode";
+    private static final String ERROR_NO_TERMINALS_FOUND_DESCR = "no terminals found with given pspId";
 
     /*
      * Error complete message
@@ -118,6 +120,7 @@ public final class ErrorCodes {
     public static final String ERROR_STATUS_MUST_NOT_BE_NULL_MSG = "[" + ERROR_STATUS_MUST_NOT_BE_NULL + "] " + ERROR_STATUS_MUST_NOT_BE_NULL_DESCR;
     public static final String ERROR_SOLUTIONID_MUST_NOT_BE_NULL_MSG = "[" + ERROR_SOLUTIONID_MUST_NOT_BE_NULL + "] " + ERROR_SOLUTIONID_MUST_NOT_BE_NULL_DESCR;
     public static final String ERROR_LOCATIONCODE_MUST_NOT_BE_NULL_MSG = "[" + ERROR_LOCATIONCODE_MUST_NOT_BE_NULL + "] " + ERROR_LOCATIONCODE_MUST_NOT_BE_NULL_DESCR;
+    public static final String ERROR_TERMINALUUID_MUST_NOT_BE_NULL_MSG = "[" + ERROR_TERMINALUUID_MUST_NOT_BE_NULL + "] " + ERROR_TERMINALUUID_MUST_NOT_BE_NULL_DESCR;
 
     public static final String ERROR_GENERIC_FROM_DB_MSG = "[" + ERROR_GENERIC_FROM_DB + "] " + ERROR_GENERIC_FROM_DB_DESCR;
     public static final String ERROR_COUNTING_TERMINALS_MSG = "[" + ERROR_COUNTING_TERMINALS + "] " + ERROR_COUNTING_TERMINALS_DESCR;
@@ -135,5 +138,6 @@ public final class ErrorCodes {
     public static final String ERROR_COUNTING_SOLUTIONS_MSG = "[" + ERROR_COUNTING_SOLUTIONS + "] " + ERROR_COUNTING_SOLUTIONS_DESCR;
     public static final String ERROR_NO_SOLUTIONS_FOUND_MSG = "[" + ERROR_NO_SOLUTIONS_FOUND + "] " + ERROR_NO_SOLUTIONS_FOUND_DESCR;
     public static final String ERROR_NO_SOLUTIONS_FOUND_PAYEE_MSG = "[" + ERROR_NO_SOLUTIONS_FOUND + "] " + ERROR_NO_SOLUTIONS_FOUND_PAYEE_DESCR;
+    public static final String ERROR_NO_TERMINALS_FOUND_MSG = "[" + ERROR_NO_TERMINALS_FOUND + "] " + ERROR_NO_TERMINALS_FOUND_DESCR;
 
 }

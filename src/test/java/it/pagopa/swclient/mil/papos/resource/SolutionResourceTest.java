@@ -10,8 +10,10 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.papos.dao.SolutionEntity;
+import it.pagopa.swclient.mil.papos.dao.TerminalEntity;
 import it.pagopa.swclient.mil.papos.model.SolutionDto;
 import it.pagopa.swclient.mil.papos.service.SolutionService;
+import it.pagopa.swclient.mil.papos.service.TerminalService;
 import it.pagopa.swclient.mil.papos.util.TestData;
 import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.Assertions;
@@ -35,19 +37,28 @@ class SolutionResourceTest {
     @InjectMock
     static SolutionService solutionService;
 
+    @InjectMock
+    static TerminalService terminalService;
+
     static SolutionEntity solutionEntity;
+
+    static TerminalEntity terminalEntity;
 
     static SolutionDto solutionDto;
 
     @BeforeAll
     static void createTestObjects() {
         solutionEntity = TestData.getCorrectSolutionEntity();
+        terminalEntity = TestData.getCorrectTerminalEntity();
         solutionDto = TestData.getCorrectSolutionDto();
     }
 
     @Test
     @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
     void testCreateSolutionEndpoint_201() {
+        Mockito.when(terminalService.findTerminal(anyString()))
+                        .thenReturn(Uni.createFrom().item(terminalEntity));
+
         Mockito.when(solutionService.createSolution(any(SolutionDto.class)))
                 .thenReturn(Uni.createFrom().item(solutionEntity));
 
@@ -67,6 +78,9 @@ class SolutionResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
     void testCreateSolutionError_500() {
+        Mockito.when(terminalService.findTerminal(anyString()))
+                .thenReturn(Uni.createFrom().item(terminalEntity));
+
         Mockito.when(solutionService.createSolution(solutionDto))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
 
