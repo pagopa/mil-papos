@@ -213,7 +213,7 @@ class SolutionServiceTest {
 
     @Test
     void testUpdateSolution_Failure() {
-        Mockito.when(solutionRepository.update(any(SolutionEntity.class)))
+        Mockito.when(solutionRepository.persist(any(SolutionEntity.class)))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
 
         Uni<SolutionEntity> result = solutionService.updateSolution("solutionId", solutionDto, solutionEntity);

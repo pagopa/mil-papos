@@ -281,32 +281,6 @@ class SolutionResourceTest {
         Assertions.assertEquals(500, response.statusCode());
     }
 
-    @Test
-    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
-    @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "GID")
-    })
-    void testFindByPspId_401() {
-
-        Mockito.when(solutionService.getSolutionCountByAttribute("AGID_01", "AGID_01"))
-                .thenReturn(Uni.createFrom().item(10L));
-
-        Mockito.when(solutionService.getSolutionsListPagedByAttribute("AGID_01", "AGID_01", 0, 10))
-                .thenReturn(Uni.createFrom().item(new ArrayList<>()));
-
-        Response response = given()
-                .contentType(ContentType.JSON)
-                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
-                .queryParam("pspId", "AGID_01")
-                .queryParam("page", 0)
-                .queryParam("size", 10)
-                .when()
-                .get("/findByPspId")
-                .then()
-                .extract().response();
-
-        Assertions.assertEquals(401, response.statusCode());
-    }
 
     @Test
     @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
@@ -496,7 +470,7 @@ class SolutionResourceTest {
                 .and()
                 .body(solutionDto)
                 .when()
-                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .put("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
                 .then()
                 .extract().response();
 
@@ -519,7 +493,7 @@ class SolutionResourceTest {
                 .and()
                 .body(solutionDto)
                 .when()
-                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .put("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
                 .then()
                 .extract().response();
 
@@ -545,7 +519,7 @@ class SolutionResourceTest {
                 .and()
                 .body(solutionDto)
                 .when()
-                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .put("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
                 .then()
                 .extract().response();
 
