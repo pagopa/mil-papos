@@ -1,7 +1,5 @@
 package it.pagopa.swclient.mil.papos.resource;
 
-import org.eclipse.microprofile.jwt.JsonWebToken;
-
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 
