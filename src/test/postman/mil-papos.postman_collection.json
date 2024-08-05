@@ -1343,7 +1343,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"pspId\": \"{{pspId}}\",\r\n  \"terminalId\": \"{{terminalId}}\",\r\n  \"noticeNumber\": \"{{noticeNumber}}\",\r\n  \"payeeCode\": \"{{payeeCode}}\"\r\n}",
+									"raw": "{\r\n  \"terminalUuid\": \"{{terminalUuid}}\",\r\n  \"noticeNumber\": \"{{noticeNumber}}\",\r\n  \"payeeCode\": \"{{payeeCode}}\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"

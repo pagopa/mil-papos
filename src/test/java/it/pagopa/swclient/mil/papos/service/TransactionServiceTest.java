@@ -21,6 +21,7 @@ import org.mockito.Mockito;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -87,7 +88,7 @@ class TransactionServiceTest {
     void testGetTransactionListPagedByAttribute_Success() throws ParseException {
         ReactivePanacheQuery<TransactionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
         Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
-        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(mockedList()));
+        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(TestData.mockedListTransaction()));
 
         String queryStr = "{ transactionId: ?1, creationTimestamp: { $gte: ?2, $lte: ?3 } }";
         Sort sort = Sort.by("creationTimestamp", Sort.Direction.Ascending);
@@ -107,7 +108,7 @@ class TransactionServiceTest {
                 0,
                 10);
 
-        result.subscribe().with(list -> Assertions.assertEquals(mockedList(), list));
+        result.subscribe().with(list -> Assertions.assertEquals(TestData.mockedListTransaction(), list));
     }
 
     @Test
@@ -170,23 +171,57 @@ class TransactionServiceTest {
     }
 
     @Test
-    void testLatestTransaction_Success() {
+    void testLatestByTerminalUuidAndStatus_Success() {
         ReactivePanacheQuery<TransactionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
         Mockito.when(query.firstResult()).thenReturn(Uni.createFrom().item(transactionEntity));
         Sort sort = Sort.by("creationTimestamp", Sort.Direction.Descending);
-        Mockito.when(transactionRepository.find("pspId = ?1 AND terminalId = ?2 AND status = ?3", sort, "pspId", "terminalId", "status")).thenReturn(query);
+        Mockito.when(transactionRepository.find("terminalUuid in ?1 and status = ?2", sort, List.of("16a79a4624356b00da07cfbf"), "status")).thenReturn(query);
 
-        Uni<TransactionEntity> result = transactionService.latestTransaction("pspId", "terminalId", "status", sort);
+        Uni<TransactionEntity> result = transactionService.findLatestByTerminalUuidAndStatus(List.of("16a79a4624356b00da07cfbf"), "status", sort);
 
         result.subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
                 .assertItem(transactionEntity);
     }
 
-    private List<TransactionEntity> mockedList() {
-        TransactionEntity te1 = new TransactionEntity();
-        TransactionEntity te2 = new TransactionEntity();
+    @Test
+    void testCountByTerminals_Success() {
+        Mockito.when(transactionRepository.count("terminalUuid in ?1", Arrays.asList("66a79a4624356b00da07cfbf", "16a79a4624356b00da07cfbf")))
+                .thenReturn(Uni.createFrom().item(10L));
 
-        return List.of(te1, te2);
+        var terminalCount = transactionService.getTransactionCountByTerminals(Arrays.asList("66a79a4624356b00da07cfbf", "16a79a4624356b00da07cfbf"));
+
+        terminalCount
+                .subscribe()
+                .withSubscriber(UniAssertSubscriber.create())
+                .assertItem(10L);
+    }
+
+    @Test
+    void testGetTransactionListPagedByTerminals_Success() throws ParseException {
+        List<String> terminalUuids = Arrays.asList("66a79a4624356b00da07cfbf", "c7a1b24b0583477292ebdbaa");
+        ReactivePanacheQuery<TransactionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
+
+        Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
+        Mockito.when(query.list()).thenReturn(Uni.createFrom().item(TestData.mockedListTransaction()));
+
+        String queryStr = "{ 'creationTimestamp': { '$gte': ?2, '$lte': ?3 }, 'terminalUuid': { '$in': [?1] } }";
+        Sort sort = Sort.by("creationTimestamp", Sort.Direction.Ascending);
+
+        Date startDate = new SimpleDateFormat("yyyy-MM-dd").parse("2024-01-01");
+        Date endDate = new SimpleDateFormat("yyyy-MM-dd").parse("2024-12-31");
+
+        Mockito.when(transactionRepository.find(queryStr, sort,terminalUuids, startDate, endDate))
+                .thenReturn(query);
+
+        Uni<List<TransactionEntity>> result = transactionService.getTransactionListPagedByTerminals(
+                terminalUuids,
+                startDate,
+                endDate,
+                sort,
+                0,
+                10);
+
+        result.subscribe().with(list -> Assertions.assertEquals(TestData.mockedListTransaction(), list));
     }
 }

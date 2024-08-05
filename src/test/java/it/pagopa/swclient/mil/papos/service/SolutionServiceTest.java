@@ -125,6 +125,19 @@ class SolutionServiceTest {
     }
 
     @Test
+    void testFindAllByPspId_Success() {
+        ReactivePanacheQuery<SolutionEntity> mockQuery = Mockito.mock(ReactivePanacheQuery.class);
+        Mockito.when(mockQuery.list()).thenReturn(Uni.createFrom().item(mockedListSolution()));
+        Mockito.when(solutionRepository.find("pspId = ?1", "pspId"))
+                .thenReturn(mockQuery);
+
+        Uni<List<SolutionEntity>> result = solutionService.findAllByPspId("pspId");
+
+        result.subscribe()
+                .with(list -> Assertions.assertEquals(mockedListSolution(), list));
+    }
+
+    @Test
     void testGetSolutionsList_Success() {
         ReactivePanacheQuery<SolutionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
         Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);

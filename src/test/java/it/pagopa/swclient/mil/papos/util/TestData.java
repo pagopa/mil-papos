@@ -44,7 +44,7 @@ public final class TestData {
     }
 
     public static TransactionDto getCorrectTransactionDto() {
-        return new TransactionDto("AGID_01", "34523860", "123456789123456789",
+        return new TransactionDto("22dd2aad-6dcd-41c9-91c4-2552f11d098f", "485564829563528563",
                 "06534340721");
     }
 
@@ -75,7 +75,9 @@ public final class TestData {
 
     public static List<TerminalEntity> mockedList() {
         TerminalEntity te1 = new TerminalEntity();
-        te1.setTerminalUuid("uuid1");
+        te1.setTerminalUuid("c7a1b24b0583477292ebdbaa");
+        te1.setTerminalId("34523860");
+        te1.setSolutionId("66a79a4624356b00da07cfbf");
         TerminalEntity te2 = new TerminalEntity();
         te2.setTerminalUuid("uuid2");
 
@@ -93,6 +95,15 @@ public final class TestData {
         se2.setLocationCode("06534340721");
 
         return List.of(se1, se2);
+    }
+
+    public static List<TransactionEntity> mockedListTransaction() {
+        TransactionEntity te1 = new TransactionEntity();
+        te1.setTerminalUuid("c7a1b24b0583477292ebdbaa");
+        TransactionEntity te2 = new TransactionEntity();
+        te2.setTerminalUuid("c7a1b24b0583477292ebdbaa");
+
+        return List.of(te1, te2);
     }
 
     public static List<TerminalDto> mockedListTerminalDto() {

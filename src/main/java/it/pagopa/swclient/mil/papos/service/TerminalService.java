@@ -2,10 +2,7 @@ package it.pagopa.swclient.mil.papos.service;
 
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
-import it.pagopa.swclient.mil.papos.dao.BulkLoadStatusEntity;
-import it.pagopa.swclient.mil.papos.dao.BulkLoadStatusRepository;
-import it.pagopa.swclient.mil.papos.dao.TerminalEntity;
-import it.pagopa.swclient.mil.papos.dao.TerminalRepository;
+import it.pagopa.swclient.mil.papos.dao.*;
 import it.pagopa.swclient.mil.papos.model.BulkLoadStatus;
 import it.pagopa.swclient.mil.papos.model.TerminalDto;
 import it.pagopa.swclient.mil.papos.model.WorkstationsDto;
@@ -122,7 +119,7 @@ public class TerminalService {
     }
 
     /**
-     * Returns a list of terminals paginated. The query filters on attributeName.
+     * Returns a list of terminals paginated. The query filters on workstation.
      *
      * @param workstation name of workstation
      * @param pageIndex   0-based page index
@@ -215,7 +212,34 @@ public class TerminalService {
      * @return a number
      */
     public Uni<Long> countBySolutionIds(List<String> solutionIds) {
+        Log.debugf("TerminalService -> countBySolutionIds - Input parameter: %s", solutionIds);
+
         return terminalRepository.count("solutionId in (?1)", solutionIds);
+    }
+
+    /**
+     * Returns all terminal corresponding to the list of solution ids.
+     *
+     * @param solutionIds list of Solution
+     * @return a list of terminals
+     */
+    public Uni<List<TerminalEntity>> findAllBySolutionIds(List<String> solutionIds) {
+        Log.debugf("TerminalService -> findAllBySolutionIds - Input parameter: %s", solutionIds);
+
+        return terminalRepository.find("solutionId in ?1", solutionIds).list();
+    }
+
+    /**
+     * Returns all terminals by solutionIds and terminalId given in input.
+     *
+     * @param solutionIds list of solutions
+     * @param terminalId ID of the terminal for the PSP
+     * @return list of terminals found
+     */
+    public Uni<List<TerminalEntity>> findAllBySolutionIdAndTerminalId(List<String> solutionIds, String terminalId) {
+        Log.debugf("SolutionService -> findAllBySolutionIdAndTerminalId - Input parameters: %s, %s", solutionIds, terminalId);
+
+        return terminalRepository.find("solutionId in ?1 and terminalId = ?2", solutionIds, terminalId).list();
     }
 
     /**
@@ -225,6 +249,8 @@ public class TerminalService {
      * @return Solutions found
      */
     public Uni<List<TerminalEntity>> findBySolutionIds(List<String> solutionIds, int pageIndex, int pageSize) {
+        Log.debugf("TerminalService -> findBySolutionIds - Input parameter: %s, %s, %s", solutionIds, pageIndex, pageSize);
+
         return terminalRepository.find("solutionId in ?1", solutionIds)
                 .page(pageIndex, pageSize)
                 .list();
