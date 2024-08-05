@@ -669,7 +669,7 @@
 						{
 							"name": "Delete solution",
 							"request": {
-								"method": "GET",
+								"method": "DELETE",
 								"header": [
 									{
 										"key": "RequestId",
