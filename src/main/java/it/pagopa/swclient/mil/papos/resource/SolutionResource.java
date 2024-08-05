@@ -1,7 +1,5 @@
 package it.pagopa.swclient.mil.papos.resource;
 
-import org.eclipse.microprofile.jwt.JsonWebToken;
-
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 
@@ -23,11 +21,9 @@ import jakarta.ws.rs.core.Response;
 @Path("/solutions")
 public class SolutionResource {
     private final SolutionService solutionService;
-    private final JsonWebToken jwt;
 
-    public SolutionResource(SolutionService solutionService, JsonWebToken jwt) {
+    public SolutionResource(SolutionService solutionService) {
         this.solutionService = solutionService;
-        this.jwt = jwt;
     }
 
     @POST
@@ -39,7 +35,8 @@ public class SolutionResource {
             @HeaderParam("RequestId") @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG) @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
             @Valid @NotNull(message = ErrorCodes.ERROR_DTO_MUST_NOT_BE_NULL_MSG) SolutionDto solution) {
 
-        Log.debugf("SolutionResource -> createSolution - Input requestId, solutionDto: %s, %s", requestId, solution);
+        Log.debugf("SolutionResource -> createSolution - Input requestId, solutionDto: %s, %s", requestId,
+                solution);
 
         return solutionService.createSolution(solution)
                 .onFailure()
@@ -50,7 +47,8 @@ public class SolutionResource {
 
                     return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB,
+                                    ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
                             .build());
                 })
                 .onItem()
@@ -75,7 +73,8 @@ public class SolutionResource {
             @QueryParam("page") int pageNumber,
             @QueryParam("size") int pageSize) {
 
-        Log.debugf("SolutionResource -> getSolutions - Input requestId, pageNumber, pageSize: %s, %s, %s", requestId,
+        Log.debugf("SolutionResource -> getSolutions - Input requestId, pageNumber, pageSize: %s, %s, %s",
+                requestId,
                 pageNumber, pageSize);
 
         return solutionService
@@ -92,7 +91,8 @@ public class SolutionResource {
                 })
                 .onItem()
                 .transformToUni(numberOfSolutions -> {
-                    Log.debugf("SolutionResource -> findAll: found a total count of [%s] solutions", numberOfSolutions);
+                    Log.debugf("SolutionResource -> findAll: found a total count of [%s] solutions",
+                            numberOfSolutions);
 
                     return solutionService.findSolutions(pageNumber, pageSize)
                             .onFailure()
@@ -103,7 +103,8 @@ public class SolutionResource {
 
                                 return new InternalServerErrorException(Response
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                        .entity(new Errors(ErrorCodes.ERROR_LIST_SOLUTIONS,
+                                        .entity(new Errors(
+                                                ErrorCodes.ERROR_LIST_SOLUTIONS,
                                                 ErrorCodes.ERROR_LIST_SOLUTIONS_MSG))
                                         .build());
                             })
@@ -113,12 +114,16 @@ public class SolutionResource {
                                         "SolutionResource -> findAll: size of list of solutions paginated found: [%s]",
                                         solutionsPaged.size());
 
-                                int totalPages = (int) Math.ceil((double) numberOfSolutions / pageSize);
-                                PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfSolutions, totalPages);
+                                int totalPages = (int) Math.ceil(
+                                        (double) numberOfSolutions / pageSize);
+                                PageMetadata pageMetadata = new PageMetadata(pageSize,
+                                        numberOfSolutions, totalPages);
 
                                 return Response
                                         .status(Response.Status.OK)
-                                        .entity(new SolutionPageResponse(solutionsPaged, pageMetadata))
+                                        .entity(new SolutionPageResponse(
+                                                solutionsPaged,
+                                                pageMetadata))
                                         .build();
                             });
                 });
@@ -133,7 +138,8 @@ public class SolutionResource {
             @HeaderParam("RequestId") @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG) @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
             @PathParam(value = "solutionId") String solutionId) {
 
-        Log.debugf("SolutionResource -> findSolution: Input requestId, solutionId: %s, %s", requestId, solutionId);
+        Log.debugf("SolutionResource -> findSolution: Input requestId, solutionId: %s, %s", requestId,
+                solutionId);
 
         return solutionService.findById(solutionId)
                 .onFailure()
@@ -144,7 +150,8 @@ public class SolutionResource {
 
                     return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB,
+                                    ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
                             .build());
                 })
                 .onItem()
@@ -179,62 +186,7 @@ public class SolutionResource {
             @QueryParam("page") int pageNumber,
             @QueryParam("size") int pageSize) {
 
-        checkToken(pspId);
-
         return findByAttribute(requestId, "pspId", pspId, pageNumber, pageSize);
-    }
-
-    private Uni<Response> findByAttribute(String requestId, String attributeName, String attributeValue, int pageNumber,
-            int pageSize) {
-        Log.debugf(
-                "SolutionResource -> findBy - Input requestId: %s, attributeName: %s, attributeValue: %s, pageNumber: %s, size: %s",
-                requestId, attributeName, attributeValue, pageNumber, pageSize);
-
-        return solutionService.getSolutionCountByAttribute(attributeName, attributeValue)
-                .onFailure()
-                .transform(err -> {
-                    Log.errorf(err, "SolutionResource -> findBy: error while counting solutions for [%s, %s]",
-                            attributeName, attributeValue);
-
-                    return new InternalServerErrorException(Response
-                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(ErrorCodes.ERROR_COUNTING_SOLUTIONS,
-                                    ErrorCodes.ERROR_COUNTING_SOLUTIONS_MSG))
-                            .build());
-                })
-                .onItem()
-                .transformToUni(numberOfSolutions -> {
-                    Log.debugf("SolutionResource -> findBy: found a total count of [%s] solutions", numberOfSolutions);
-
-                    return solutionService
-                            .getSolutionsListPagedByAttribute(attributeName, attributeValue, pageNumber, pageSize)
-                            .onFailure()
-                            .transform(err -> {
-                                Log.errorf(err,
-                                        "SolutionResource -> findBy: Error while retrieving list of solutions for [%s, %s], index and size [%s, %s]",
-                                        attributeName, attributeValue, pageNumber, pageSize);
-
-                                return new InternalServerErrorException(Response
-                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                        .entity(new Errors(ErrorCodes.ERROR_LIST_SOLUTIONS,
-                                                ErrorCodes.ERROR_LIST_SOLUTIONS_MSG))
-                                        .build());
-                            })
-                            .onItem()
-                            .transform(solutionPaged -> {
-                                Log.debugf(
-                                        "SolutionResource -> findBy: size of list of solutions paginated found: [%s]",
-                                        solutionPaged.size());
-
-                                int totalPages = (int) Math.ceil((double) numberOfSolutions / pageSize);
-                                PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfSolutions, totalPages);
-
-                                return Response
-                                        .status(Response.Status.OK)
-                                        .entity(new SolutionPageResponse(solutionPaged, pageMetadata))
-                                        .build();
-                            });
-                });
     }
 
     @GET
@@ -247,8 +199,6 @@ public class SolutionResource {
             @QueryParam("locationCode") String locationCode,
             @QueryParam("page") int pageNumber,
             @QueryParam("size") int pageSize) {
-
-        checkToken(locationCode);
 
         return findByAttribute(requestId, "locationCode", locationCode, pageNumber, pageSize);
     }
@@ -274,7 +224,8 @@ public class SolutionResource {
 
                     return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB,
+                                    ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
                             .build());
                 })
                 .onItem()
@@ -300,7 +251,8 @@ public class SolutionResource {
 
                                 return new InternalServerErrorException(Response
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB,
+                                        .entity(new Errors(
+                                                ErrorCodes.ERROR_GENERIC_FROM_DB,
                                                 ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
                                         .build());
                             })
@@ -316,7 +268,7 @@ public class SolutionResource {
                 });
     }
 
-    @PATCH
+    @PUT
     @Path("/{solutionId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -332,11 +284,14 @@ public class SolutionResource {
         return solutionService.findById(solutionId)
                 .onFailure()
                 .transform(err -> {
-                    Log.errorf(err, "SolutionResource ->  updateSolution : error during search solution with solutionId: [%s]", solutionId);
+                    Log.errorf(err,
+                            "SolutionResource ->  updateSolution : error during search solution with solutionId: [%s]",
+                            solutionId);
 
                     return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB,
+                                    ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
                             .build());
                 })
                 .onItem()
@@ -350,7 +305,8 @@ public class SolutionResource {
 
                             return new InternalServerErrorException(Response
                                     .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                    .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB,
+                                    .entity(new Errors(
+                                            ErrorCodes.ERROR_GENERIC_FROM_DB,
                                             ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
                                     .build());
                         })
@@ -366,19 +322,66 @@ public class SolutionResource {
                         })));
     }
 
-    private void checkToken(String toCheck) {
-        Log.debugf("SolutionResource -> checkToken: sub [%s], pspId/locationCode: [%s]", jwt.getSubject(), toCheck);
+    private Uni<Response> findByAttribute(String requestId, String attributeName, String attributeValue,
+            int pageNumber,
+            int pageSize) {
+        Log.debugf(
+                "SolutionResource -> findBy - Input requestId: %s, attributeName: %s, attributeValue: %s, pageNumber: %s, size: %s",
+                requestId, attributeName, attributeValue, pageNumber, pageSize);
 
-        if (!jwt.getSubject().equals(toCheck)) {
-            Log.errorf(
-                    "SolutionResource -> checkToken: Error while checking token, subject not equals to pspId/locationCode [%s, %s]",
-                    jwt.getSubject(), toCheck);
+        return solutionService.getSolutionCountByAttribute(attributeName, attributeValue)
+                .onFailure()
+                .transform(err -> {
+                    Log.errorf(err, "SolutionResource -> findBy: error while counting solutions for [%s, %s]",
+                            attributeName, attributeValue);
 
-            throw new WebApplicationException(Response
-                    .status(Response.Status.UNAUTHORIZED)
-                    .entity(new Errors(ErrorCodes.ERROR_CHECK_TOKEN, ErrorCodes.ERROR_CHECK_TOKEN_MSG))
-                    .build());
-        }
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(ErrorCodes.ERROR_COUNTING_SOLUTIONS,
+                                    ErrorCodes.ERROR_COUNTING_SOLUTIONS_MSG))
+                            .build());
+                })
+                .onItem()
+                .transformToUni(numberOfSolutions -> {
+                    Log.debugf("SolutionResource -> findBy: found a total count of [%s] solutions",
+                            numberOfSolutions);
+
+                    return solutionService
+                            .getSolutionsListPagedByAttribute(attributeName, attributeValue,
+                                    pageNumber, pageSize)
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err,
+                                        "SolutionResource -> findBy: Error while retrieving list of solutions for [%s, %s], index and size [%s, %s]",
+                                        attributeName, attributeValue,
+                                        pageNumber, pageSize);
+
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(
+                                                ErrorCodes.ERROR_LIST_SOLUTIONS,
+                                                ErrorCodes.ERROR_LIST_SOLUTIONS_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transform(solutionPaged -> {
+                                Log.debugf(
+                                        "SolutionResource -> findBy: size of list of solutions paginated found: [%s]",
+                                        solutionPaged.size());
+
+                                int totalPages = (int) Math.ceil(
+                                        (double) numberOfSolutions / pageSize);
+                                PageMetadata pageMetadata = new PageMetadata(pageSize,
+                                        numberOfSolutions, totalPages);
+
+                                return Response
+                                        .status(Response.Status.OK)
+                                        .entity(new SolutionPageResponse(
+                                                solutionPaged,
+                                                pageMetadata))
+                                        .build();
+                            });
+                });
     }
 
 }

@@ -1,10 +1,10 @@
 {
 	"info": {
-		"_postman_id": "2e8b1dd3-ff67-4e68-890e-7a8314062541",
+		"_postman_id": "e4ceb59f-d10b-4975-b696-4a4a99c689d0",
 		"name": "Papos Microservice",
 		"description": "Papos Microservice for Multi-channel Integration Layer of SW Client Project\n\nContact Support:\n Name: Antonio Tarricone\n Email: antonio.tarricone@pagopa.it",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "29646859"
+		"_exporter_id": "26204659"
 	},
 	"item": [
 		{
@@ -298,6 +298,9 @@
 									"listen": "test",
 									"script": {
 										"exec": [
+											"var jsonData = JSON.parse(pm.response.text());",
+											"pm.collectionVariables.set(\"solutionId\", jsonData.id);",
+											"",
 											"pm.test(\"Status code is 201\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.response.to.have.status(201);",
@@ -417,6 +420,161 @@
 								"description": "Returns a json with the status of bulk loading operation"
 							},
 							"response": []
+						},
+						{
+							"name": "Find Solutions",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_PAPOS_BASE_URL}}/solutions?page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"host": [
+										"{{MIL_PAPOS_BASE_URL}}"
+									],
+									"path": [
+										"solutions"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "{{getTerminalPage}}"
+										},
+										{
+											"key": "size",
+											"value": "{{getTerminalPageSize}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Find by pspId",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_PAPOS_BASE_URL}}/solutions/findByPspId?pspId={{pspId}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"host": [
+										"{{MIL_PAPOS_BASE_URL}}"
+									],
+									"path": [
+										"solutions",
+										"findByPspId"
+									],
+									"query": [
+										{
+											"key": "pspId",
+											"value": "{{pspId}}"
+										},
+										{
+											"key": "page",
+											"value": "{{getTerminalPage}}"
+										},
+										{
+											"key": "size",
+											"value": "{{getTerminalPageSize}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Find by loactionCode",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_PAPOS_BASE_URL}}/solutions/findByLocationCode?locationCode={{locationCode}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"host": [
+										"{{MIL_PAPOS_BASE_URL}}"
+									],
+									"path": [
+										"solutions",
+										"findByLocationCode"
+									],
+									"query": [
+										{
+											"key": "locationCode",
+											"value": "{{locationCode}}"
+										},
+										{
+											"key": "page",
+											"value": "{{getTerminalPage}}"
+										},
+										{
+											"key": "size",
+											"value": "{{getTerminalPageSize}}"
+										}
+									]
+								}
+							},
+							"response": []
 						}
 					],
 					"auth": {
@@ -449,6 +607,88 @@
 									""
 								]
 							}
+						}
+					]
+				},
+				{
+					"name": "Update Solution",
+					"item": [
+						{
+							"name": "Update solution",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"pspId\": \"TMIL0101\",\n    \"locationCode\": \"12704343560\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{MIL_PAPOS_BASE_URL}}/solutions/{{solutionId}}",
+									"host": [
+										"{{MIL_PAPOS_BASE_URL}}"
+									],
+									"path": [
+										"solutions",
+										"{{solutionId}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Delete Solution",
+					"item": [
+						{
+							"name": "Delete solution",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_PAPOS_BASE_URL}}/solutions/{{solutionId}}",
+									"host": [
+										"{{MIL_PAPOS_BASE_URL}}"
+									],
+									"path": [
+										"solutions",
+										"{{solutionId}}"
+									]
+								}
+							},
+							"response": []
 						}
 					]
 				}
@@ -1690,6 +1930,10 @@
 		},
 		{
 			"key": "solutionId",
+			"value": "66acad7c717c6d7e3636cf14",
+			"type": "string"
+		},
+		{
 			"value": "",
 			"type": "string"
 		}
