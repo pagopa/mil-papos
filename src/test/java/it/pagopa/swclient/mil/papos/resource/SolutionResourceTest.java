@@ -492,4 +492,78 @@ class SolutionResourceTest {
         Assertions.assertEquals(500, response.statusCode());
     }
 
+    @Test
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "AGID_01")
+    })
+    void testUpdateSolution_204() {
+        Mockito.when(solutionService.findById(any(String.class)))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
+
+        Mockito.when(solutionService.updateSolution(anyString(), any(SolutionDto.class), any(SolutionEntity.class)))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(solutionDto)
+                .when()
+                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(204, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "AGID_01")
+    })
+    void testUpdateSolution_500SI() {
+
+        Mockito.when(solutionService.findById(anyString()))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(solutionDto)
+                .when()
+                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "AGID_01")
+    })
+    void testUpdateSolution_500UT() {
+
+        Mockito.when(solutionService.findById(anyString()))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
+
+        Mockito.when(solutionService.updateSolution(anyString(), any(SolutionDto.class), any(SolutionEntity.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(solutionDto)
+                .when()
+                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
 }

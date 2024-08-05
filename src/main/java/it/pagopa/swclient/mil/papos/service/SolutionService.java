@@ -18,6 +18,7 @@ public class SolutionService {
     public SolutionService(SolutionRepository solutionRepository) {
         this.solutionRepository = solutionRepository;
     }
+    
 
     /**
      * Create a new solution starting from a solutionDto.
@@ -81,6 +82,26 @@ public class SolutionService {
                 .onItem()
                 .transform(solutionDeleted -> solutionDeleted);
     }
+
+    /**
+     * Update solution starting from a solutionDto.
+     *
+     * @param solutionDto  dto of modified solution
+     * @param solutionId solutionId of old solution to be modified
+     * @return solution updated
+     */
+    public Uni<SolutionEntity> updateSolution(String solutionId, SolutionDto solutionDto, SolutionEntity oldSolution) {
+        Log.debugf("SolutionService -> updateTerminal - Input parameters: %s, %s, %s", solutionId, solutionDto, oldSolution);
+        oldSolution.setLocationCode(solutionDto.locationCode());
+        oldSolution.setPspId(solutionDto.pspId());
+
+        return solutionRepository.update(oldSolution)
+                .onFailure()
+                .transform(error -> error)
+                .onItem()
+                .transform(terminalUpdated -> terminalUpdated);
+    }
+
 
     /**
      * Returns a number corresponding to the total number of solutions found.
@@ -166,4 +187,6 @@ public class SolutionService {
 
         return solutionRepository.list("pspId = ?1 and _id in ?2", pspId, solutionObjectIds);
     }
+
+
 }

@@ -71,12 +71,12 @@ public class SolutionResource {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({ "mil_papos_admin" })
     public Uni<Response> getSolutions(
-            @HeaderParam("RequestId") @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG)
-            @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
+            @HeaderParam("RequestId") @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG) @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
             @QueryParam("page") int pageNumber,
             @QueryParam("size") int pageSize) {
 
-        Log.debugf("SolutionResource -> getSolutions - Input requestId, pageNumber, pageSize: %s, %s, %s", requestId, pageNumber, pageSize);
+        Log.debugf("SolutionResource -> getSolutions - Input requestId, pageNumber, pageSize: %s, %s, %s", requestId,
+                pageNumber, pageSize);
 
         return solutionService
                 .getSolutionsCount()
@@ -263,7 +263,7 @@ public class SolutionResource {
             @PathParam(value = "solutionId") String solutionId) {
 
         Log.debugf("SolutionResource -> deleteSolution - Input requestId, solutionId: %s, %s", requestId,
-            solutionId);
+                solutionId);
 
         return solutionService.findById(solutionId)
                 .onFailure()
@@ -314,6 +314,56 @@ public class SolutionResource {
                                         .build();
                             });
                 });
+    }
+
+    @PATCH
+    @Path("/{solutionId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({ "mil_papos_admin" })
+    public Uni<Response> updateSolution(
+            @HeaderParam("RequestId") @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG) @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
+            @Valid @NotNull(message = ErrorCodes.ERROR_DTO_MUST_NOT_BE_NULL_MSG) SolutionDto solution,
+            @PathParam(value = "solutionId") String solutionId) {
+
+        Log.debugf("SolutionResource -> updateSolution - Input requestId, updateSolution: %s, %s", requestId,
+                solution);
+
+        return solutionService.findById(solutionId)
+                .onFailure()
+                .transform(err -> {
+                    Log.errorf(err, "SolutionResource ->  updateSolution : error during search solution with solutionId: [%s]", solutionId);
+
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                            .build());
+                })
+                .onItem()
+                .transformToUni((solutionEntity -> solutionService
+                        .updateSolution(solutionId, solution, solutionEntity)
+                        .onFailure()
+                        .transform(err -> {
+                            Log.errorf(err,
+                                    "SolutionResource -> updateSolution: error during update solution [%s]",
+                                    solution);
+
+                            return new InternalServerErrorException(Response
+                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                    .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB,
+                                            ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                    .build());
+                        })
+                        .onItem()
+                        .transform(solutionUpdated -> {
+                            Log.debugf(
+                                    "SolutionResource -> updateSolution: solution updated correctly on DB [%s]",
+                                    solutionUpdated);
+
+                            return Response
+                                    .status(Response.Status.NO_CONTENT)
+                                    .build();
+                        })));
     }
 
     private void checkToken(String toCheck) {

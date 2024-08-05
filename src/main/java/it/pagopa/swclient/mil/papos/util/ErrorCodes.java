@@ -31,7 +31,8 @@ public final class ErrorCodes {
     public static final String ERROR_AMOUNT_MUST_NOT_BE_NULL                                     = MODULE_ID + "000017";
     public static final String ERROR_STATUS_MUST_NOT_BE_NULL                                     = MODULE_ID + "000018";
     public static final String ERROR_SOLUTIONID_MUST_NOT_BE_NULL                                 = MODULE_ID + "000019";
-    public static final String ERROR_TERMINALUUID_MUST_NOT_BE_NULL                               = MODULE_ID + "000020";
+    public static final String ERROR_LOCATIONCODE_MUST_NOT_BE_NULL                               = MODULE_ID + "000020";
+    public static final String ERROR_TERMINALUUID_MUST_NOT_BE_NULL                               = MODULE_ID + "000021";
 
     /*
      * Service errors code from 000200 to 000500
@@ -74,6 +75,7 @@ public final class ErrorCodes {
     private static final String ERROR_AMOUNT_MUST_NOT_BE_NULL_DESCR = "amount must not be null";
     private static final String ERROR_STATUS_MUST_NOT_BE_NULL_DESCR = "status must not be null";
     private static final String ERROR_SOLUTIONID_MUST_NOT_BE_NULL_DESCR = "solutionId must not be null";
+    private static final String ERROR_LOCATIONCODE_MUST_NOT_BE_NULL_DESCR = "locationCode must not be null";
     private static final String ERROR_TERMINALUUID_MUST_NOT_BE_NULL_DESCR  = "terminalUuId must not be null";
 
     private static final String ERROR_GENERIC_FROM_DB_DESCR = "unexpected error from db";
@@ -115,6 +117,7 @@ public final class ErrorCodes {
     public static final String ERROR_AMOUNT_MUST_NOT_BE_NULL_MSG = "[" + ERROR_AMOUNT_MUST_NOT_BE_NULL + "] " + ERROR_AMOUNT_MUST_NOT_BE_NULL_DESCR;
     public static final String ERROR_STATUS_MUST_NOT_BE_NULL_MSG = "[" + ERROR_STATUS_MUST_NOT_BE_NULL + "] " + ERROR_STATUS_MUST_NOT_BE_NULL_DESCR;
     public static final String ERROR_SOLUTIONID_MUST_NOT_BE_NULL_MSG = "[" + ERROR_SOLUTIONID_MUST_NOT_BE_NULL + "] " + ERROR_SOLUTIONID_MUST_NOT_BE_NULL_DESCR;
+    public static final String ERROR_LOCATIONCODE_MUST_NOT_BE_NULL_MSG = "[" + ERROR_LOCATIONCODE_MUST_NOT_BE_NULL + "] " + ERROR_LOCATIONCODE_MUST_NOT_BE_NULL_DESCR;
     public static final String ERROR_TERMINALUUID_MUST_NOT_BE_NULL_MSG = "[" + ERROR_TERMINALUUID_MUST_NOT_BE_NULL + "] " + ERROR_TERMINALUUID_MUST_NOT_BE_NULL_DESCR;
 
     public static final String ERROR_GENERIC_FROM_DB_MSG = "[" + ERROR_GENERIC_FROM_DB + "] " + ERROR_GENERIC_FROM_DB_DESCR;
