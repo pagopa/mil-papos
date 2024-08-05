@@ -128,6 +128,18 @@ public class SolutionService {
     }
 
     /**
+     * Returns all solutions by pspId given in input.
+     *
+     * @param pspId ID of the POS PSP
+     * @return a number
+     */
+    public Uni<List<SolutionEntity>> findAllByPspId(String pspId) {
+        Log.debugf("SolutionService -> findAllByPspId - Input parameters: %s", pspId);
+
+        return solutionRepository.find("pspId = ?1", pspId).list();
+    }
+
+    /**
      * Returns a list of solutions paginated. The query filters on attributeName.
      *
      * @param attributeName  string representing the name of attribute to be filtered

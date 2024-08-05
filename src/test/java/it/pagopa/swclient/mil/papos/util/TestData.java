@@ -76,6 +76,7 @@ public final class TestData {
     public static List<TerminalEntity> mockedList() {
         TerminalEntity te1 = new TerminalEntity();
         te1.setTerminalUuid("c7a1b24b0583477292ebdbaa");
+        te1.setTerminalId("34523860");
         te1.setSolutionId("66a79a4624356b00da07cfbf");
         TerminalEntity te2 = new TerminalEntity();
         te2.setTerminalUuid("uuid2");

@@ -52,6 +52,7 @@ public final class ErrorCodes {
     public static final String ERROR_LIST_SOLUTIONS                                              = MODULE_ID + "000212";
     public static final String ERROR_COUNTING_SOLUTIONS                                          = MODULE_ID + "000213";
     public static final String ERROR_NO_SOLUTIONS_FOUND                                          = MODULE_ID + "000214";
+    public static final String ERROR_NO_TERMINALS_FOUND                                          = MODULE_ID + "000215";
 
     /*
      * Error descriptions
@@ -94,6 +95,7 @@ public final class ErrorCodes {
     private static final String ERROR_COUNTING_SOLUTIONS_DESCR = "error occurred while counting solutions";
     private static final String ERROR_NO_SOLUTIONS_FOUND_DESCR = "no solutions found with given pspId and solutionIds";
     private static final String ERROR_NO_SOLUTIONS_FOUND_PAYEE_DESCR = "no solutions found with given payeeCode";
+    private static final String ERROR_NO_TERMINALS_FOUND_DESCR = "no terminals found with given pspId";
 
     /*
      * Error complete message
@@ -136,5 +138,6 @@ public final class ErrorCodes {
     public static final String ERROR_COUNTING_SOLUTIONS_MSG = "[" + ERROR_COUNTING_SOLUTIONS + "] " + ERROR_COUNTING_SOLUTIONS_DESCR;
     public static final String ERROR_NO_SOLUTIONS_FOUND_MSG = "[" + ERROR_NO_SOLUTIONS_FOUND + "] " + ERROR_NO_SOLUTIONS_FOUND_DESCR;
     public static final String ERROR_NO_SOLUTIONS_FOUND_PAYEE_MSG = "[" + ERROR_NO_SOLUTIONS_FOUND + "] " + ERROR_NO_SOLUTIONS_FOUND_PAYEE_DESCR;
+    public static final String ERROR_NO_TERMINALS_FOUND_MSG = "[" + ERROR_NO_TERMINALS_FOUND + "] " + ERROR_NO_TERMINALS_FOUND_DESCR;
 
 }

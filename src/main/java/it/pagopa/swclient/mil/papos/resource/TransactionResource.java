@@ -5,7 +5,10 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import it.pagopa.swclient.mil.papos.dao.TerminalEntity;
 import it.pagopa.swclient.mil.papos.dao.TransactionEntity;
-import it.pagopa.swclient.mil.papos.model.*;
+import it.pagopa.swclient.mil.papos.model.PageMetadata;
+import it.pagopa.swclient.mil.papos.model.TransactionDto;
+import it.pagopa.swclient.mil.papos.model.TransactionPageResponse;
+import it.pagopa.swclient.mil.papos.model.UpdateTransactionDto;
 import it.pagopa.swclient.mil.papos.service.SolutionService;
 import it.pagopa.swclient.mil.papos.service.TerminalService;
 import it.pagopa.swclient.mil.papos.service.TransactionService;
@@ -179,6 +182,7 @@ public class TransactionResource {
             @QueryParam("size") int pageSize) {
 
         Log.debugf("TransactionResource -> findByPspId - Input requestId, pspId, startDate, endDate, sortStrategy, page, size: %s, %s, %s, %s, %s, %s, %s", requestId, pspId, startDate, endDate, sortStrategy, pageNumber, pageSize);
+        checkToken(pspId);
 
         return solutionService.findAllByLocationOrPsp("pspId", pspId)
                 .onFailure()
@@ -279,35 +283,32 @@ public class TransactionResource {
             @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
             @PathParam(value = "transactionId") String transactionId) {
 
-        Log.debugf("TransactionResource -> deleteTransaction - Input requestId, transactionId: %s, %s", requestId,
-                transactionId);
+        Log.debugf("TransactionResource -> deleteTransaction - Input requestId, transactionId: %s, %s", requestId, transactionId);
 
         return findTransactionGeneric(transactionId, "deleteTransaction")
                 .onItem()
-                .transformToUni((transactionEntity ->
-                                transactionService.deleteTransaction(transactionEntity)
-                                        .onFailure()
-                                        .transform(err -> {
-                                            Log.errorf(err,
-                                                    "TransactionResource -> deleteTransaction: error during deleting transaction [%s]",
-                                                    transactionEntity);
+                .transformToUni((transactionEntity -> {
+                    checkToken(transactionEntity.getPayeeCode());
 
-                                            return new InternalServerErrorException(Response
-                                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                                    .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
-                                                    .build());
-                                        })
-                                        .onItem()
-                                        .transform(transactionUpdated -> {
-                                            Log.debugf("TransactionResource -> deleteTransaction: transaction deleted correctly on DB [%s]",
-                                                    transactionUpdated);
+                    return transactionService.deleteTransaction(transactionEntity)
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err, "TransactionResource -> deleteTransaction: error during deleting transaction [%s]", transactionEntity);
 
-                                            return Response
-                                                    .status(Response.Status.NO_CONTENT)
-                                                    .build();
-                                        })
-                        )
-                );
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transform(transactionUpdated -> {
+                                Log.debugf("TransactionResource -> deleteTransaction: transaction deleted correctly on DB [%s]", transactionUpdated);
+
+                                return Response
+                                        .status(Response.Status.NO_CONTENT)
+                                        .build();
+                            });
+                }));
     }
 
     @PATCH
@@ -326,29 +327,28 @@ public class TransactionResource {
 
         return findTransactionGeneric(transactionId, "updateTransaction")
                 .onItem()
-                .transformToUni((transactionEntity ->
-                                transactionService.updateTransaction(transactionId, transaction, transactionEntity)
-                                        .onFailure()
-                                        .transform(err -> {
-                                            Log.errorf(err, "TransactionResource -> updateTransaction: error during update transaction [%s]",
-                                                    transaction);
+                .transformToUni((transactionEntity -> {
+                    checkToken(transactionEntity.getPayeeCode());
 
-                                            return new InternalServerErrorException(Response
-                                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                                    .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
-                                                    .build());
-                                        })
-                                        .onItem()
-                                        .transform(transactionUpdated -> {
-                                            Log.debugf("TransactionResource -> updateTransaction: transaction updated correctly on DB [%s]",
-                                                    transactionUpdated);
+                    return transactionService.updateTransaction(transactionId, transaction, transactionEntity)
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err, "TransactionResource -> updateTransaction: error during update transaction [%s]", transaction);
 
-                                            return Response
-                                                    .status(Response.Status.NO_CONTENT)
-                                                    .build();
-                                        })
-                        )
-                );
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transform(transactionUpdated -> {
+                                Log.debugf("TransactionResource -> updateTransaction: transaction updated correctly on DB [%s]", transactionUpdated);
+
+                                return Response
+                                        .status(Response.Status.NO_CONTENT)
+                                        .build();
+                            });
+                }));
     }
 
     @GET
@@ -392,10 +392,10 @@ public class TransactionResource {
         Sort sort = Sort.by(CREATION_TIMESTAMP, Sort.Direction.Descending);
         checkToken(pspId);
 
-        return transactionService.latestTransaction(pspId, terminalId, status, sort)
+        return solutionService.findAllByPspId(pspId)
                 .onFailure()
                 .transform(err -> {
-                    Log.errorf(err, "TransactionResource -> getLatestTransaction: unexpected error get latest transaction [%s, %s, %s]", pspId, terminalId, status);
+                    Log.errorf(err, "TransactionResource -> getLatestTransaction: unexpected error during find solutions by pspId [%s]", pspId);
 
                     return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -403,21 +403,73 @@ public class TransactionResource {
                             .build());
                 })
                 .onItem()
-                .transformToUni(transactionEntity -> {
-                    if (transactionEntity == null) {
-                        Log.errorf("TransactionResource -> getLatestTransaction: error 404 during searching latest transaction [%s, %s, %s]", pspId, terminalId, status);
+                .transformToUni(solutionEntities -> {
+                    if (solutionEntities.isEmpty()) {
+                        Log.errorf("TransactionResource -> getLatestTransaction: no solutions found for pspId %s", pspId);
 
-                        return Uni.createFrom().failure(new NotFoundException(Response
+                        return Uni.createFrom().item(() -> Response
                                 .status(Response.Status.NOT_FOUND)
-                                .entity(new Errors(ErrorCodes.ERROR_TRANSACTION_NOT_FOUND, ErrorCodes.ERROR_TRANSACTION_NOT_FOUND_MSG))
-                                .build()));
+                                .entity(new Errors(ErrorCodes.ERROR_NO_SOLUTIONS_FOUND, ErrorCodes.ERROR_NO_SOLUTIONS_FOUND_PAYEE_MSG))
+                                .build()
+                        );
                     }
-                    Log.debugf("TransactionResource -> getLatestTransaction: transaction found correctly [%s]", transactionEntity);
+                    List<String> solutionIds = solutionEntities.stream()
+                            .map(solution -> solution.id.toString())
+                            .toList();
 
-                    return Uni.createFrom().item(Response
-                            .status(Response.Status.OK)
-                            .entity(transactionEntity)
-                            .build());
+                    return terminalService.findAllBySolutionIdAndTerminalId(solutionIds, terminalId)
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err, "TransactionResource -> getLatestTransaction: unexpected error during find terminal by solutionIds and terminalId [%s]", solutionIds, terminalId);
+
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transformToUni(terminalEntities -> {
+                                if (terminalEntities.isEmpty()) {
+                                    Log.errorf("TransactionResource -> getLatestTransaction: no solutions found for pspId %s", pspId);
+
+                                    return Uni.createFrom().item(() -> Response
+                                            .status(Response.Status.NOT_FOUND)
+                                            .entity(new Errors(ErrorCodes.ERROR_NO_TERMINALS_FOUND, ErrorCodes.ERROR_NO_TERMINALS_FOUND_MSG))
+                                            .build()
+                                    );
+                                }
+                                List<String> terminalUuids = terminalEntities.stream()
+                                        .map(TerminalEntity::getTerminalUuid)
+                                        .toList();
+
+                                return transactionService.findLatestByTerminalUuidAndStatus(terminalUuids, status, sort)
+                                        .onFailure()
+                                        .transform(err -> {
+                                            Log.errorf(err, "TransactionResource -> getLatestTransaction: unexpected error during find transactions by terminalUuids and status [%s]", terminalUuids, status);
+
+                                            return new InternalServerErrorException(Response
+                                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                    .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                                    .build());
+                                        })
+                                        .onItem()
+                                        .transformToUni(transactionEntity -> {
+                                            if (transactionEntity == null) {
+                                                Log.errorf("TransactionResource -> getLatestTransaction: error 404 during searching latest transaction [%s, %s, %s]", pspId, terminalId, status);
+
+                                                return Uni.createFrom().failure(new NotFoundException(Response
+                                                        .status(Response.Status.NOT_FOUND)
+                                                        .entity(new Errors(ErrorCodes.ERROR_TRANSACTION_NOT_FOUND, ErrorCodes.ERROR_TRANSACTION_NOT_FOUND_MSG))
+                                                        .build()));
+                                            }
+                                            Log.debugf("TransactionResource -> getLatestTransaction: transaction found correctly [%s]", transactionEntity);
+
+                                            return Uni.createFrom().item(Response
+                                                    .status(Response.Status.OK)
+                                                    .entity(transactionEntity)
+                                                    .build());
+                                        });
+                            });
                 });
     }
 
@@ -425,7 +477,7 @@ public class TransactionResource {
         return transactionService.findTransaction(transactionId)
                 .onFailure()
                 .transform(err -> {
-                    Log.errorf(err, "TransactionResource ->  %s : error during search transaction with transactionId: [%s]", calledBy, transactionId);
+                    Log.errorf(err, "TransactionResource ->  %s: error during search transaction with transactionId: [%s]", calledBy, transactionId);
 
                     return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -435,13 +487,14 @@ public class TransactionResource {
                 .onItem()
                 .transformToUni(transactionEntity -> {
                     if (transactionEntity == null) {
-                        Log.errorf("TransactionResource -> %s : error 404 during searching transaction with transactionId: [%s]", calledBy, transactionId);
+                        Log.errorf("TransactionResource -> %s: error 404 during searching transaction with transactionId: [%s]", calledBy, transactionId);
 
                         return Uni.createFrom().failure(new NotFoundException(Response
                                 .status(Response.Status.NOT_FOUND)
                                 .entity(new Errors(ErrorCodes.ERROR_TRANSACTION_NOT_FOUND, ErrorCodes.ERROR_TRANSACTION_NOT_FOUND_MSG))
                                 .build()));
                     }
+                    Log.debugf("TransactionResource -> %s: transaction correctly found by %s: - %s", transactionId, transactionEntity);
 
                     return Uni.createFrom().item(transactionEntity);
                 });

@@ -29,6 +29,7 @@ import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static io.restassured.RestAssured.given;
 import static org.mockito.ArgumentMatchers.*;
@@ -504,7 +505,7 @@ class TransactionResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = {"public_administration"})
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "AGID_01")
+            @Claim(key = "sub", value = "06534340721")
     })
     void testDeleteTransaction_204() {
         Mockito.when(transactionService.findTransaction(any(String.class)))
@@ -574,7 +575,7 @@ class TransactionResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = {"public_administration"})
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "AGID_01")
+            @Claim(key = "sub", value = "06534340721")
     })
     void testDeleteTransaction_500UT() {
         Mockito.when(transactionService.findTransaction(any(String.class)))
@@ -599,7 +600,7 @@ class TransactionResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = {"public_administration"})
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "AGID_01")
+            @Claim(key = "sub", value = "06534340721")
     })
     void testUpdateTransaction_204() {
         Mockito.when(transactionService.findTransaction(any(String.class)))
@@ -670,7 +671,7 @@ class TransactionResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = {"public_administration"})
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "AGID_01")
+            @Claim(key = "sub", value = "06534340721")
     })
     void testUpdateTransaction_500UT() {
         Mockito.when(transactionService.findTransaction(any(String.class)))
@@ -719,7 +720,13 @@ class TransactionResourceTest {
             @Claim(key = "sub", value = "AGID_01")
     })
     void testLatestTransaction_200() {
-        Mockito.when(transactionService.latestTransaction(any(String.class), any(String.class), any(String.class), any(Sort.class)))
+        Mockito.when(solutionService.findAllByPspId(anyString()))
+                        .thenReturn(Uni.createFrom().item(TestData.mockedListSolution()));
+
+        Mockito.when(terminalService.findAllBySolutionIdAndTerminalId(anyList(), anyString()))
+                .thenReturn(Uni.createFrom().item(TestData.mockedList()));
+
+        Mockito.when(transactionService.findLatestByTerminalUuidAndStatus(anyList(), anyString(), any(Sort.class)))
                 .thenReturn(Uni.createFrom().item(transactionEntity));
 
         Response response = given()
@@ -742,9 +749,149 @@ class TransactionResourceTest {
     @JwtSecurity(claims = {
             @Claim(key = "sub", value = "AGID_01")
     })
+    void testLatestTransaction_500FABP() {
+        Mockito.when(solutionService.findAllByPspId(anyString()))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("pspId", "AGID_01")
+                .queryParam("terminalId", "34523860")
+                .queryParam("status", "CLOSE_OK")
+                .and()
+                .when()
+                .get("/latest")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"pos_service_provider"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "AGID_01")
+    })
     void testLatestTransaction_404() {
+        List<SolutionEntity> empty = new ArrayList<>();
+        Mockito.when(solutionService.findAllByPspId(anyString()))
+                .thenReturn(Uni.createFrom().item(empty));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("pspId", "AGID_01")
+                .queryParam("terminalId", "34523860")
+                .queryParam("status", "CLOSE_OK")
+                .and()
+                .when()
+                .get("/latest")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(404, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"pos_service_provider"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "AGID_01")
+    })
+    void testLatestTransaction_500FABST() {
+        Mockito.when(solutionService.findAllByPspId(anyString()))
+                .thenReturn(Uni.createFrom().item(TestData.mockedListSolution()));
+
+        Mockito.when(terminalService.findAllBySolutionIdAndTerminalId(anyList(), anyString()))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("pspId", "AGID_01")
+                .queryParam("terminalId", "34523860")
+                .queryParam("status", "CLOSE_OK")
+                .and()
+                .when()
+                .get("/latest")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"pos_service_provider"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "AGID_01")
+    })
+    void testLatestTransaction_404FABST() {
+        Mockito.when(solutionService.findAllByPspId(anyString()))
+                .thenReturn(Uni.createFrom().item(TestData.mockedListSolution()));
+
+        List<TerminalEntity> empty = new ArrayList<>();
+        Mockito.when(terminalService.findAllBySolutionIdAndTerminalId(anyList(), anyString()))
+                .thenReturn(Uni.createFrom().item(empty));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("pspId", "AGID_01")
+                .queryParam("terminalId", "34523860")
+                .queryParam("status", "CLOSE_OK")
+                .and()
+                .when()
+                .get("/latest")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(404, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"pos_service_provider"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "AGID_01")
+    })
+    void testLatestTransaction_500FLBTUS() {
+        Mockito.when(solutionService.findAllByPspId(anyString()))
+                .thenReturn(Uni.createFrom().item(TestData.mockedListSolution()));
+
+        Mockito.when(terminalService.findAllBySolutionIdAndTerminalId(anyList(), anyString()))
+                .thenReturn(Uni.createFrom().item(TestData.mockedList()));
+
+        Mockito.when(transactionService.findLatestByTerminalUuidAndStatus(anyList(), anyString(), any(Sort.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("pspId", "AGID_01")
+                .queryParam("terminalId", "34523860")
+                .queryParam("status", "CLOSE_OK")
+                .and()
+                .when()
+                .get("/latest")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"pos_service_provider"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "AGID_01")
+    })
+    void testLatestTransaction_404FLBTUS() {
+        Mockito.when(solutionService.findAllByPspId(anyString()))
+                .thenReturn(Uni.createFrom().item(TestData.mockedListSolution()));
+
+        Mockito.when(terminalService.findAllBySolutionIdAndTerminalId(anyList(), anyString()))
+                .thenReturn(Uni.createFrom().item(TestData.mockedList()));
+
         transactionEntity = null;
-        Mockito.when(transactionService.latestTransaction(any(String.class), any(String.class), any(String.class), any(Sort.class)))
+        Mockito.when(transactionService.findLatestByTerminalUuidAndStatus(anyList(), anyString(), any(Sort.class)))
                 .thenReturn(Uni.createFrom().item(transactionEntity));
 
         Response response = given()
@@ -761,29 +908,5 @@ class TransactionResourceTest {
 
         transactionEntity = TestData.getCorrectTransactionEntity();
         Assertions.assertEquals(404, response.statusCode());
-    }
-
-    @Test
-    @TestSecurity(user = "testUser", roles = {"pos_service_provider"})
-    @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "AGID_01")
-    })
-    void testLatestTransaction_500FT() {
-        Mockito.when(transactionService.latestTransaction(any(String.class), any(String.class), any(String.class), any(Sort.class)))
-                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
-
-        Response response = given()
-                .contentType(ContentType.JSON)
-                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
-                .queryParam("pspId", "AGID_01")
-                .queryParam("terminalId", "34523860")
-                .queryParam("status", "CLOSE_OK")
-                .and()
-                .when()
-                .get("/latest")
-                .then()
-                .extract().response();
-
-        Assertions.assertEquals(500, response.statusCode());
     }
 }

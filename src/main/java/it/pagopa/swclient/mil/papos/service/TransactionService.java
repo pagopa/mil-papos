@@ -153,18 +153,16 @@ public class TransactionService {
     }
 
     /**
-     * Retrieves the latest transaction by POS and status.
+     * Returns a list of transactions corresponding to given terminalUuids, status.
      *
-     * @param pspId      ID of the POS PSP
-     * @param terminalId ID of the terminal for the PSP
-     * @param status     status of the transactions to search for
-     * @return transaction found
+     * @param terminalUuids list of uuid of terminal associated to pspId of the solution
+     * @param status        of the transaction
+     * @return list of transactions found
      */
-    public Uni<TransactionEntity> latestTransaction(String pspId, String terminalId, String status, Sort sort) {
-        Log.debugf("TransactionService -> latestTransaction - Input parameters: %s, %s, %s", pspId, terminalId, status);
+    public Uni<TransactionEntity> findLatestByTerminalUuidAndStatus(List<String> terminalUuids, String status, Sort sort) {
+        Log.debugf("TransactionService -> getTransactionCountByTerminals - Input parameters: %s, %s, %s", terminalUuids, status, sort);
 
-        return transactionRepository
-                .find("pspId = ?1 AND terminalId = ?2 AND status = ?3", sort, pspId, terminalId, status)
+        return transactionRepository.find("terminalUuid in ?1 and status = ?2", sort, terminalUuids, status)
                 .firstResult();
     }
 

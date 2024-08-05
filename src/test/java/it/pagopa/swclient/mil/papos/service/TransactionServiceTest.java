@@ -171,13 +171,13 @@ class TransactionServiceTest {
     }
 
     @Test
-    void testLatestTransaction_Success() {
+    void testLatestByTerminalUuidAndStatus_Success() {
         ReactivePanacheQuery<TransactionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
         Mockito.when(query.firstResult()).thenReturn(Uni.createFrom().item(transactionEntity));
         Sort sort = Sort.by("creationTimestamp", Sort.Direction.Descending);
-        Mockito.when(transactionRepository.find("pspId = ?1 AND terminalId = ?2 AND status = ?3", sort, "pspId", "terminalId", "status")).thenReturn(query);
+        Mockito.when(transactionRepository.find("terminalUuid in ?1 and status = ?2", sort, List.of("16a79a4624356b00da07cfbf"), "status")).thenReturn(query);
 
-        Uni<TransactionEntity> result = transactionService.latestTransaction("pspId", "terminalId", "status", sort);
+        Uni<TransactionEntity> result = transactionService.findLatestByTerminalUuidAndStatus(List.of("16a79a4624356b00da07cfbf"), "status", sort);
 
         result.subscribe()
                 .withSubscriber(UniAssertSubscriber.create())
