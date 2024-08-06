@@ -131,7 +131,7 @@ public class TransactionResource {
         return transactionService.getTransactionCountByAttribute("payeeCode", payeeCode)
                 .onFailure()
                 .transform(err -> {
-                    Log.errorf(err, "TransactionResource -> findBy: error while counting transactions for payeeCode", payeeCode);
+                    Log.errorf(err, "TransactionResource -> findByPayeeCode: error while counting transactions for payeeCode", payeeCode);
 
                     return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -139,29 +139,40 @@ public class TransactionResource {
                             .build());
                 })
                 .onItem()
-                .transformToUni(numberOfTransactions ->
-                        transactionService.getTransactionListPagedByAttribute("payeeCode", payeeCode, convertedStartDate, convertedEndDate, sort, pageNumber, pageSize)
-                                .onFailure()
-                                .transform(err -> {
-                                    Log.errorf(err, "TransactionResource -> findBy: Error while retrieving list of transactions for payeeCode [%s], index and size [%s, %s]", payeeCode, pageNumber, pageSize);
+                .transformToUni(numberOfTransactions -> {
+                    if (numberOfTransactions == 0) {
+                        Log.errorf("TransactionResource -> findByPayeeCode: no transaction found on db by payeeCode [%s]", payeeCode);
 
-                                    return new InternalServerErrorException(Response
-                                            .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity(new Errors(ErrorCodes.ERROR_LIST_TRANSACTIONS, ErrorCodes.ERROR_LIST_TRANSACTIONS_MSG))
-                                            .build());
-                                })
-                                .onItem()
-                                .transform(transactionsPaged -> {
-                                    Log.debugf("TransactionResource -> findBy: size of list of transactions paginated found: [%s]", transactionsPaged.size());
+                        return Uni.createFrom().failure(new NotFoundException(Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity(new Errors(ErrorCodes.ERROR_TRANSACTION_NOT_FOUND, ErrorCodes.ERROR_TRANSACTION_NOT_FOUND_MSG))
+                                .build()));
+                    }
+                    Log.debugf("TransactionResource -> findByPayeeCode: total number of transaction by payeeCode [%s] found: [%s]", numberOfTransactions);
 
-                                    int totalPages = (int) Math.ceil((double) numberOfTransactions / pageSize);
-                                    PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfTransactions, totalPages);
+                    return transactionService.getTransactionListPagedByAttribute("payeeCode", payeeCode, convertedStartDate, convertedEndDate, sort, pageNumber, pageSize)
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err, "TransactionResource -> findByPayeeCode: Error while retrieving list of transactions for payeeCode [%s], index and size [%s, %s]", payeeCode, pageNumber, pageSize);
 
-                                    return Response
-                                            .status(Response.Status.OK)
-                                            .entity(new TransactionPageResponse(transactionsPaged, pageMetadata))
-                                            .build();
-                                }));
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(ErrorCodes.ERROR_LIST_TRANSACTIONS, ErrorCodes.ERROR_LIST_TRANSACTIONS_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transform(transactionsPaged -> {
+                                Log.debugf("TransactionResource -> findByPayeeCode: size of list of transactions paginated found: [%s]", transactionsPaged.size());
+
+                                int totalPages = (int) Math.ceil((double) numberOfTransactions / pageSize);
+                                PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfTransactions, totalPages);
+
+                                return Response
+                                        .status(Response.Status.OK)
+                                        .entity(new TransactionPageResponse(transactionsPaged, pageMetadata))
+                                        .build();
+                            });
+                });
     }
 
     @GET
@@ -196,6 +207,15 @@ public class TransactionResource {
                 })
                 .onItem()
                 .transformToUni(solutionEntities -> {
+                    if (solutionEntities.isEmpty()) {
+                        Log.errorf("TransactionResource -> findByPspId: no solutions found for pspId", pspId);
+
+                        return Uni.createFrom().item(() ->
+                                Response.status(Response.Status.NOT_FOUND)
+                                        .entity(new Errors(ErrorCodes.ERROR_NO_SOLUTIONS_FOUND, ErrorCodes.ERROR_NO_SOLUTIONS_FOUND_MSG))
+                                        .build()
+                        );
+                    }
                     Log.debugf("TransactionResource -> findByPspId: solution found by pspId [%s]: %s", pspId, solutionEntities);
 
                     List<String> solutionIds = solutionEntities.stream()
@@ -214,6 +234,15 @@ public class TransactionResource {
                             })
                             .onItem()
                             .transformToUni(terminalEntities -> {
+                                if (terminalEntities.isEmpty()) {
+                                    Log.errorf("TransactionResource -> findByPspId: no solutions found for solutionIds %s", solutionIds);
+
+                                    return Uni.createFrom().item(() -> Response
+                                            .status(Response.Status.NOT_FOUND)
+                                            .entity(new Errors(ErrorCodes.ERROR_NO_TERMINALS_FOUND, ErrorCodes.ERROR_NO_TERMINALS_FOUND_MSG))
+                                            .build()
+                                    );
+                                }
                                 Log.debugf("TransactionResource -> findByPspId: terminals found by solutionIds [%s]: %s", solutionIds, terminalEntities);
 
                                 List<String> terminalUuids = terminalEntities.stream()
@@ -237,7 +266,7 @@ public class TransactionResource {
 
                                                 return Uni.createFrom().failure(new NotFoundException(Response
                                                         .status(Response.Status.NOT_FOUND)
-                                                        .entity(new Errors(ErrorCodes.ERROR_TRANSACTION_NOT_FOUND, terminalUuids.toString()))
+                                                        .entity(new Errors(ErrorCodes.ERROR_TRANSACTION_NOT_FOUND, ErrorCodes.ERROR_TRANSACTION_NOT_FOUND_MSG))
                                                         .build()));
                                             }
 
