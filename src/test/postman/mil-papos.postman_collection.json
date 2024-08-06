@@ -524,7 +524,7 @@
 							"response": []
 						},
 						{
-							"name": "Find by loactionCode",
+							"name": "Find by locationCode",
 							"event": [
 								{
 									"listen": "test",
@@ -611,7 +611,7 @@
 					]
 				},
 				{
-					"name": "Update Solution",
+					"name": "3. Update Solution",
 					"item": [
 						{
 							"name": "Update solution",
@@ -641,42 +641,13 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"pspId\": \"TMIL0101\",\n    \"locationCode\": \"12704343560\"\n}",
+									"raw": "{\n    \"pspId\": \"{{pspId}}\",\n    \"locationCode\": \"{{locationCode}}\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
 										}
 									}
 								},
-								"url": {
-									"raw": "{{MIL_PAPOS_BASE_URL}}/solutions/{{solutionId}}",
-									"host": [
-										"{{MIL_PAPOS_BASE_URL}}"
-									],
-									"path": [
-										"solutions",
-										"{{solutionId}}"
-									]
-								}
-							},
-							"response": []
-						}
-					]
-				},
-				{
-					"name": "Delete Solution",
-					"item": [
-						{
-							"name": "Delete solution",
-							"request": {
-								"method": "DELETE",
-								"header": [
-									{
-										"key": "RequestId",
-										"value": "{{requestId}}",
-										"type": "text"
-									}
-								],
 								"url": {
 									"raw": "{{MIL_PAPOS_BASE_URL}}/solutions/{{solutionId}}",
 									"host": [
@@ -824,7 +795,7 @@
 									"formdata": [
 										{
 											"key": "file",
-											"value": "[ { \"solutionId\": \"66a79a4624356b00da07cfbf\", \"terminalId\": \"34523860\", \"enabled\": true }, { \"solutionId\": \"66a79a4624346b20da01cfbf\", \"terminalId\": \"84523987\", \"enabled\": false }, { \"solutionId\": \"{{solutionId}}\", \"terminalId\": \"94523012\", \"enabled\": true }, { \"solutionId\": \"{{solutionId}}\", \"terminalId\": \"74523123\", \"enabled\": false }, { \"solutionId\": \"{{solutionId}}\", \"terminalId\": \"64523234\", \"enabled\": true } ]",
+											"value": "[ { \"solutionId\": \"66a79a4624356b00da07cfbf\", \"terminalId\": \"34523860\", \"enabled\": true }, { \"solutionId\": \"66a79a4624346b20da01cfbf\", \"terminalId\": \"84523987\", \"enabled\": false }, { \"solutionId\": \"{{solutionId}}\", \"terminalId\": \"{{terminalId}}\", \"enabled\": true }, { \"solutionId\": \"{{solutionId}}\", \"terminalId\": \"74523123\", \"enabled\": false }, { \"solutionId\": \"{{solutionId}}\", \"terminalId\": \"64523234\", \"enabled\": true } ]",
 											"type": "text"
 										}
 									]
@@ -961,7 +932,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/findByPayeeCode?payeeCode={{payeeCode}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/findByPayeeCode?payeeCode={{locationCode}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
 									"host": [
 										"{{MIL_PAPOS_BASE_URL}}"
 									],
@@ -972,7 +943,7 @@
 									"query": [
 										{
 											"key": "payeeCode",
-											"value": "{{payeeCode}}",
+											"value": "{{locationCode}}",
 											"description": "(Required) Fiscal code of the subject that receives the payment"
 										},
 										{
@@ -1160,7 +1131,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/findByWorkstation?workstation={{workstation}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}&payeeCode={{payeeCode}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/findByWorkstation?workstation={{workstation}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}&payeeCode={{locationCode}}",
 									"host": [
 										"{{MIL_PAPOS_BASE_URL}}"
 									],
@@ -1186,7 +1157,7 @@
 										},
 										{
 											"key": "payeeCode",
-											"value": "{{payeeCode}}",
+											"value": "{{locationCode}}",
 											"description": "(Required) Fiscal code of the subject that receives the payment"
 										}
 									]
@@ -1233,7 +1204,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"solutionId\": {{solutionId}},\r\n    \"terminalId\": \"67899876\",\r\n    \"enabled\": false\r\n}",
+									"raw": "{\r\n    \"solutionId\": \"{{solutionId}}\",\r\n    \"terminalId\": \"{{terminalId}}\",\r\n    \"enabled\": false\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1251,61 +1222,6 @@
 									]
 								},
 								"description": "Updated terminal without modify linked cash desks"
-							},
-							"response": []
-						}
-					]
-				},
-				{
-					"name": "4. Delete Terminal",
-					"item": [
-						{
-							"name": "Delete Terminal",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Status code is 204\", function () {",
-											"    pm.response.to.have.status(204);",
-											"});",
-											""
-										],
-										"type": "text/javascript",
-										"packages": {}
-									}
-								}
-							],
-							"request": {
-								"auth": {
-									"type": "bearer",
-									"bearer": [
-										{
-											"key": "token",
-											"value": "{{access_token_psp}}",
-											"type": "string"
-										}
-									]
-								},
-								"method": "DELETE",
-								"header": [
-									{
-										"key": "RequestId",
-										"value": "{{requestId}}",
-										"description": "(Required) Request Id that will be logged by services"
-									}
-								],
-								"url": {
-									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/{{terminalUuid}}",
-									"host": [
-										"{{MIL_PAPOS_BASE_URL}}"
-									],
-									"path": [
-										"terminals",
-										"{{terminalUuid}}"
-									]
-								},
-								"description": "Deletes a terminal"
 							},
 							"response": []
 						}
@@ -1343,7 +1259,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"terminalUuid\": \"{{terminalUuid}}\",\r\n  \"noticeNumber\": \"{{noticeNumber}}\",\r\n  \"payeeCode\": \"{{payeeCode}}\"\r\n}",
+									"raw": "{\r\n  \"terminalUuid\": \"{{terminalUuid}}\",\r\n  \"noticeNumber\": \"{{noticeNumber}}\",\r\n  \"payeeCode\": \"{{locationCode}}\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1408,7 +1324,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_URL}}/transactions/findByPayeeCode?payeeCode={{payeeCode}}&startDate={{startDate}}&endDate={{endDate}}&sortStrategy={{sortStrategy}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/transactions/findByPayeeCode?payeeCode={{locationCode}}&startDate={{startDate}}&endDate={{endDate}}&sortStrategy={{sortStrategy}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
 									"host": [
 										"{{MIL_PAPOS_BASE_URL}}"
 									],
@@ -1419,7 +1335,7 @@
 									"query": [
 										{
 											"key": "payeeCode",
-											"value": "{{payeeCode}}",
+											"value": "{{locationCode}}",
 											"description": "(Required) Fiscal code of the subject that receives the payment"
 										},
 										{
@@ -1727,9 +1643,98 @@
 							"response": []
 						}
 					]
+				}
+			]
+		},
+		{
+			"name": "3. Delete Operation",
+			"item": [
+				{
+					"name": "0. Delete Solution",
+					"item": [
+						{
+							"name": "Delete solution",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_PAPOS_BASE_URL}}/solutions/{{solutionId}}",
+									"host": [
+										"{{MIL_PAPOS_BASE_URL}}"
+									],
+									"path": [
+										"solutions",
+										"{{solutionId}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
 				},
 				{
-					"name": "5. Delete Transaction",
+					"name": "1. Delete Terminal",
+					"item": [
+						{
+							"name": "Delete Terminal",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{access_token_psp}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "RequestId",
+										"value": "{{requestId}}",
+										"description": "(Required) Request Id that will be logged by services"
+									}
+								],
+								"url": {
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/{{terminalUuid}}",
+									"host": [
+										"{{MIL_PAPOS_BASE_URL}}"
+									],
+									"path": [
+										"terminals",
+										"{{terminalUuid}}"
+									]
+								},
+								"description": "Deletes a terminal"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "2. Delete Transaction",
 					"item": [
 						{
 							"name": "Delete Transaction",
@@ -1823,13 +1828,8 @@
 			"type": "string"
 		},
 		{
-			"key": "payeeCode",
-			"value": "06534340721",
-			"type": "string"
-		},
-		{
 			"key": "locationCode",
-			"value": "12704343560",
+			"value": "06534340721",
 			"type": "string"
 		},
 		{
