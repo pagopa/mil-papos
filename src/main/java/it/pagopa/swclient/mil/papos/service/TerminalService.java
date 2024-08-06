@@ -278,6 +278,7 @@ public class TerminalService {
         bulkLoadStatusEntity.setSuccessRecords(bulkLoadStatus.getSuccessRecords());
         bulkLoadStatusEntity.setFailedRecords(bulkLoadStatus.getFailedRecords());
         bulkLoadStatusEntity.setErrorMessages(bulkLoadStatus.getErrorMessages());
+        bulkLoadStatusEntity.setPspId(bulkLoadStatus.getPspId());
 
         return bulkLoadStatusEntity;
     }
