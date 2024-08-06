@@ -115,7 +115,7 @@ class TransactionServiceTest {
     void testFindTransaction_Success() {
         ReactivePanacheQuery<TransactionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
         Mockito.when(query.firstResult()).thenReturn(Uni.createFrom().item(transactionEntity));
-        Mockito.when(transactionRepository.find("transactionId = ?1", "transactionId")).thenReturn(query);
+        Mockito.when(transactionRepository.find("{_id: ObjectId(?1)}", "transactionId")).thenReturn(query);
 
         Uni<TransactionEntity> result = transactionService.findTransaction("transactionId");
 
