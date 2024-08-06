@@ -95,7 +95,7 @@ public class SolutionService {
         oldSolution.setLocationCode(solutionDto.locationCode());
         oldSolution.setPspId(solutionDto.pspId());
 
-        return solutionRepository.persist(oldSolution)
+        return solutionRepository.update(oldSolution)
                 .onFailure()
                 .transform(error -> error)
                 .onItem()

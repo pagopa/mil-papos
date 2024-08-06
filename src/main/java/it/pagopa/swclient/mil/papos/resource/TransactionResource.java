@@ -277,7 +277,7 @@ public class TransactionResource {
                                             return transactionService.getTransactionListPagedByTerminals(terminalUuids, convertedStartDate, convertedEndDate, sort, pageNumber, pageSize)
                                                     .onFailure()
                                                     .transform(err -> {
-                                                        Log.errorf(err, "TransactionResource -> findByPspId: unexpected error during find all terminal by solutionIds [%s]", solutionIds);
+                                                        Log.errorf(err, "TransactionResource -> findByPspId: unexpected error during find transaction list paged by terminalUuids [%s] and [%s, %s, %s, %s, %s]", terminalUuids, convertedStartDate, convertedEndDate, sort, pageNumber, pageSize);
 
                                                         return new InternalServerErrorException(Response
                                                                 .status(Response.Status.INTERNAL_SERVER_ERROR)

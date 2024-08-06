@@ -112,7 +112,7 @@ public class TransactionService {
         Log.debugf("TransactionService -> findTransaction - Input parameters: %s", transactionId);
 
         return transactionRepository
-                .find("transactionId = ?1", transactionId)
+                .find("{_id: ObjectId(?1)}", transactionId)
                 .firstResult();
     }
 
