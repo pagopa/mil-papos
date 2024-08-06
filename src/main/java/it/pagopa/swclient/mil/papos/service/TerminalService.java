@@ -179,6 +179,7 @@ public class TerminalService {
         Log.debugf("TerminalService -> updateTerminal - Input parameters: %s, %s, %s", terminalUuid, terminalDto, oldTerminal);
 
         TerminalEntity entity = createTerminalEntity(terminalDto, terminalUuid);
+        entity.id = oldTerminal.id;
         entity.setTerminalUuid(oldTerminal.getTerminalUuid());
         entity.setWorkstations(oldTerminal.getWorkstations());
 

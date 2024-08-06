@@ -260,7 +260,7 @@ class TerminalResourceTest {
     @JwtSecurity(claims = {
             @Claim(key = "sub", value = "TMIL0101")
     })
-    void testBulkLoadTerminals_500ES() {
+    void testBulkLoadTerminals_404ES() {
         String fileContent = "[{ \"solutionId\": \"66a79a4624356b00da07cfbf\", \"terminalId\": \"34523860\", \"enabled\": true }, { \"solutionId\": \"66a79a4624346b20da01cfbf\", \"terminalId\": \"84523987\", \"enabled\": false }]";
         InputStream fileInputStream = new ByteArrayInputStream(fileContent.getBytes(StandardCharsets.UTF_8));
 
@@ -276,7 +276,7 @@ class TerminalResourceTest {
                 .then()
                 .extract().response();
 
-        Assertions.assertEquals(500, response.statusCode());
+        Assertions.assertEquals(404, response.statusCode());
     }
 
     @Test
@@ -715,7 +715,7 @@ class TerminalResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = {"public_administration"})
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "TMIL0101")
+            @Claim(key = "sub", value = "12704343560")
     })
     void testUpdateWorkstations_204() {
         Mockito.when(terminalService.findTerminal(any(String.class)))
@@ -839,7 +839,7 @@ class TerminalResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = {"public_administration"})
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "TMIL0101")
+            @Claim(key = "sub", value = "12704343560")
     })
     void testUpdateWorkstations_500UT() {
         Mockito.when(terminalService.findTerminal(any(String.class)))
@@ -890,6 +890,28 @@ class TerminalResourceTest {
                 .extract().response();
 
         Assertions.assertEquals(204, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"pos_service_provider"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "TMIL0101")
+    })
+    void testUpdateTerminal_500() {
+        Mockito.when(solutionService.findById(any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(terminalDto)
+                .when()
+                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
     }
 
     @Test

@@ -149,7 +149,7 @@ public class TerminalResource {
                                         Log.errorf("TerminalResource -> bulkLoadTerminals: no solutions found for pspId %s and solutionIds %s", jwt.getSubject(), solutionIds);
 
                                         return Uni.createFrom().item(() ->
-                                                Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                Response.status(Response.Status.NOT_FOUND)
                                                         .entity(new Errors(ErrorCodes.ERROR_NO_SOLUTIONS_FOUND, ErrorCodes.ERROR_NO_SOLUTIONS_FOUND_MSG))
                                                         .build()
                                         );
@@ -411,7 +411,7 @@ public class TerminalResource {
                             .onItem()
                             .transformToUni(solutionFound -> {
                                 Log.debugf("TerminalResource -> updateWorkstations: solution found correctly on DB [%s]", solutionFound);
-                                checkToken(solutionFound.getPspId());
+                                checkToken(solutionFound.getLocationCode());
 
                                 return terminalService.updateWorkstations(workstations, terminalEntity)
                                         .onFailure()
@@ -450,10 +450,19 @@ public class TerminalResource {
         Log.debugf("TerminalResource -> updateTerminal - Input requestId, updateTerminal: %s, %s", requestId, terminal);
 
         return solutionService.findById(terminal.solutionId())
+                .onFailure()
+                .transform(err -> {
+                    Log.errorf(err, "TerminalResource -> updateTerminal: error during search solution with solutionId: [%s]", terminal.solutionId());
+
+                    return new InternalServerErrorException(Response
+                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                            .build());
+                })
                 .onItem()
                 .transformToUni(solution -> {
                     if (solution == null) {
-                        Log.errorf("TerminalResource -> createTerminal: error 404 during searching solution with solutionId: %s", terminal.solutionId());
+                        Log.errorf("TerminalResource -> updateTerminal: error 404 during searching solution with solutionId: %s", terminal.solutionId());
 
                         return Uni.createFrom().failure(new NotFoundException(Response
                                 .status(Response.Status.NOT_FOUND)
