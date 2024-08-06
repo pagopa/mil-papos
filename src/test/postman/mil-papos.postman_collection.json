@@ -669,7 +669,7 @@
 						{
 							"name": "Delete solution",
 							"request": {
-								"method": "GET",
+								"method": "DELETE",
 								"header": [
 									{
 										"key": "RequestId",
@@ -961,7 +961,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/findByPayeeCode?payeeCode={{locationCode}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/findByPayeeCode?payeeCode={{payeeCode}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
 									"host": [
 										"{{MIL_PAPOS_BASE_URL}}"
 									],
@@ -972,7 +972,7 @@
 									"query": [
 										{
 											"key": "payeeCode",
-											"value": "{{locationCode}}",
+											"value": "{{payeeCode}}",
 											"description": "(Required) Fiscal code of the subject that receives the payment"
 										},
 										{
@@ -1160,7 +1160,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/findByWorkstation?workstation={{workstation}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}&payeeCode={{locationCode}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/findByWorkstation?workstation={{workstation}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}&payeeCode={{payeeCode}}",
 									"host": [
 										"{{MIL_PAPOS_BASE_URL}}"
 									],
@@ -1186,7 +1186,7 @@
 										},
 										{
 											"key": "payeeCode",
-											"value": "{{locationCode}}",
+											"value": "{{payeeCode}}",
 											"description": "(Required) Fiscal code of the subject that receives the payment"
 										}
 									]
@@ -1931,10 +1931,6 @@
 		{
 			"key": "solutionId",
 			"value": "66acad7c717c6d7e3636cf14",
-			"type": "string"
-		},
-		{
-			"value": "",
 			"type": "string"
 		}
 	]
