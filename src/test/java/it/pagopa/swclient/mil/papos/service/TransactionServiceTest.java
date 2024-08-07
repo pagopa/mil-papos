@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import static it.pagopa.swclient.mil.papos.util.Utility.roundCeilObjectIdhex;
 import static org.mockito.ArgumentMatchers.*;
 
 @QuarkusTest
@@ -90,13 +91,13 @@ class TransactionServiceTest {
         Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
         Mockito.when(query.list()).thenReturn(Uni.createFrom().item(TestData.mockedListTransaction()));
 
-        String queryStr = "{ transactionId: ?1, creationTimestamp: { $gte: ?2, $lte: ?3 } }";
-        Sort sort = Sort.by("creationTimestamp", Sort.Direction.Ascending);
+        String queryStr = String.format("{ %s: ?1, _id: { $gte: ?2, $lte: ?3 } }", "transactionId");
+        Sort sort = Sort.by("_id", Sort.Direction.Ascending);
 
         Date startDate = new SimpleDateFormat("yyyy-MM-dd").parse("2024-01-01");
         Date endDate = new SimpleDateFormat("yyyy-MM-dd").parse("2024-12-31");
 
-        Mockito.when(transactionRepository.find(queryStr, sort,"transactionId", startDate, endDate))
+        Mockito.when(transactionRepository.find(queryStr, sort, "transactionId", roundCeilObjectIdhex(startDate), roundCeilObjectIdhex(endDate)))
                 .thenReturn(query);
 
         Uni<List<TransactionEntity>> result = transactionService.getTransactionListPagedByAttribute(
@@ -205,13 +206,13 @@ class TransactionServiceTest {
         Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
         Mockito.when(query.list()).thenReturn(Uni.createFrom().item(TestData.mockedListTransaction()));
 
-        String queryStr = "{ 'creationTimestamp': { '$gte': ?2, '$lte': ?3 }, 'terminalUuid': { '$in': [?1] } }";
-        Sort sort = Sort.by("creationTimestamp", Sort.Direction.Ascending);
+        String queryStr = "{ '_id': { '$gte': ?2, '$lte': ?3 }, 'terminalUuid': { '$in': [?1] } }";
+        Sort sort = Sort.by("_id", Sort.Direction.Ascending);
 
         Date startDate = new SimpleDateFormat("yyyy-MM-dd").parse("2024-01-01");
         Date endDate = new SimpleDateFormat("yyyy-MM-dd").parse("2024-12-31");
 
-        Mockito.when(transactionRepository.find(queryStr, sort,terminalUuids, startDate, endDate))
+        Mockito.when(transactionRepository.find(queryStr, sort,terminalUuids, roundCeilObjectIdhex(startDate), roundCeilObjectIdhex(endDate)))
                 .thenReturn(query);
 
         Uni<List<TransactionEntity>> result = transactionService.getTransactionListPagedByTerminals(
