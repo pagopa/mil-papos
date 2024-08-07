@@ -12,6 +12,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import java.util.Date;
 import java.util.List;
 
+import static it.pagopa.swclient.mil.papos.util.Utility.roundCeilObjectIdhex;
+
 @ApplicationScoped
 public class TransactionService {
     private final TransactionRepository transactionRepository;
@@ -63,10 +65,10 @@ public class TransactionService {
     public Uni<List<TransactionEntity>> getTransactionListPagedByAttribute(String attributeName, String attributeValue, Date startDate, Date endDate, Sort sortStrategy, int pageIndex, int pageSize) {
         Log.debugf("TransactionService -> getTransactionListPagedByAttribute - Input parameters: %s, %s, %s, %s, %s, %s, %s", attributeName, attributeValue, startDate, endDate, sortStrategy, pageIndex, pageSize);
 
-        String query = String.format("{ %s: ?1, creationTimestamp: { $gte: ?2, $lte: ?3 } }", attributeName);
+        String query = String.format("{ %s: ?1, _id: { $gte: ?2, $lte: ?3 } }", attributeName);
 
         return transactionRepository
-                .find(query, sortStrategy, attributeValue, startDate, endDate)
+                .find(query, sortStrategy, attributeValue, roundCeilObjectIdhex(startDate), roundCeilObjectIdhex(endDate))
                 .page(pageIndex, pageSize)
                 .list();
     }
@@ -94,10 +96,10 @@ public class TransactionService {
     public Uni<List<TransactionEntity>> getTransactionListPagedByTerminals(List<String> terminalUuids, Date startDate, Date endDate, Sort sortStrategy, int pageIndex, int pageSize) {
         Log.debugf("TransactionService -> getTransactionListPagedByTerminals - Input parameters: %s, %s, %s, %s, %s, %s", terminalUuids, startDate, endDate, sortStrategy, pageIndex, pageSize);
 
-        String query = "{ 'creationTimestamp': { '$gte': ?2, '$lte': ?3 }, 'terminalUuid': { '$in': [?1] } }";
+        String query = "{ '_id': { '$gte': ?2, '$lte': ?3 }, 'terminalUuid': { '$in': [?1] } }";
 
         return transactionRepository
-                .find(query, sortStrategy, terminalUuids, startDate, endDate)
+                .find(query, sortStrategy, terminalUuids, roundCeilObjectIdhex(startDate), roundCeilObjectIdhex(endDate))
                 .page(pageIndex, pageSize)
                 .list();
     }

@@ -39,7 +39,7 @@ public class TransactionResource {
 
     private final JsonWebToken jwt;
 
-    private static final String CREATION_TIMESTAMP = "creationTimestamp";
+    private static final String ID_TRANSACTION = "_id";
 
     public TransactionResource(TransactionService transactionService, TerminalService terminalService, SolutionService solutionService, JsonWebToken jwt) {
         this.transactionService = transactionService;
@@ -126,7 +126,7 @@ public class TransactionResource {
 
         Date convertedStartDate = Utility.convertStringToDate(startDate, true);
         Date convertedEndDate = Utility.convertStringToDate(endDate, false);
-        Sort sort = Sort.by(CREATION_TIMESTAMP, "asc".equalsIgnoreCase(sortStrategy) ? Sort.Direction.Ascending : Sort.Direction.Descending);
+        Sort sort = Sort.by(ID_TRANSACTION, "asc".equalsIgnoreCase(sortStrategy) ? Sort.Direction.Ascending : Sort.Direction.Descending);
 
         return transactionService.getTransactionCountByAttribute("payeeCode", payeeCode)
                 .onFailure()
@@ -272,7 +272,7 @@ public class TransactionResource {
 
                                             Date convertedStartDate = Utility.convertStringToDate(startDate, true);
                                             Date convertedEndDate = Utility.convertStringToDate(endDate, false);
-                                            Sort sort = Sort.by(CREATION_TIMESTAMP, "asc".equalsIgnoreCase(sortStrategy) ? Sort.Direction.Ascending : Sort.Direction.Descending);
+                                            Sort sort = Sort.by(ID_TRANSACTION, "asc".equalsIgnoreCase(sortStrategy) ? Sort.Direction.Ascending : Sort.Direction.Descending);
 
                                             return transactionService.getTransactionListPagedByTerminals(terminalUuids, convertedStartDate, convertedEndDate, sort, pageNumber, pageSize)
                                                     .onFailure()
@@ -418,7 +418,7 @@ public class TransactionResource {
             @QueryParam("status") String status) {
 
         Log.debugf("TransactionResource -> getLatestTransaction - Input requestId, pspId, terminalId, status: %s, %s, %s, %s", requestId, pspId, terminalId, status);
-        Sort sort = Sort.by(CREATION_TIMESTAMP, Sort.Direction.Descending);
+        Sort sort = Sort.by(ID_TRANSACTION, Sort.Direction.Descending);
         checkToken(pspId);
 
         return solutionService.findAllByPspId(pspId)
