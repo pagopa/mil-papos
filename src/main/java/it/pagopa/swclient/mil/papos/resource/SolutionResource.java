@@ -133,7 +133,7 @@ public class SolutionResource {
     @Path("/{solutionId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "mil_papos_admin" })
+    @RolesAllowed({ "mil_papos_admin", "pos_service_provider" })
     public Uni<Response> findSolution(
             @HeaderParam("RequestId") @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG) @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
             @PathParam(value = "solutionId") String solutionId) {
@@ -193,7 +193,7 @@ public class SolutionResource {
     @Path("/findByLocationCode")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "mil_papos_admin" })
+    @RolesAllowed({ "mil_papos_admin", "public_administration" })
     public Uni<Response> findByLocationCode(
             @HeaderParam("RequestId") @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG) @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
             @QueryParam("locationCode") String locationCode,
