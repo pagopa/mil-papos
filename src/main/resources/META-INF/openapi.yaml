@@ -1734,7 +1734,7 @@ components:
       description: ID of the POS PSP
       required: true
       schema:
-        $ref: '#/components/schemas/PayeeCode'
+        $ref: '#/components/schemas/PspId'
 
     RequestId:
       name: RequestId

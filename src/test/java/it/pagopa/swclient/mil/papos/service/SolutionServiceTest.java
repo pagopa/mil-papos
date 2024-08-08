@@ -152,10 +152,10 @@ class SolutionServiceTest {
 
     @Test
     void testFindBy_Success() {
-        Mockito.when(solutionRepository.list(String.format("%s = ?1", "locationCode"), "12704343560"))
+        Mockito.when(solutionRepository.list(String.format("%s = ?1", "locationCode"), "06534340721"))
                 .thenReturn(Uni.createFrom().item(mockedListSolution()));
 
-        Uni<List<SolutionEntity>> result = solutionService.findAllByLocationOrPsp("locationCode", "12704343560");
+        Uni<List<SolutionEntity>> result = solutionService.findAllByLocationOrPsp("locationCode", "06534340721");
 
         result.subscribe()
                 .with(list -> Assertions.assertEquals(mockedListSolution(), list));
