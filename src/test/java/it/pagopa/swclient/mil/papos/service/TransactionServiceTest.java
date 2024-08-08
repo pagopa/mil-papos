@@ -75,34 +75,34 @@ class TransactionServiceTest {
     }
 
     @Test
-    void testGetTransactionCountByAttribute_Success() {
+    void testGetTransactionCountByPayee_Success() {
         Mockito.when(transactionRepository.count(anyString(), anyString()))
                 .thenReturn(Uni.createFrom().item(10L));
 
-        Uni<Long> result = transactionService.getTransactionCountByAttribute("pspId", "psp1");
+        Uni<Long> result = transactionService.getTransactionCountByPayee("06534340721");
 
         result.subscribe()
                 .with(count -> Assertions.assertEquals(10L, count));
     }
 
     @Test
-    void testGetTransactionListPagedByAttribute_Success() throws ParseException {
+    void testGetTransactionListPagedByPayeeAndTerminals_Success() throws ParseException {
         ReactivePanacheQuery<TransactionEntity> query = Mockito.mock(ReactivePanacheQuery.class);
         Mockito.when(query.page(anyInt(), anyInt())).thenReturn(query);
         Mockito.when(query.list()).thenReturn(Uni.createFrom().item(TestData.mockedListTransaction()));
 
-        String queryStr = String.format("{ %s: ?1, _id: { $gte: ?2, $lte: ?3 } }", "transactionId");
+        String queryStr = "{ 'payeeCode': ?1, '_id': { '$gte': ?2, '$lte': ?3 }, 'terminalUuid': { '$in': [?4] } }";
         Sort sort = Sort.by("_id", Sort.Direction.Ascending);
 
         Date startDate = new SimpleDateFormat("yyyy-MM-dd").parse("2024-01-01");
         Date endDate = new SimpleDateFormat("yyyy-MM-dd").parse("2024-12-31");
 
-        Mockito.when(transactionRepository.find(queryStr, sort, "transactionId", roundCeilObjectIdhex(startDate), roundCeilObjectIdhex(endDate)))
+        Mockito.when(transactionRepository.find(queryStr, sort, "06534340721", roundCeilObjectIdhex(startDate), roundCeilObjectIdhex(endDate), List.of("c7a1b24b0583477292ebdbaa")))
                 .thenReturn(query);
 
-        Uni<List<TransactionEntity>> result = transactionService.getTransactionListPagedByAttribute(
-                "transactionId",
-                "transactionId",
+        Uni<List<TransactionEntity>> result = transactionService.getTransactionListPagedByPayeeAndTerminals(
+                "06534340721",
+                List.of("c7a1b24b0583477292ebdbaa"),
                 startDate,
                 endDate,
                 sort,

@@ -17,13 +17,17 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 @Path("/solutions")
 public class SolutionResource {
     private final SolutionService solutionService;
 
-    public SolutionResource(SolutionService solutionService) {
+    private final JsonWebToken jwt;
+
+    public SolutionResource(SolutionService solutionService, JsonWebToken jwt) {
         this.solutionService = solutionService;
+        this.jwt = jwt;
     }
 
     @POST
@@ -133,7 +137,7 @@ public class SolutionResource {
     @Path("/{solutionId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "mil_papos_admin", "pos_service_provider" })
+    @RolesAllowed({ "mil_papos_admin" })
     public Uni<Response> findSolution(
             @HeaderParam("RequestId") @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG) @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
             @PathParam(value = "solutionId") String solutionId) {
@@ -179,12 +183,15 @@ public class SolutionResource {
     @Path("/findByPspId")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({ "mil_papos_admin" })
+    @RolesAllowed({ "mil_papos_admin", "pos_service_provider" })
     public Uni<Response> findByPspId(
             @HeaderParam("RequestId") @NotNull(message = ErrorCodes.ERROR_REQUESTID_MUST_NOT_BE_NULL_MSG) @Pattern(regexp = RegexPatterns.REQUEST_ID_PATTERN) String requestId,
             @QueryParam("pspId") String pspId,
             @QueryParam("page") int pageNumber,
             @QueryParam("size") int pageSize) {
+        if (jwt.getGroups().contains("pos_service_provider")) {
+            checkToken(pspId);
+        }
 
         return findByAttribute(requestId, "pspId", pspId, pageNumber, pageSize);
     }
@@ -199,6 +206,9 @@ public class SolutionResource {
             @QueryParam("locationCode") String locationCode,
             @QueryParam("page") int pageNumber,
             @QueryParam("size") int pageSize) {
+        if (jwt.getGroups().contains("public_administration")) {
+            checkToken(locationCode);
+        }
 
         return findByAttribute(requestId, "locationCode", locationCode, pageNumber, pageSize);
     }
@@ -382,6 +392,19 @@ public class SolutionResource {
                                         .build();
                             });
                 });
+    }
+
+    private void checkToken(String toCheck) {
+        Log.debugf("SolutionResource -> checkToken: sub [%s], pspId/payeeCode: [%s]", jwt.getSubject(), toCheck);
+
+        if (!jwt.getSubject().equals(toCheck)) {
+            Log.errorf("SolutionResource -> checkToken: Error while checking token, subject not equals to pspId/payeeCode [%s, %s]", jwt.getSubject(), toCheck);
+
+            throw new WebApplicationException(Response
+                    .status(Response.Status.UNAUTHORIZED)
+                    .entity(new Errors(ErrorCodes.ERROR_CHECK_TOKEN, ErrorCodes.ERROR_CHECK_TOKEN_MSG))
+                    .build());
+        }
     }
 
 }

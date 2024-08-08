@@ -76,6 +76,9 @@ class TransactionResourceTest {
         Mockito.when(terminalService.findTerminal(any(String.class)))
                 .thenReturn(Uni.createFrom().item(terminalEntity));
 
+        Mockito.when(solutionService.findById(any(String.class)))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
+
         Mockito.when(transactionService.createTransaction(any(TransactionDto.class)))
                 .thenReturn(Uni.createFrom().item(transactionEntity));
 
@@ -119,9 +122,37 @@ class TransactionResourceTest {
     @JwtSecurity(claims = {
             @Claim(key = "sub", value = "06534340721")
     })
+    void testCreateTransactionEndpoint_500FBI() {
+        Mockito.when(terminalService.findTerminal(any(String.class)))
+                .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Mockito.when(solutionService.findById(any(String.class)))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .body(transactionDto)
+                .when()
+                .post("/")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"public_administration"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "06534340721")
+    })
     void testCreateTransactionError_500() {
         Mockito.when(terminalService.findTerminal(any(String.class)))
                 .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Mockito.when(solutionService.findById(any(String.class)))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
 
         Mockito.when(transactionService.createTransaction(any(TransactionDto.class)))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
@@ -146,7 +177,10 @@ class TransactionResourceTest {
     })
     void testCreateTransactionError_401() {
         Mockito.when(terminalService.findTerminal(any(String.class)))
-                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+                .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Mockito.when(solutionService.findById(any(String.class)))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -191,15 +225,26 @@ class TransactionResourceTest {
             @Claim(key = "sub", value = "06534340721")
     })
     void testFindByPayeeCode_200() {
-        Mockito.when(transactionService.getTransactionCountByAttribute("payeeCode", "06534340721"))
-                .thenReturn(Uni.createFrom().item(10L));
-        Sort sort = Sort.by("creationTimestamp", Sort.Direction.Descending);
+        Mockito.when(solutionService.findAllByLocationOrPsp("locationCode", "06534340721"))
+                .thenReturn(Uni.createFrom().item(TestData.mockedListSolution()));
 
-        Mockito.when(transactionService.getTransactionListPagedByAttribute("payeeCode", "06534340721",
+        List<String> solutionIds = List.of("66a79a4624356b00da07cfbf", "66a79a4624346b20da01cfbf");
+        Mockito.when(terminalService.findAllBySolutionIds(solutionIds))
+                .thenReturn(Uni.createFrom().item(TestData.mockedList()));
+
+        Mockito.when(transactionService.getTransactionCountByPayee("06534340721"))
+                .thenReturn(Uni.createFrom().item(10L));
+
+        List<String> terminalUuids = TestData.mockedList().stream()
+                .map(TerminalEntity::getTerminalUuid)
+                .toList();
+
+        Sort sort = Sort.by("creationTimestamp", Sort.Direction.Ascending);
+        Mockito.when(transactionService.getTransactionListPagedByPayeeAndTerminals("06534340721", terminalUuids,
                         Utility.convertStringToDate("2023-01-01", true),
                         Utility.convertStringToDate("2023-12-31", false),
                         sort, 0, 10))
-                .thenReturn(Uni.createFrom().item(new ArrayList<>()));
+                .thenReturn(Uni.createFrom().item(TestData.mockedListTransaction()));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -224,7 +269,7 @@ class TransactionResourceTest {
             @Claim(key = "sub", value = "06534340721")
     })
     void testFindByPayeeCode_500TC() {
-        Mockito.when(transactionService.getTransactionCountByAttribute("payeeCode", "06534340721"))
+        Mockito.when(solutionService.findAllByLocationOrPsp("locationCode", "06534340721"))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
 
         Response response = given()
@@ -250,8 +295,9 @@ class TransactionResourceTest {
             @Claim(key = "sub", value = "06534340721")
     })
     void testFindByPayeeCode_404() {
-        Mockito.when(transactionService.getTransactionCountByAttribute("payeeCode", "06534340721"))
-                .thenReturn(Uni.createFrom().item(0L));
+        List<SolutionEntity> empty = new ArrayList<>();
+        Mockito.when(solutionService.findAllByLocationOrPsp("locationCode", "06534340721"))
+                .thenReturn(Uni.createFrom().item(empty));
 
         Response response = given()
                 .contentType(ContentType.JSON)
@@ -273,14 +319,14 @@ class TransactionResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = {"public_administration"})
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "AGID_01")
+            @Claim(key = "sub", value = "06534340721")
     })
     void testFindByPayeeCode_500TLP() {
-        Mockito.when(transactionService.getTransactionCountByAttribute("payeeCode", "AGID_01"))
-                .thenReturn(Uni.createFrom().item(10L));
+        Mockito.when(solutionService.findAllByLocationOrPsp("locationCode", "06534340721"))
+                .thenReturn(Uni.createFrom().item(TestData.mockedListSolution()));
 
-        Mockito.when(transactionService.getTransactionListPagedByAttribute(any(String.class), any(String.class),
-                        any(Date.class), any(Date.class), any(Sort.class), any(Integer.class), any(Integer.class)))
+        List<String> solutionIds = List.of("66a79a4624356b00da07cfbf", "66a79a4624346b20da01cfbf");
+        Mockito.when(terminalService.findAllBySolutionIds(solutionIds))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
 
         Response response = given()
@@ -305,17 +351,128 @@ class TransactionResourceTest {
     @JwtSecurity(claims = {
             @Claim(key = "sub", value = "06534340721")
     })
-    void testFindByPayeeCode_DateParsingError() {
-        Mockito.when(transactionService.getTransactionCountByAttribute("payeeCode", "payeeCode"))
-                .thenReturn(Uni.createFrom().item(10L));
+    void testFindByPayeeCode_404FABSI() {
+        Mockito.when(solutionService.findAllByLocationOrPsp("locationCode", "06534340721"))
+                .thenReturn(Uni.createFrom().item(TestData.mockedListSolution()));
+
+        List<String> solutionIds = List.of("66a79a4624356b00da07cfbf", "66a79a4624346b20da01cfbf");
+        List<TerminalEntity> empty = new ArrayList<>();
+        Mockito.when(terminalService.findAllBySolutionIds(solutionIds))
+                .thenReturn(Uni.createFrom().item(empty));
 
         Response response = given()
                 .contentType(ContentType.JSON)
                 .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
                 .queryParam("payeeCode", "06534340721")
-                .queryParam("startDate", "invalid-date")
+                .queryParam("startDate", "2023-01-01")
                 .queryParam("endDate", "2023-12-31")
                 .queryParam("sortStrategy", "asc")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/findByPayeeCode")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(404, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"public_administration"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "06534340721")
+    })
+    void testFindByPayeeCode_500TCBP() {
+        Mockito.when(solutionService.findAllByLocationOrPsp("locationCode", "06534340721"))
+                .thenReturn(Uni.createFrom().item(TestData.mockedListSolution()));
+
+        List<String> solutionIds = List.of("66a79a4624356b00da07cfbf", "66a79a4624346b20da01cfbf");
+        Mockito.when(terminalService.findAllBySolutionIds(solutionIds))
+                .thenReturn(Uni.createFrom().item(TestData.mockedList()));
+
+        Mockito.when(transactionService.getTransactionCountByPayee("06534340721"))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("payeeCode", "06534340721")
+                .queryParam("startDate", "2023-01-01")
+                .queryParam("endDate", "2023-12-31")
+                .queryParam("sortStrategy", "desc")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/findByPayeeCode")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"public_administration"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "06534340721")
+    })
+    void testFindByPayeeCode_404TCBP() {
+        Mockito.when(solutionService.findAllByLocationOrPsp("locationCode", "06534340721"))
+                .thenReturn(Uni.createFrom().item(TestData.mockedListSolution()));
+
+        List<String> solutionIds = List.of("66a79a4624356b00da07cfbf", "66a79a4624346b20da01cfbf");
+        Mockito.when(terminalService.findAllBySolutionIds(solutionIds))
+                .thenReturn(Uni.createFrom().item(TestData.mockedList()));
+
+        Mockito.when(transactionService.getTransactionCountByPayee("06534340721"))
+                .thenReturn(Uni.createFrom().item(0L));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("payeeCode", "06534340721")
+                .queryParam("startDate", "2023-01-01")
+                .queryParam("endDate", "2023-12-31")
+                .queryParam("sortStrategy", "desc")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/findByPayeeCode")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(404, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"public_administration"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "06534340721")
+    })
+    void testFindByPayeeCode_500TLPPT() {
+        Mockito.when(solutionService.findAllByLocationOrPsp(anyString(), anyString()))
+                .thenReturn(Uni.createFrom().item(TestData.mockedListSolution()));
+
+        Mockito.when(terminalService.findAllBySolutionIds(anyList()))
+                .thenReturn(Uni.createFrom().item(TestData.mockedList()));
+
+        Mockito.when(transactionService.getTransactionCountByPayee(anyString()))
+                .thenReturn(Uni.createFrom().item(10L));
+
+        Mockito.when(transactionService.getTransactionListPagedByPayeeAndTerminals(anyString(), anyList(),
+                        any(Date.class),
+                        any(Date.class),
+                        any(Sort.class),
+                        anyInt(),
+                        anyInt()))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("payeeCode", "06534340721")
+                .queryParam("startDate", "2023-01-01")
+                .queryParam("endDate", "2023-12-31")
+                .queryParam("sortStrategy", "desc")
                 .queryParam("page", 0)
                 .queryParam("size", 10)
                 .when()
@@ -603,10 +760,16 @@ class TransactionResourceTest {
             @Claim(key = "sub", value = "06534340721")
     })
     void testDeleteTransaction_204() {
-        Mockito.when(transactionService.findTransaction(any(String.class)))
+        Mockito.when(transactionService.findTransaction("66b49e6d7bca521f8c2f97e0"))
                 .thenReturn(Uni.createFrom().item(transactionEntity));
 
-        Mockito.when(transactionService.deleteTransaction(any(TransactionEntity.class)))
+        Mockito.when(terminalService.findTerminal(transactionEntity.getTerminalUuid()))
+                .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Mockito.when(solutionService.findById(terminalEntity.getSolutionId()))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
+
+        Mockito.when(transactionService.deleteTransaction(transactionEntity))
                 .thenReturn(Uni.createFrom().voidItem());
 
         Response response = given()
@@ -614,7 +777,7 @@ class TransactionResourceTest {
                 .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
                 .and()
                 .when()
-                .delete("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .delete("/66b49e6d7bca521f8c2f97e0")
                 .then()
                 .extract().response();
 
@@ -624,41 +787,16 @@ class TransactionResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = {"public_administration"})
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "AGID_01")
-    })
-    void testDeleteTransaction_404() {
-        transactionEntity = null;
-        Mockito.when(transactionService.findTransaction(any(String.class)))
-                .thenReturn(Uni.createFrom().item(transactionEntity));
-
-        Response response = given()
-                .contentType(ContentType.JSON)
-                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
-                .and()
-                .body(transactionDto)
-                .when()
-                .delete("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
-                .then()
-                .extract().response();
-
-        transactionEntity = TestData.getCorrectTransactionEntity();
-        Assertions.assertEquals(404, response.statusCode());
-    }
-
-    @Test
-    @TestSecurity(user = "testUser", roles = {"public_administration"})
-    @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "AGID_01")
+            @Claim(key = "sub", value = "06534340721")
     })
     void testDeleteTransaction_500FT() {
-        Mockito.when(transactionService.findTransaction(any(String.class)))
+        Mockito.when(transactionService.findTransaction(anyString()))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
 
         Response response = given()
                 .contentType(ContentType.JSON)
                 .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
                 .and()
-                .body(transactionDto)
                 .when()
                 .delete("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
                 .then()
@@ -672,20 +810,97 @@ class TransactionResourceTest {
     @JwtSecurity(claims = {
             @Claim(key = "sub", value = "06534340721")
     })
-    void testDeleteTransaction_500UT() {
-        Mockito.when(transactionService.findTransaction(any(String.class)))
+    void testDeleteTransaction_500TFT() {
+        Mockito.when(transactionService.findTransaction("66b49e6d7bca521f8c2f97e0"))
                 .thenReturn(Uni.createFrom().item(transactionEntity));
 
-        Mockito.when(transactionService.deleteTransaction(any(TransactionEntity.class)))
+        Mockito.when(terminalService.findTerminal(transactionEntity.getTerminalUuid()))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
 
         Response response = given()
                 .contentType(ContentType.JSON)
                 .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
                 .and()
-                .body(transactionDto)
+                .when()
+                .delete("/66b49e6d7bca521f8c2f97e0")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"public_administration"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "06534340721")
+    })
+    void testDeleteTransaction_500FS() {
+        Mockito.when(transactionService.findTransaction("66b49e6d7bca521f8c2f97e0"))
+                .thenReturn(Uni.createFrom().item(transactionEntity));
+
+        Mockito.when(terminalService.findTerminal(transactionEntity.getTerminalUuid()))
+                .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Mockito.when(solutionService.findById(terminalEntity.getSolutionId()))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .when()
+                .delete("/66b49e6d7bca521f8c2f97e0")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(500, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"public_administration"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "06534340721")
+    })
+    void testDeleteTransaction_404() {
+        Mockito.when(transactionService.findTransaction(anyString()))
+                .thenReturn(Uni.createFrom().nullItem());
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
                 .when()
                 .delete("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(404, response.statusCode());
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"public_administration"})
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "06534340721")
+    })
+    void testDeleteTransaction_500DT() {
+        Mockito.when(transactionService.findTransaction("66b49e6d7bca521f8c2f97e0"))
+                .thenReturn(Uni.createFrom().item(transactionEntity));
+
+        Mockito.when(terminalService.findTerminal(transactionEntity.getTerminalUuid()))
+                .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Mockito.when(solutionService.findById(terminalEntity.getSolutionId()))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
+
+        Mockito.when(transactionService.deleteTransaction(transactionEntity))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .and()
+                .when()
+                .delete("/66b49e6d7bca521f8c2f97e0")
                 .then()
                 .extract().response();
 
@@ -698,8 +913,14 @@ class TransactionResourceTest {
             @Claim(key = "sub", value = "06534340721")
     })
     void testUpdateTransaction_204() {
-        Mockito.when(transactionService.findTransaction(any(String.class)))
+        Mockito.when(transactionService.findTransaction("66b49e6d7bca521f8c2f97e0"))
                 .thenReturn(Uni.createFrom().item(transactionEntity));
+
+        Mockito.when(terminalService.findTerminal(transactionEntity.getTerminalUuid()))
+                .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Mockito.when(solutionService.findById(terminalEntity.getSolutionId()))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
 
         Mockito.when(transactionService.updateTransaction(any(String.class), any(UpdateTransactionDto.class), any(TransactionEntity.class)))
                 .thenReturn(Uni.createFrom().item(transactionEntity));
@@ -710,7 +931,7 @@ class TransactionResourceTest {
                 .and()
                 .body(updateTransactionDto)
                 .when()
-                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .patch("/66b49e6d7bca521f8c2f97e0")
                 .then()
                 .extract().response();
 
@@ -720,57 +941,17 @@ class TransactionResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = {"public_administration"})
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "AGID_01")
-    })
-    void testUpdateTransaction_404() {
-        transactionEntity = null;
-        Mockito.when(transactionService.findTransaction(any(String.class)))
-                .thenReturn(Uni.createFrom().item(transactionEntity));
-
-        Response response = given()
-                .contentType(ContentType.JSON)
-                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
-                .and()
-                .body(updateTransactionDto)
-                .when()
-                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
-                .then()
-                .extract().response();
-
-        transactionEntity = TestData.getCorrectTransactionEntity();
-        Assertions.assertEquals(404, response.statusCode());
-    }
-
-    @Test
-    @TestSecurity(user = "testUser", roles = {"public_administration"})
-    @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "AGID_01")
-    })
-    void testUpdateTransaction_500FT() {
-        Mockito.when(transactionService.findTransaction(any(String.class)))
-                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
-
-        Response response = given()
-                .contentType(ContentType.JSON)
-                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
-                .and()
-                .body(updateTransactionDto)
-                .when()
-                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
-                .then()
-                .extract().response();
-
-        Assertions.assertEquals(500, response.statusCode());
-    }
-
-    @Test
-    @TestSecurity(user = "testUser", roles = {"public_administration"})
-    @JwtSecurity(claims = {
             @Claim(key = "sub", value = "06534340721")
     })
     void testUpdateTransaction_500UT() {
-        Mockito.when(transactionService.findTransaction(any(String.class)))
+        Mockito.when(transactionService.findTransaction("66b49e6d7bca521f8c2f97e0"))
                 .thenReturn(Uni.createFrom().item(transactionEntity));
+
+        Mockito.when(terminalService.findTerminal(transactionEntity.getTerminalUuid()))
+                .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Mockito.when(solutionService.findById(terminalEntity.getSolutionId()))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
 
         Mockito.when(transactionService.updateTransaction(any(String.class), any(UpdateTransactionDto.class), any(TransactionEntity.class)))
                 .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
@@ -781,7 +962,7 @@ class TransactionResourceTest {
                 .and()
                 .body(updateTransactionDto)
                 .when()
-                .patch("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .patch("/66b49e6d7bca521f8c2f97e0")
                 .then()
                 .extract().response();
 
@@ -791,18 +972,24 @@ class TransactionResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = {"pos_service_provider"})
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "AGID_01")
+            @Claim(key = "sub", value = "TMIL0101")
     })
     void testFindTransaction_200() {
-        Mockito.when(transactionService.findTransaction(any(String.class)))
+        Mockito.when(transactionService.findTransaction("66b49e6d7bca521f8c2f97e0"))
                 .thenReturn(Uni.createFrom().item(transactionEntity));
+
+        Mockito.when(terminalService.findTerminal(transactionEntity.getTerminalUuid()))
+                .thenReturn(Uni.createFrom().item(terminalEntity));
+
+        Mockito.when(solutionService.findById(terminalEntity.getSolutionId()))
+                .thenReturn(Uni.createFrom().item(solutionEntity));
 
         Response response = given()
                 .contentType(ContentType.JSON)
                 .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
                 .and()
                 .when()
-                .get("/d43d21a5-f8a7-4a68-8320-60b8f342c4aa")
+                .get("/66b49e6d7bca521f8c2f97e0")
                 .then()
                 .extract().response();
 

@@ -43,32 +43,31 @@ public class TransactionService {
     /**
      * Returns a number corresponding to the total number of transaction found.
      *
-     * @param attributeName  name of the attribute
-     * @param attributeValue value of the attribute
+     * @param payeeCode CF of the subject that receives the payment
      * @return a number
      */
-    public Uni<Long> getTransactionCountByAttribute(String attributeName, String attributeValue) {
-        Log.debugf("TransactionService -> getTransactionCountByAttribute - Input parameters: %s, %s", attributeName, attributeValue);
+    public Uni<Long> getTransactionCountByPayee(String payeeCode) {
+        Log.debugf("TransactionService -> getTransactionCountByPayee - Input parameters: %s, %s", payeeCode);
 
-        return transactionRepository.count(attributeName, attributeValue);
+        return transactionRepository.count("payeeCode", payeeCode);
     }
 
     /**
      * Returns a list of transactions paginated. The query filters on attributeName.
      *
-     * @param attributeName  string representing the name of attribute to be filtered
-     * @param attributeValue value of attribute
-     * @param pageIndex      0-based page index
-     * @param pageSize       page size
+     * @param payeeCode CF of the subject that receives the payment
+     * @param terminalUuids list of uuid of terminal
+     * @param pageIndex     0-based page index
+     * @param pageSize      page size
      * @return a list of transactions
      */
-    public Uni<List<TransactionEntity>> getTransactionListPagedByAttribute(String attributeName, String attributeValue, Date startDate, Date endDate, Sort sortStrategy, int pageIndex, int pageSize) {
-        Log.debugf("TransactionService -> getTransactionListPagedByAttribute - Input parameters: %s, %s, %s, %s, %s, %s, %s", attributeName, attributeValue, startDate, endDate, sortStrategy, pageIndex, pageSize);
+    public Uni<List<TransactionEntity>> getTransactionListPagedByPayeeAndTerminals(String payeeCode, List<String> terminalUuids, Date startDate, Date endDate, Sort sortStrategy, int pageIndex, int pageSize) {
+        Log.debugf("TransactionService -> getTransactionListPagedByAttribute - Input parameters: %s, %s, %s, %s, %s, %s, %s", payeeCode, terminalUuids, startDate, endDate, sortStrategy, pageIndex, pageSize);
 
-        String query = String.format("{ %s: ?1, _id: { $gte: ?2, $lte: ?3 } }", attributeName);
+        String query = "{ 'payeeCode': ?1, '_id': { '$gte': ?2, '$lte': ?3 }, 'terminalUuid': { '$in': [?4] } }";
 
         return transactionRepository
-                .find(query, sortStrategy, attributeValue, roundCeilObjectIdhex(startDate), roundCeilObjectIdhex(endDate))
+                .find(query, sortStrategy, payeeCode, roundCeilObjectIdhex(startDate), roundCeilObjectIdhex(endDate), terminalUuids)
                 .page(pageIndex, pageSize)
                 .list();
     }
@@ -86,7 +85,7 @@ public class TransactionService {
     }
 
     /**
-     * Returns a list of transactions paginated. The query filters on pspId.
+     * Returns a list of transactions paginated.
      *
      * @param terminalUuids list of uuid of terminal associated to pspId of the solution
      * @param pageIndex     0-based page index
