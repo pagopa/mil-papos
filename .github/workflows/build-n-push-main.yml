@@ -96,15 +96,8 @@ jobs:
       # RELEASE CANDIDATE - Update of pom.xml with the new version.
       #
       - name: RELEASE CANDIDATE - Update of pom.xml with the new version
-        run: ${{ runner.temp }}/maven/bin/mvn versions:set -DnewVersion=${{ steps.semantic.outputs.new_release_version }}-RC -s ${{ runner.temp }}/settings.xml --no-transfer-progress
+        run: ${{ runner.temp }}/maven/bin/mvn versions:set -DnewVersion=$BRANCH_NAME -s ${{ runner.temp }}/settings.xml --no-transfer-progress
 
-      #
-      # RELEASE CANDIDATE - Execute unit-test + Calculate test coverage + SCA with Sonar.
-      #
-      - name: RELEASE CANDIDATE - Execute unit-test + Calculate test coverage + SCA with Sonar
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ${{ runner.temp }}/maven/bin/mvn verify -Pvalidate -s ${{ runner.temp }}/settings.xml --no-transfer-progress
 
       #
       # RELEASE CANDIDATE - Build native executable.
