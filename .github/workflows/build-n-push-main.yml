@@ -10,7 +10,10 @@ on:
 
 jobs:
   build_push_update:
+   
     runs-on: ubuntu-latest
+    
+    environment: dev-cd
     
     permissions:
       id-token: write
@@ -43,7 +46,6 @@ jobs:
       # Download JDK and verify its hash.
       #
       - name: Download JDK and verify its hash
-        if: steps.cache-jdk.outputs.cache-hit != 'true'
         run: |
           echo "454bebb2c9fe48d981341461ffb6bf1017c7b7c6e15c6b0c29b959194ba3aaa5  ${{ runner.temp }}/jdk_setup.tar.gz" >> ${{ runner.temp }}/jdk_setup.sha256
           curl -L "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_x64_linux_hotspot_21.0.2_13.tar.gz" -o "${{ runner.temp }}/jdk_setup.tar.gz"
@@ -76,7 +78,6 @@ jobs:
       # Download Maven and verify its hash.
       #
       - name: Download Maven and verify its hash
-        if: steps.cache-maven.outputs.cache-hit != 'true'
         run: |
           echo "6eedd2cae3626d6ad3a5c9ee324bd265853d64297f07f033430755bd0e0c3a4b  ${{ runner.temp }}/maven_setup.tar.gz" >> ${{ runner.temp }}/maven_setup.sha256
           curl -L "https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz" -o "${{ runner.temp }}/maven_setup.tar.gz"
@@ -92,23 +93,40 @@ jobs:
           echo "<settings><servers><server><id>github</id><username>${{ secrets.GIT_USER }}</username><password>${{ secrets.GIT_PAT }}</password></server></servers></settings>" >> ${{ runner.temp }}/settings.xml
 
       #
-      # Build native executable.
+      # RELEASE CANDIDATE - Update of pom.xml with the new version.
       #
-      - name: Build native executable
+      - name: RELEASE CANDIDATE - Update of pom.xml with the new version
+        run: ${{ runner.temp }}/maven/bin/mvn versions:set -DnewVersion=${{ steps.semantic.outputs.new_release_version }}-RC -s ${{ runner.temp }}/settings.xml --no-transfer-progress
+
+      #
+      # RELEASE CANDIDATE - Execute unit-test + Calculate test coverage + SCA with Sonar.
+      #
+      - name: RELEASE CANDIDATE - Execute unit-test + Calculate test coverage + SCA with Sonar
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ${{ runner.temp }}/maven/bin/mvn verify -Pvalidate -s ${{ runner.temp }}/settings.xml --no-transfer-progress
+
+      #
+      # RELEASE CANDIDATE - Build native executable.
+      #
+      - name: RELEASE CANDIDATE - Build native executable
         run: ${{ runner.temp }}/maven/bin/mvn clean package -Pnative -Dmaven.test.skip=true -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image@sha256:ce70e1a8016471ff0fc9c8f048cd9e37afddacd3de37ed0bca74201d102e45f5 -s ${{ runner.temp }}/settings.xml --no-transfer-progress
 
       #
-      # Build Docker image.
+      # RELEASE CANDIDATE - Build Docker image.
       #
-      - name: Build Docker image
+      - name: RELEASE CANDIDATE - Build Docker image
         run: |
-          BRANCH_NAME="${GITHUB_REF////_}"
-          docker build -f src/main/docker/Dockerfile.native-micro -t ghcr.io/${{ github.repository }}:$BRANCH_NAME .
+          docker build \
+          -f src/main/docker/Dockerfile.native-micro \
+          -t ghcr.io/${{ github.repository }}:${{ steps.semantic.outputs.new_release_version }}-RC \
+          .
 
       #
-      # Push Docker image.
+      # RELEASE CANDIDATE - Push Docker image.
       #
-      - name: Push Docker image
+      - name: RELEASE CANDIDATE - Push Docker image
+        if: steps.semantic.outputs.new_release_published == 'true'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker push -a ghcr.io/${{ github.repository }}
