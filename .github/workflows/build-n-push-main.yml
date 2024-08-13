@@ -96,7 +96,7 @@ jobs:
       # RELEASE CANDIDATE - Update of pom.xml with the new version.
       #
       - name: RELEASE CANDIDATE - Update of pom.xml with the new version
-        run: ${{ runner.temp }}/maven/bin/mvn versions:set -DnewVersion= ${{ github.head_ref || github.ref_name }}  -s ${{ runner.temp }}/settings.xml --no-transfer-progress
+        run: ${{ runner.temp }}/maven/bin/mvn versions:set -DnewVersion=$BRANCH_NAME -s ${{ runner.temp }}/settings.xml --no-transfer-progress
 
 
       #
