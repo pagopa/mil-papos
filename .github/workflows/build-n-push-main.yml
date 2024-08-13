@@ -28,26 +28,9 @@ jobs:
           fetch-depth: 0
 
       #
-      # Calculate of the new version (dry-run).
-      #
-      - name: Calculate of the new version (dry-run)
-        uses: cycjimmy/semantic-release-action@8e58d20d0f6c8773181f43eb74d6a05e3099571d
-        id: semantic
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          semantic_version: 19
-          branch: main
-          extra_plugins: |
-            @semantic-release/release-notes-generator@10.0.3
-            @semantic-release/git@10.0.1
-          dry_run: true
-
-      #
       # Cache JDK.
       #
       - name: Cache JDK
-        if: steps.semantic.outputs.new_release_published == 'true'
         uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8
         id: cache-jdk
         with:
@@ -60,7 +43,7 @@ jobs:
       # Download JDK and verify its hash.
       #
       - name: Download JDK and verify its hash
-        if: steps.semantic.outputs.new_release_published == 'true' && steps.cache-jdk.outputs.cache-hit != 'true'
+        if: steps.cache-jdk.outputs.cache-hit != 'true'
         run: |
           echo "454bebb2c9fe48d981341461ffb6bf1017c7b7c6e15c6b0c29b959194ba3aaa5  ${{ runner.temp }}/jdk_setup.tar.gz" >> ${{ runner.temp }}/jdk_setup.sha256
           curl -L "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_x64_linux_hotspot_21.0.2_13.tar.gz" -o "${{ runner.temp }}/jdk_setup.tar.gz"
@@ -70,7 +53,6 @@ jobs:
       # Setup JDK.
       #
       - name: Setup JDK
-        if: steps.semantic.outputs.new_release_published == 'true'
         uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2
         with:
           distribution: "jdkfile"
@@ -82,7 +64,6 @@ jobs:
       # Cache Maven.
       #
       - name: Cache Maven
-        if: steps.semantic.outputs.new_release_published == 'true'
         uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8
         id: cache-maven
         with:
@@ -95,7 +76,7 @@ jobs:
       # Download Maven and verify its hash.
       #
       - name: Download Maven and verify its hash
-        if: steps.semantic.outputs.new_release_published == 'true' && steps.cache-maven.outputs.cache-hit != 'true'
+        if: steps.cache-maven.outputs.cache-hit != 'true'
         run: |
           echo "6eedd2cae3626d6ad3a5c9ee324bd265853d64297f07f033430755bd0e0c3a4b  ${{ runner.temp }}/maven_setup.tar.gz" >> ${{ runner.temp }}/maven_setup.sha256
           curl -L "https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz" -o "${{ runner.temp }}/maven_setup.tar.gz"
@@ -105,51 +86,55 @@ jobs:
       # Setup Maven.
       #
       - name: Setup Maven
-        if: steps.semantic.outputs.new_release_published == 'true'
         run: |
           mkdir ${{ runner.temp }}/maven
           tar -xvf ${{ runner.temp }}/maven_setup.tar.gz -C ${{ runner.temp }}/maven --strip-components=1
           echo "<settings><servers><server><id>github</id><username>${{ secrets.GIT_USER }}</username><password>${{ secrets.GIT_PAT }}</password></server></servers></settings>" >> ${{ runner.temp }}/settings.xml
 
       #
-      # RELEASE CANDIDATE - Update of pom.xml with the new version.
+      # Build native executable.
       #
-      - name: RELEASE CANDIDATE - Update of pom.xml with the new version
-        if: steps.semantic.outputs.new_release_published == 'true'
-        run: ${{ runner.temp }}/maven/bin/mvn versions:set -DnewVersion=${{ steps.semantic.outputs.new_release_version }}-RC-test -s ${{ runner.temp }}/settings.xml --no-transfer-progress
-
-      #
-      # RELEASE CANDIDATE - Execute unit-test + Calculate test coverage + SCA with Sonar.
-      #
-      - name: RELEASE CANDIDATE - Execute unit-test + Calculate test coverage + SCA with Sonar
-        if: steps.semantic.outputs.new_release_published == 'true'
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ${{ runner.temp }}/maven/bin/mvn verify -Pvalidate -s ${{ runner.temp }}/settings.xml --no-transfer-progress
-
-      #
-      # RELEASE CANDIDATE - Build native executable.
-      #
-      - name: RELEASE CANDIDATE - Build native executable
-        if: steps.semantic.outputs.new_release_published == 'true'
+      - name: Build native executable
         run: ${{ runner.temp }}/maven/bin/mvn clean package -Pnative -Dmaven.test.skip=true -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image@sha256:ce70e1a8016471ff0fc9c8f048cd9e37afddacd3de37ed0bca74201d102e45f5 -s ${{ runner.temp }}/settings.xml --no-transfer-progress
 
       #
-      # RELEASE CANDIDATE - Build Docker image.
+      # Build Docker image.
       #
-      - name: RELEASE CANDIDATE - Build Docker image
-        if: steps.semantic.outputs.new_release_published == 'true'
+      - name: Build Docker image
         run: |
-          docker build \
-          -f src/main/docker/Dockerfile.native-micro \
-          -t ghcr.io/${{ github.repository }}:${{ steps.semantic.outputs.new_release_version }}-RC-test \
-          .
+          BRANCH_NAME="${GITHUB_REF////_}"
+          docker build -f src/main/docker/Dockerfile.native-micro -t ghcr.io/${{ github.repository }}:$BRANCH_NAME .
 
       #
-      # RELEASE CANDIDATE - Push Docker image.
+      # Push Docker image.
       #
-      - name: RELEASE CANDIDATE - Push Docker image
-        if: steps.semantic.outputs.new_release_published == 'true'
+      - name: Push Docker image
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker push -a ghcr.io/${{ github.repository }}
+
+      #
+      # Get Docker image with sha256.
+      #
+      - name: Get Docker image with sha256
+        run: echo "image_sha256=$(docker image inspect -f '{{index .RepoDigests 0}}' ghcr.io/${{ github.repository }}:$BRANCH_NAME)" >> "$GITHUB_ENV"
+
+      #
+      # Login to Azure.
+      #
+      - name: Login to Azure
+        uses: azure/login@92a5484dfaf04ca78a94597f4f19fea633851fa2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+ 
+      #
+      # Update Container App.
+      #
+      - name: Update Container App
+        uses: azure/CLI@fa0f960f00db49b95fdb54328a767aee31e80105
+        with:
+          inlineScript: |
+            az config set extension.use_dynamic_install=yes_without_prompt
+            az containerapp update -n ${{ secrets.AZURE_CONTAINER_APP_NAME }} -g ${{ secrets.AZURE_RESOURCE_GROUP_NAME }} --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} -i ${{ env.image_sha256 }}
