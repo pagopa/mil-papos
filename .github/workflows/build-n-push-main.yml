@@ -116,7 +116,7 @@ jobs:
       #
       - name: RELEASE CANDIDATE - Update of pom.xml with the new version
         if: steps.semantic.outputs.new_release_published == 'true'
-        run: ${{ runner.temp }}/maven/bin/mvn versions:set -DnewVersion=${{ steps.semantic.outputs.new_release_version }}-RC -s ${{ runner.temp }}/settings.xml --no-transfer-progress
+        run: ${{ runner.temp }}/maven/bin/mvn versions:set -DnewVersion=${{ steps.semantic.outputs.new_release_version }}-RC-test -s ${{ runner.temp }}/settings.xml --no-transfer-progress
 
       #
       # RELEASE CANDIDATE - Execute unit-test + Calculate test coverage + SCA with Sonar.
@@ -142,7 +142,7 @@ jobs:
         run: |
           docker build \
           -f src/main/docker/Dockerfile.native-micro \
-          -t ghcr.io/${{ github.repository }}:${{ steps.semantic.outputs.new_release_version }}-RC \
+          -t ghcr.io/${{ github.repository }}:${{ steps.semantic.outputs.new_release_version }}-RC-test \
           .
 
       #
