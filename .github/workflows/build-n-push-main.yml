@@ -112,7 +112,7 @@ jobs:
         run: |
           docker build \
           -f src/main/docker/Dockerfile.native-micro \
-          -t ghcr.io/${{ github.repository }} ${{ github.head_ref || github.ref_name }}  \
+          -t ghcr.io/${{ github.repository }}:${{ github.head_ref || github.ref_name }}  \
           .
 
       #
