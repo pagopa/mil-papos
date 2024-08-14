@@ -332,9 +332,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/solutions",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/solutions",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"solutions"
@@ -408,9 +408,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/solutions/{{solutionId}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/solutions/{{solutionId}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"solutions",
@@ -449,9 +449,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/solutions?page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/solutions?page={{getTerminalPage}}&size={{getTerminalPageSize}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"solutions"
@@ -497,9 +497,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/solutions/findByPspId?pspId={{pspId}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/solutions/findByPspId?pspId={{pspId}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"solutions",
@@ -550,9 +550,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/solutions/findByLocationCode?locationCode={{locationCode}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/solutions/findByLocationCode?locationCode={{locationCode}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"solutions",
@@ -649,9 +649,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/solutions/{{solutionId}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/solutions/{{solutionId}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"solutions",
@@ -774,9 +774,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/terminals",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals"
@@ -833,9 +833,9 @@
 									]
 								},
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/terminals/bulkload",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/bulkload",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals",
@@ -873,9 +873,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/terminals/bulkload/{{bulkLoadingId}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/bulkload/{{bulkLoadingId}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals",
@@ -964,9 +964,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/terminals/findByPayeeCode?payeeCode={{locationCode}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/findByPayeeCode?payeeCode={{locationCode}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals",
@@ -1031,9 +1031,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/terminals/findByPspId?pspId={{pspId}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/findByPspId?pspId={{pspId}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals",
@@ -1112,9 +1112,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/terminals/{{terminalUuid}}/updateWorkstations",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/{{terminalUuid}}/updateWorkstations",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals",
@@ -1163,9 +1163,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/terminals/findByWorkstation?workstation={{workstation}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}&payeeCode={{locationCode}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/findByWorkstation?workstation={{workstation}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}&payeeCode={{locationCode}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals",
@@ -1244,9 +1244,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/terminals/{{terminalUuid}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/{{terminalUuid}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals",
@@ -1314,9 +1314,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/transactions",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/transactions",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"transactions"
@@ -1371,9 +1371,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/transactions/findByPayeeCode?payeeCode={{locationCode}}&startDate={{startDate}}&endDate={{endDate}}&sortStrategy={{sortStrategy}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/transactions/findByPayeeCode?payeeCode={{locationCode}}&startDate={{startDate}}&endDate={{endDate}}&sortStrategy={{sortStrategy}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"transactions",
@@ -1453,9 +1453,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/transactions/findByPspId?pspId={{pspId}}&startDate={{startDate}}&endDate={{endDate}}&sortStrategy={{sortStrategy}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/transactions/findByPspId?pspId={{pspId}}&startDate={{startDate}}&endDate={{endDate}}&sortStrategy={{sortStrategy}}&page={{getTerminalPage}}&size={{getTerminalPageSize}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"transactions",
@@ -1549,9 +1549,9 @@
 									}
 								},
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/transactions/{{transactionId}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/transactions/{{transactionId}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"transactions",
@@ -1604,9 +1604,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/transactions/{{transactionId}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/transactions/{{transactionId}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"transactions",
@@ -1659,9 +1659,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/transactions/latest?pspId={{pspId}}&terminalId={{terminalId}}&status={{transactionStatus}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/transactions/latest?pspId={{pspId}}&terminalId={{terminalId}}&status={{transactionStatus}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"transactions",
@@ -1726,9 +1726,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/transactions/{{transactionId}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/transactions/{{transactionId}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"transactions",
@@ -1803,9 +1803,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/terminals/{{terminalUuid}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/terminals/{{terminalUuid}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"terminals",
@@ -1865,9 +1865,9 @@
 									}
 								],
 								"url": {
-									"raw": "{{MIL_PAPOS_BASE_CSTAR_URL}}/solutions/{{solutionId}}",
+									"raw": "{{MIL_PAPOS_BASE_URL}}/solutions/{{solutionId}}",
 									"host": [
-										"{{MIL_PAPOS_BASE_CSTAR_URL}}"
+										"{{MIL_PAPOS_BASE_URL}}"
 									],
 									"path": [
 										"solutions",
