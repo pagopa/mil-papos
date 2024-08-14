@@ -119,7 +119,6 @@ jobs:
       # RELEASE CANDIDATE - Push Docker image.
       #
       - name: RELEASE CANDIDATE - Push Docker image
-        if: steps.semantic.outputs.new_release_published == 'true'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker push -a ghcr.io/${{ github.repository }}
