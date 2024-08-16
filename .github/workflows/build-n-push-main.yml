@@ -105,24 +105,31 @@ jobs:
       - name: RELEASE CANDIDATE - Build native executable
         run: ${{ runner.temp }}/maven/bin/mvn clean package -Pnative -Dmaven.test.skip=true -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image@sha256:ce70e1a8016471ff0fc9c8f048cd9e37afddacd3de37ed0bca74201d102e45f5 -s ${{ runner.temp }}/settings.xml --no-transfer-progress
 
+      
       #
-      # RELEASE CANDIDATE - Build Docker image.
+      # RELEASE CANDIDATE - Build native executable.
       #
-      - name: RELEASE CANDIDATE - Build Docker image
-        run: |
-          docker build \
-          -f src/main/docker/Dockerfile.native-micro \
-          -t ghcr.io/${{ github.repository }}:${{ github.head_ref || github.ref_name }}  \
-          .
+      - name: RELEASE CANDIDATE - Build native executable
+        run: ${{ runner.temp }}/maven/bin/mvn clean package -Pnative -Dmaven.test.skip=true -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image@sha256:ce70e1a8016471ff0fc9c8f048cd9e37afddacd3de37ed0bca74201d102e45f5 -s ${{ runner.temp }}/settings.xml --no-transfer-progress
+  
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+          
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: network=host
+          
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          file: src/main/docker/Dockerfile.native-micro
+          tags: ghcr.io/${{ github.repository }}:${{ github.head_ref || github.ref_name }}
+     
 
+      
       #
-      # RELEASE CANDIDATE - Push Docker image.
-      #
-      - name: RELEASE CANDIDATE - Push Docker image
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push -a ghcr.io/${{ github.repository }}
-  #
       # Install Node.
       #
       - name: Install Node
