@@ -54,7 +54,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          file: src/main/docker/Dockerfile.multistage
+          file: src/main/docker/Dockerfile.native-micro
           tags: ghcr.io/${{ github.repository }}:${{ github.head_ref || github.ref_name }}
             
       #
