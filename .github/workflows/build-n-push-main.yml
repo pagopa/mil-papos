@@ -48,12 +48,11 @@ jobs:
       - name: RELEASE CANDIDATE - Build jar and Docker image 
         run: |
           docker build \
+          --secret id=my_user,src="test" \
           -f src/main/docker/Dockerfile.multistage \
           -t ghcr.io/${{ github.repository }}:${{ github.head_ref || github.ref_name }}  \
-          --build-arg my_user="test" \
           .
 
-         
       #
       # RELEASE CANDIDATE - Push Docker image.
       #
