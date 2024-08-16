@@ -53,7 +53,6 @@ jobs:
 
       #
       # Setup JDK.
-      #
       - name: Setup JDK
         uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2
         with:
@@ -83,11 +82,6 @@ jobs:
           curl -L "https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz" -o "${{ runner.temp }}/maven_setup.tar.gz"
           sha256sum --check --status "${{ runner.temp }}/maven_setup.sha256"
   #
-      # RELEASE CANDIDATE - Build native executable.
-      #
-      - name: RELEASE CANDIDATE - Build native executable
-        run: ${{ runner.temp }}/maven/bin/mvn clean package -Pnative -Dmaven.test.skip=${{ github.event.inputs.skip-unit-test }} -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image@sha256:05baf3fd2173f6f25ad35216b6b066c35fbfb97f06daba75efb5b22bc0a85b9c -s ${{ runner.temp }}/settings.xml --no-transfer-progress
-      #
       # Setup Maven.
       #
       - name: Setup Maven
@@ -96,6 +90,19 @@ jobs:
           tar -xvf ${{ runner.temp }}/maven_setup.tar.gz -C ${{ runner.temp }}/maven --strip-components=1
           echo "<settings><servers><server><id>github</id><username>${{ secrets.GIT_USER }}</username><password>${{ secrets.GIT_PAT }}</password></server></servers></settings>" >> ${{ runner.temp }}/settings.xml
 
+       #
+      # RELEASE CANDIDATE - Update of pom.xml with the new version.
+      #
+      - name: RELEASE CANDIDATE - Update of pom.xml with the new version
+        run: ${{ runner.temp }}/maven/bin/mvn versions:set -DnewVersion=$BRANCH_NAME -s ${{ runner.temp }}/settings.xml --no-transfer-progress
+
+
+      #
+      # RELEASE CANDIDATE - Build native executable.
+      #
+      - name: RELEASE CANDIDATE - Build native executable
+        run: ${{ runner.temp }}/maven/bin/mvn clean package -Pnative -Dmaven.test.skip=true -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image@sha256:ce70e1a8016471ff0fc9c8f048cd9e37afddacd3de37ed0bca74201d102e45f5 -s ${{ runner.temp }}/settings.xml --no-transfer-progress
+  
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
           
