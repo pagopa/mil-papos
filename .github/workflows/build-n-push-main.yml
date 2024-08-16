@@ -41,26 +41,22 @@ jobs:
           path: |
             ${{ runner.temp }}/jdk_setup.tar.gz
             ${{ runner.temp }}/jdk_setup.sha256
-
-      #
-      # RELEASE CANDIDATE - Build Docker image.
-      #
-      - name: RELEASE CANDIDATE - Build jar and Docker image 
-        run: |
-          docker build \
-          --secret id=my_user,src=${{ secrets.GIT_USER }} \
-          -f src/main/docker/Dockerfile.multistage \
-          -t ghcr.io/${{ github.repository }}:${{ github.head_ref || github.ref_name }}  \
-          .
-
-      #
-      # RELEASE CANDIDATE - Push Docker image.
-      #
-      - name: RELEASE CANDIDATE - Push Docker image
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push -a ghcr.io/${{ github.repository }}
-     
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+          
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: network=host
+          
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          file: src/main/docker/Dockerfile.multistage
+          tags: ghcr.io/${{ github.repository }}:${{ github.head_ref || github.ref_name }}
+            
       #
       # Install Node.
       #
