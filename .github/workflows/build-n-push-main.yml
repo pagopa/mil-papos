@@ -41,7 +41,57 @@ jobs:
           path: |
             ${{ runner.temp }}/jdk_setup.tar.gz
             ${{ runner.temp }}/jdk_setup.sha256
-      
+       
+      #
+      # Download JDK and verify its hash.
+      #
+      - name: Download JDK and verify its hash
+        run: |
+          echo "454bebb2c9fe48d981341461ffb6bf1017c7b7c6e15c6b0c29b959194ba3aaa5  ${{ runner.temp }}/jdk_setup.tar.gz" >> ${{ runner.temp }}/jdk_setup.sha256
+          curl -L "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_x64_linux_hotspot_21.0.2_13.tar.gz" -o "${{ runner.temp }}/jdk_setup.tar.gz"
+          sha256sum --check --status "${{ runner.temp }}/jdk_setup.sha256"
+
+      #
+      # Setup JDK.
+      #
+      - name: Setup JDK
+        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2
+        with:
+          distribution: "jdkfile"
+          jdkFile: "${{ runner.temp }}/jdk_setup.tar.gz"
+          java-version: "21"
+          cache: maven
+
+      #
+      # Cache Maven.
+      #
+      - name: Cache Maven
+        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8
+        id: cache-maven
+        with:
+          key: apache-maven-3.9.6-bin.tar.gz
+          path: |
+            ${{ runner.temp }}/maven_setup.tar.gz
+            ${{ runner.temp }}/maven_setup.sha256
+
+      #
+      # Download Maven and verify its hash.
+      #
+      - name: Download Maven and verify its hash
+        run: |
+          echo "6eedd2cae3626d6ad3a5c9ee324bd265853d64297f07f033430755bd0e0c3a4b  ${{ runner.temp }}/maven_setup.tar.gz" >> ${{ runner.temp }}/maven_setup.sha256
+          curl -L "https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz" -o "${{ runner.temp }}/maven_setup.tar.gz"
+          sha256sum --check --status "${{ runner.temp }}/maven_setup.sha256"
+
+      #
+      # Setup Maven.
+      #
+      - name: Setup Maven
+        run: |
+          mkdir ${{ runner.temp }}/maven
+          tar -xvf ${{ runner.temp }}/maven_setup.tar.gz -C ${{ runner.temp }}/maven --strip-components=1
+          echo "<settings><servers><server><id>github</id><username>${{ secrets.GIT_USER }}</username><password>${{ secrets.GIT_PAT }}</password></server></servers></settings>" >> ${{ runner.temp }}/settings.xml
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
           
