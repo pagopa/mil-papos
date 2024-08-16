@@ -27,9 +27,9 @@ jobs:
       - name: RELEASE CANDIDATE - Build jar and Docker image 
         run: |
           docker build \
-          -f src/main/docker/Dockerfile.multistage \
           --secret MY_USER="test" \
           --secret MY_PAT="test" \
+          -f src/main/docker/Dockerfile.multistage \
           -t ghcr.io/${{ github.repository }}:${{ github.head_ref || github.ref_name }}  \
           .
 
