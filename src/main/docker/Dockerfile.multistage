@@ -5,10 +5,10 @@ COPY --chown=quarkus:quarkus .mvn/ /code/.mvn
 COPY --chown=quarkus:quarkus pom.xml /code/
 USER quarkus
 WORKDIR /code
-RUN --mount=type=secret,id=GIT_USERNAME \
-  --mount=type=secret,id=GIT_PASSWORD \
-   export GIT_USERNAME=$(cat /run/secrets/GIT_USERNAME) && \
-   export GIT_PASSWORD=$(cat /run/secrets/GIT_PASSWORD) && \
+RUN --mount=type=secret,id=git_user \
+  --mount=type=secret,id=git_pass \
+   export GIT_USER=$(cat /run/secrets/git_user) && \
+   export GIT_PASS=$(cat /run/secrets/git_pass) && \
    yarn gen
 
 RUN echo "<settings><servers><server><id>github</id><username>$env:GIT_USERNAME</username><password>$env:GIT_PASSWORD</password></server></servers></settings>" >> /root/.m2/settings.xml

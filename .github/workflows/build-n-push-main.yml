@@ -45,8 +45,8 @@ jobs:
           file: src/main/docker/Dockerfile.multistage
           tags: ghcr.io/${{ github.repository }}:${{ github.head_ref || github.ref_name }}
           secrets: |
-              "GIT_USERNAME=${{ secrets.GIT_USER }}"
-              "GIT_PASSWORD=${{ secrets.GIT_PAT }}"
+              "git_user=${{ secrets.GIT_USER }}"
+              "git_pass=${{ secrets.GIT_PAT }}"
       #
       # Install Node.
       #
