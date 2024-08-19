@@ -36,8 +36,8 @@ jobs:
       - name: RELEASE CANDIDATE - Build Docker image
         run: |
           docker build \
-          --secret id=git_user,env=${{ secrets.GIT_USER }}
-          --secret id=git_pass,env=${{ secrets.GIT_PAT }}
+          --secret id=git_user,env=${{ secrets.GIT_USER }} \
+          --secret id=git_pass,env=${{ secrets.GIT_PAT }} \
           -f src/main/docker/Dockerfile.multistage \
           -t ghcr.io/${{ github.repository }}:${{ github.head_ref || github.ref_name }} \
           .
