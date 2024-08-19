@@ -5,6 +5,13 @@ COPY --chown=quarkus:quarkus .mvn/ /code/.mvn
 COPY --chown=quarkus:quarkus pom.xml /code/
 USER quarkus
 WORKDIR /code
+RUN --mount=type=secret,id=GIT_USERNAME \
+  --mount=type=secret,id=GIT_PASSWORD \
+   export GIT_USERNAME=$(cat /run/secrets/GIT_USERNAME) && \
+   export GIT_PASSWORD=$(cat /run/secrets/GIT_PASSWORD) && \
+   yarn gen
+
+RUN echo "<settings><servers><server><id>github</id><username>$env:GIT_USERNAME</username><password>$env:GIT_PASSWORD</password></server></servers></settings>" >> /root/.m2/settings.xml
 RUN ./mvnw -B org.apache.maven.plugins:maven-dependency-plugin:3.7.1:go-offline
 COPY src /code/src
 RUN ./mvnw package -Dnative
