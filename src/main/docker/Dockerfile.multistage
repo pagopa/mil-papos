@@ -5,27 +5,27 @@ COPY --chown=quarkus:quarkus .mvn/ /code/.mvn
 COPY --chown=quarkus:quarkus pom.xml /code/
 USER quarkus
 WORKDIR /code
-RUN --mount=type=secret,id=git_pass \
-   export GIT_USER=$(cat /run/secrets/git_user)
-RUN --mount=type=secret,id=git_user \
-    export GIT_PASS=$(cat /run/secrets/git_pass) 
-RUN echo "<settings><servers><server><id>github</id><username>$env:GIT_USERNAME</username><password>$env:GIT_PASSWORD</password></server></servers></settings>" >> /root/.m2/settings.xml
 RUN ./mvnw -B org.apache.maven.plugins:maven-dependency-plugin:3.7.1:go-offline
 COPY src /code/src
-RUN ./mvnw package -Dnative
+RUN ./mvnw clean package -Pnative -DskipTests
 
-## Stage 2 : create the docker final image
+FROM ubuntu:noble-20240530@sha256:e3f92abc0967a6c19d0dfa2d55838833e947b9d74edbcb0113e48535ad4be12a AS cve
+COPY --from=build /build/target/papos*.jar .
+
+## Stage 3 : create the docker final image
 FROM quay.io/quarkus/quarkus-micro-image:2.0
 WORKDIR /work/
 COPY --from=build /code/target/*-runner /work/application
 
-# set up permissions for user `1001`
+# set up permissions for user `10000`
 RUN chmod 775 /work /work/application \
-  && chown -R 1001 /work \
+  && chown -R 10000 /work \
   && chmod -R "g+rwX" /work \
-  && chown -R 1001:root /work
+  && chown -R 10000:root /work
 
 EXPOSE 8080
-USER 1001
+
+RUN useradd --uid 10000 runner
+USER 10000
 
 CMD ["./application", "-Dquarkus.http.host=0.0.0.0"]
