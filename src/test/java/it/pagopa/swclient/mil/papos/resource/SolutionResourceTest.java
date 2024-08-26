@@ -220,7 +220,7 @@ class SolutionResourceTest {
     }
 
     @Test
-    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
+    @TestSecurity(user = "testUser", roles = { "pos_service_provider" })
     @JwtSecurity(claims = {
             @Claim(key = "sub", value = "AGID_01")
     })
@@ -295,9 +295,8 @@ class SolutionResourceTest {
         Assertions.assertEquals(500, response.statusCode());
     }
 
-
     @Test
-    @TestSecurity(user = "testUser", roles = { "mil_papos_admin" })
+    @TestSecurity(user = "testUser", roles = { "public_administration" })
     @JwtSecurity(claims = {
             @Claim(key = "sub", value = "locationCode")
     })
@@ -320,6 +319,28 @@ class SolutionResourceTest {
                 .extract().response();
 
         Assertions.assertEquals(200, response.statusCode());
+    }
+    @Test
+    @TestSecurity(user = "testUser", roles = { "public_administration" })
+    @JwtSecurity(claims = {
+            @Claim(key = "sub", value = "locationCrode")
+    })
+    void testFindByLocationCode_401() {
+        Mockito.when(solutionService.getSolutionCountByAttribute("locationCode", "locationCode"))
+                .thenReturn(Uni.createFrom().failure(new WebApplicationException()));
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .header("RequestId", "1a2b3c4d-5e6f-789a-bcde-f0123456789a")
+                .queryParam("locationCode", "locationCode")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .when()
+                .get("/findByLocationCode")
+                .then()
+                .extract().response();
+
+        Assertions.assertEquals(401, response.statusCode());
     }
 
     @Test

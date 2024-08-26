@@ -715,7 +715,7 @@ class TerminalResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = {"public_administration"})
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "12704343560")
+            @Claim(key = "sub", value = "06534340721")
     })
     void testUpdateWorkstations_204() {
         Mockito.when(terminalService.findTerminal(any(String.class)))
@@ -839,7 +839,7 @@ class TerminalResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = {"public_administration"})
     @JwtSecurity(claims = {
-            @Claim(key = "sub", value = "12704343560")
+            @Claim(key = "sub", value = "06534340721")
     })
     void testUpdateWorkstations_500UT() {
         Mockito.when(terminalService.findTerminal(any(String.class)))

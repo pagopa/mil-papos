@@ -61,8 +61,6 @@ public class TransactionResource {
 
         Log.debugf("TransactionResource -> createTransaction - Input requestId, createTransaction: %s, %s", requestId, transaction);
 
-        checkToken(transaction.payeeCode());
-
         return terminalService.findTerminal(transaction.terminalUuid())
                 .onFailure()
                 .transform(err -> {
@@ -83,11 +81,12 @@ public class TransactionResource {
                                 .entity(new Errors(ErrorCodes.ERROR_TERMINAL_NOT_FOUND, ErrorCodes.ERROR_TERMINAL_NOT_FOUND_MSG))
                                 .build()));
                     }
+                    Log.debugf("TransactionResource -> createTransaction - Terminal found by terminalUuid %s: %s", transaction.terminalUuid(), terminalFound);
 
-                    return transactionService.createTransaction(transaction)
+                    return solutionService.findById(terminalFound.getSolutionId())
                             .onFailure()
                             .transform(err -> {
-                                Log.errorf(err, "TransactionResource -> createTransaction: unexpected error during persist for transaction [%s]", transaction);
+                                Log.errorf(err, "TransactionResource -> createTransaction: unexpected error during find solution by solutionId [%s]", terminalFound.getSolutionId());
 
                                 return new InternalServerErrorException(Response
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -95,10 +94,26 @@ public class TransactionResource {
                                         .build());
                             })
                             .onItem()
-                            .transform(transactionSaved -> {
-                                Log.debugf("TransactionResource -> createTransaction: transaction saved correctly on DB [%s]", transactionSaved);
+                            .transformToUni(solution -> {
+                                Log.debugf("TransactionResource -> createTransaction - Solution found by solutionId %s: %s", terminalFound.getSolutionId(), solution);
 
-                                return Response.status(Response.Status.NO_CONTENT).build();
+                                checkToken(solution.getLocationCode());
+                                return transactionService.createTransaction(transaction)
+                                        .onFailure()
+                                        .transform(err -> {
+                                            Log.errorf(err, "TransactionResource -> createTransaction: unexpected error during persist for transaction [%s]", transaction);
+
+                                            return new InternalServerErrorException(Response
+                                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                    .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                                    .build());
+                                        })
+                                        .onItem()
+                                        .transform(transactionSaved -> {
+                                            Log.debugf("TransactionResource -> createTransaction: transaction saved correctly on DB [%s]", transactionSaved);
+
+                                            return Response.status(Response.Status.NO_CONTENT).build();
+                                        });
                             });
                 });
     }
@@ -122,55 +137,109 @@ public class TransactionResource {
 
         Log.debugf("TransactionResource -> findByPayeeCode - Input requestId, payeeCode, startDate, endDate, sortStrategy, page, size: %s, %s, %s, %s, %s, %s, %s", requestId, payeeCode, startDate, endDate, sortStrategy, pageNumber, pageSize);
 
-        checkToken(payeeCode);
-
         Date convertedStartDate = Utility.convertStringToDate(startDate, true);
         Date convertedEndDate = Utility.convertStringToDate(endDate, false);
         Sort sort = Sort.by(ID_TRANSACTION, "asc".equalsIgnoreCase(sortStrategy) ? Sort.Direction.Ascending : Sort.Direction.Descending);
 
-        return transactionService.getTransactionCountByAttribute("payeeCode", payeeCode)
+        return solutionService.findAllByLocationOrPsp("locationCode", jwt.getSubject())
                 .onFailure()
                 .transform(err -> {
-                    Log.errorf(err, "TransactionResource -> findByPayeeCode: error while counting transactions for payeeCode", payeeCode);
+                    Log.errorf(err, "TransactionResource -> findByPayeeCode: unexpected error during finding solution with locationCode [%s]", jwt.getSubject());
 
                     return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity(new Errors(ErrorCodes.ERROR_COUNTING_TRANSACTIONS, ErrorCodes.ERROR_COUNTING_TRANSACTIONS_MSG))
+                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
                             .build());
                 })
                 .onItem()
-                .transformToUni(numberOfTransactions -> {
-                    if (numberOfTransactions == 0) {
-                        Log.errorf("TransactionResource -> findByPayeeCode: no transaction found on db by payeeCode [%s]", payeeCode);
+                .transformToUni(solutions -> {
+                    if (solutions.isEmpty()) {
+                        Log.errorf("TransactionResource -> findByPayeeCode: no solutions found for locationCode", jwt.getSubject());
 
-                        return Uni.createFrom().failure(new NotFoundException(Response
-                                .status(Response.Status.NOT_FOUND)
-                                .entity(new Errors(ErrorCodes.ERROR_TRANSACTION_NOT_FOUND, ErrorCodes.ERROR_TRANSACTION_NOT_FOUND_MSG))
-                                .build()));
+                        return Uni.createFrom().item(() ->
+                                Response.status(Response.Status.NOT_FOUND)
+                                        .entity(new Errors(ErrorCodes.ERROR_NO_SOLUTIONS_FOUND, ErrorCodes.ERROR_NO_SOLUTIONS_FOUND_PAYEE_MSG))
+                                        .build()
+                        );
                     }
-                    Log.debugf("TransactionResource -> findByPayeeCode: total number of transaction by payeeCode [%s] found: [%s]", numberOfTransactions);
+                    Log.debugf("TransactionResource -> findByPayeeCode: solution found by locationCode [%s]: %s", jwt.getSubject(), solutions);
 
-                    return transactionService.getTransactionListPagedByAttribute("payeeCode", payeeCode, convertedStartDate, convertedEndDate, sort, pageNumber, pageSize)
+                    List<String> solutionIds = solutions.stream()
+                            .map(solution -> solution.id.toString())
+                            .toList();
+
+                    return terminalService.findAllBySolutionIds(solutionIds)
                             .onFailure()
                             .transform(err -> {
-                                Log.errorf(err, "TransactionResource -> findByPayeeCode: Error while retrieving list of transactions for payeeCode [%s], index and size [%s, %s]", payeeCode, pageNumber, pageSize);
+                                Log.errorf(err, "TransactionResource -> findByPayeeCode: unexpected error during finding solution with locationCode [%s]", jwt.getSubject());
 
                                 return new InternalServerErrorException(Response
                                         .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                        .entity(new Errors(ErrorCodes.ERROR_LIST_TRANSACTIONS, ErrorCodes.ERROR_LIST_TRANSACTIONS_MSG))
+                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
                                         .build());
                             })
                             .onItem()
-                            .transform(transactionsPaged -> {
-                                Log.debugf("TransactionResource -> findByPayeeCode: size of list of transactions paginated found: [%s]", transactionsPaged.size());
+                            .transformToUni(terminals -> {
+                                if (terminals.isEmpty()) {
+                                    Log.errorf("TransactionResource -> findByPayeeCode: no terminals found for solutionIds", solutionIds);
 
-                                int totalPages = (int) Math.ceil((double) numberOfTransactions / pageSize);
-                                PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfTransactions, totalPages);
+                                    return Uni.createFrom().item(() ->
+                                            Response.status(Response.Status.NOT_FOUND)
+                                                    .entity(new Errors(ErrorCodes.ERROR_NO_TERMINALS_FOUND, ErrorCodes.ERROR_NO_TERMINALS_FOUND_MSG))
+                                                    .build()
+                                    );
+                                }
+                                Log.debugf("TransactionResource -> findByPayeeCode: solution found by locationCode [%s]: %s", jwt.getSubject(), solutions);
 
-                                return Response
-                                        .status(Response.Status.OK)
-                                        .entity(new TransactionPageResponse(transactionsPaged, pageMetadata))
-                                        .build();
+                                return transactionService.getTransactionCountByPayee(payeeCode)
+                                        .onFailure()
+                                        .transform(err -> {
+                                            Log.errorf(err, "TransactionResource -> findByPayeeCode: error while counting transactions for payeeCode", payeeCode);
+
+                                            return new InternalServerErrorException(Response
+                                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                    .entity(new Errors(ErrorCodes.ERROR_COUNTING_TRANSACTIONS, ErrorCodes.ERROR_COUNTING_TRANSACTIONS_MSG))
+                                                    .build());
+                                        })
+                                        .onItem()
+                                        .transformToUni(numberOfTransactions -> {
+                                            if (numberOfTransactions == 0) {
+                                                Log.errorf("TransactionResource -> findByPayeeCode: no transaction found on db by payeeCode [%s]", payeeCode);
+
+                                                return Uni.createFrom().failure(new NotFoundException(Response
+                                                        .status(Response.Status.NOT_FOUND)
+                                                        .entity(new Errors(ErrorCodes.ERROR_TRANSACTION_NOT_FOUND, ErrorCodes.ERROR_TRANSACTION_NOT_FOUND_MSG))
+                                                        .build()));
+                                            }
+                                            Log.debugf("TransactionResource -> findByPayeeCode: total number of transaction by payeeCode [%s] found: [%s]", numberOfTransactions);
+
+                                            List<String> terminalUuids = terminals.stream()
+                                                    .map(TerminalEntity::getTerminalUuid)
+                                                    .toList();
+
+                                            return transactionService.getTransactionListPagedByPayeeAndTerminals(payeeCode, terminalUuids, convertedStartDate, convertedEndDate, sort, pageNumber, pageSize)
+                                                    .onFailure()
+                                                    .transform(err -> {
+                                                        Log.errorf(err, "TransactionResource -> findByPayeeCode: Error while retrieving list of transactions for payeeCode [%s], index and size [%s, %s]", payeeCode, pageNumber, pageSize);
+
+                                                        return new InternalServerErrorException(Response
+                                                                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                                .entity(new Errors(ErrorCodes.ERROR_LIST_TRANSACTIONS, ErrorCodes.ERROR_LIST_TRANSACTIONS_MSG))
+                                                                .build());
+                                                    })
+                                                    .onItem()
+                                                    .transform(transactionsPaged -> {
+                                                        Log.debugf("TransactionResource -> findByPayeeCode: size of list of transactions paginated found: [%s]", transactionsPaged.size());
+
+                                                        int totalPages = (int) Math.ceil((double) numberOfTransactions / pageSize);
+                                                        PageMetadata pageMetadata = new PageMetadata(pageSize, numberOfTransactions, totalPages);
+
+                                                        return Response
+                                                                .status(Response.Status.OK)
+                                                                .entity(new TransactionPageResponse(transactionsPaged, pageMetadata))
+                                                                .build();
+                                                    });
+                                        });
                             });
                 });
     }
@@ -316,28 +385,25 @@ public class TransactionResource {
 
         return findTransactionGeneric(transactionId, "deleteTransaction")
                 .onItem()
-                .transformToUni((transactionEntity -> {
-                    checkToken(transactionEntity.getPayeeCode());
+                .transformToUni((transactionEntity ->
+                        transactionService.deleteTransaction(transactionEntity)
+                                .onFailure()
+                                .transform(err -> {
+                                    Log.errorf(err, "TransactionResource -> deleteTransaction: error during deleting transaction [%s]", transactionEntity);
 
-                    return transactionService.deleteTransaction(transactionEntity)
-                            .onFailure()
-                            .transform(err -> {
-                                Log.errorf(err, "TransactionResource -> deleteTransaction: error during deleting transaction [%s]", transactionEntity);
+                                    return new InternalServerErrorException(Response
+                                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                            .build());
+                                })
+                                .onItem()
+                                .transform(transactionUpdated -> {
+                                    Log.debugf("TransactionResource -> deleteTransaction: transaction deleted correctly on DB [%s]", transactionUpdated);
 
-                                return new InternalServerErrorException(Response
-                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
-                                        .build());
-                            })
-                            .onItem()
-                            .transform(transactionUpdated -> {
-                                Log.debugf("TransactionResource -> deleteTransaction: transaction deleted correctly on DB [%s]", transactionUpdated);
-
-                                return Response
-                                        .status(Response.Status.NO_CONTENT)
-                                        .build();
-                            });
-                }));
+                                    return Response
+                                            .status(Response.Status.NO_CONTENT)
+                                            .build();
+                                })));
     }
 
     @PATCH
@@ -356,28 +422,25 @@ public class TransactionResource {
 
         return findTransactionGeneric(transactionId, "updateTransaction")
                 .onItem()
-                .transformToUni((transactionEntity -> {
-                    checkToken(transactionEntity.getPayeeCode());
+                .transformToUni((transactionEntity ->
+                        transactionService.updateTransaction(transactionId, transaction, transactionEntity)
+                                .onFailure()
+                                .transform(err -> {
+                                    Log.errorf(err, "TransactionResource -> updateTransaction: error during update transaction [%s]", transaction);
 
-                    return transactionService.updateTransaction(transactionId, transaction, transactionEntity)
-                            .onFailure()
-                            .transform(err -> {
-                                Log.errorf(err, "TransactionResource -> updateTransaction: error during update transaction [%s]", transaction);
+                                    return new InternalServerErrorException(Response
+                                            .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                            .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                            .build());
+                                })
+                                .onItem()
+                                .transform(transactionUpdated -> {
+                                    Log.debugf("TransactionResource -> updateTransaction: transaction updated correctly on DB [%s]", transactionUpdated);
 
-                                return new InternalServerErrorException(Response
-                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
-                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
-                                        .build());
-                            })
-                            .onItem()
-                            .transform(transactionUpdated -> {
-                                Log.debugf("TransactionResource -> updateTransaction: transaction updated correctly on DB [%s]", transactionUpdated);
-
-                                return Response
-                                        .status(Response.Status.NO_CONTENT)
-                                        .build();
-                            });
-                }));
+                                    return Response
+                                            .status(Response.Status.NO_CONTENT)
+                                            .build();
+                                })));
     }
 
     @GET
@@ -506,7 +569,7 @@ public class TransactionResource {
         return transactionService.findTransaction(transactionId)
                 .onFailure()
                 .transform(err -> {
-                    Log.errorf(err, "TransactionResource ->  %s: error during search transaction with transactionId: [%s]", calledBy, transactionId);
+                    Log.errorf(err, "TransactionResource -> %s: error during search transaction with transactionId: [%s]", calledBy, transactionId);
 
                     return new InternalServerErrorException(Response
                             .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -523,9 +586,45 @@ public class TransactionResource {
                                 .entity(new Errors(ErrorCodes.ERROR_TRANSACTION_NOT_FOUND, ErrorCodes.ERROR_TRANSACTION_NOT_FOUND_MSG))
                                 .build()));
                     }
-                    Log.debugf("TransactionResource -> %s: transaction correctly found by %s: - %s", transactionId, transactionEntity);
+                    Log.debugf("TransactionResource -> %s: - Transaction found by id %s: %s", calledBy, transactionId, transactionEntity);
 
-                    return Uni.createFrom().item(transactionEntity);
+                    return terminalService.findTerminal(transactionEntity.getTerminalUuid())
+                            .onFailure()
+                            .transform(err -> {
+                                Log.errorf(err, "TransactionResource -> %s: error during finding terminal with terminalUuid: [%s]", calledBy, transactionEntity.getTerminalUuid());
+
+                                return new InternalServerErrorException(Response
+                                        .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                        .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                        .build());
+                            })
+                            .onItem()
+                            .transformToUni(terminal -> {
+                                Log.debugf("TransactionResource -> %s: - Terminal found by uuid %s: %s", calledBy, transactionEntity.getTerminalUuid(), terminal);
+
+                                return solutionService.findById(terminal.getSolutionId())
+                                        .onFailure()
+                                        .transform(err -> {
+                                            Log.errorf(err, "TransactionResource -> %s: error during finding solution with solutionId: [%s]", calledBy, terminal.getSolutionId());
+
+                                            return new InternalServerErrorException(Response
+                                                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                    .entity(new Errors(ErrorCodes.ERROR_GENERIC_FROM_DB, ErrorCodes.ERROR_GENERIC_FROM_DB_MSG))
+                                                    .build());
+                                        })
+                                        .onItem()
+                                        .transform(solution -> {
+                                            Log.debugf("TransactionResource -> %s: - Solution found by id %s: %s", calledBy, terminal.getSolutionId(), solution);
+
+                                            if (jwt.getGroups().contains("public_administration")) {
+                                                checkToken(solution.getLocationCode());
+                                            } else {
+                                                checkToken(solution.getPspId());
+                                            }
+
+                                            return transactionEntity;
+                                        });
+                            });
                 });
     }
 

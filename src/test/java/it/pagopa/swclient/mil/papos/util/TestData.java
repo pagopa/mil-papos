@@ -54,6 +54,7 @@ public final class TestData {
 
     public static TransactionEntity getCorrectTransactionEntity() {
         TransactionEntity transactionEntity = new TransactionEntity();
+        transactionEntity.id = new ObjectId("66b49e6d7bca521f8c2f97e0");
         transactionEntity.setPayeeCode("06534340721");
         transactionEntity.setNoticeNumber("123456789123456789");
 
@@ -64,13 +65,13 @@ public final class TestData {
         SolutionEntity solutionEntity = new SolutionEntity();
         solutionEntity.id = new ObjectId("66a79a4624356b00da07cfbf");
         solutionEntity.setPspId("TMIL0101");
-        solutionEntity.setLocationCode("12704343560");
+        solutionEntity.setLocationCode("06534340721");
 
         return solutionEntity;
     }
 
     public static SolutionDto getCorrectSolutionDto() {
-        return new SolutionDto("TMIL0101", "12704343560");
+        return new SolutionDto("TMIL0101", "06534340721");
     }
 
     public static List<TerminalEntity> mockedList() {
