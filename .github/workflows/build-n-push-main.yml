@@ -1,13 +1,12 @@
-name: Build, push and update
+name: Build and deploy from branch.
 
 on:
   pull_request:
 
 jobs:
-  build_push_update:
-   
+  build_deploy_branch:
     runs-on: ubuntu-latest
-    
+    if: contains(github.event.head_commit.message, '[deploy]]')
     environment: dev-cd
     
     permissions:
@@ -16,17 +15,12 @@ jobs:
       contents: write
     
     steps:
-     
-      #
-      # Checkout the source code.
-      #
       - name: Checkout the source code
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           token: ${{ secrets.GIT_PAT }}
           fetch-depth: 0
 
-      
       - name: Log in to the Container registry
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
