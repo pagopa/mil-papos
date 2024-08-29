@@ -1,4 +1,4 @@
-name: Build, push and update
+name: Build, push and update multistage
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ on:
         description: Skip unit-test
 
 jobs:
-  build_push_update:
+  build_push_update_multi:
    
     runs-on: ubuntu-latest
     
