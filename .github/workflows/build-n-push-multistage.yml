@@ -1,0 +1,54 @@
+name: Build, push and update
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip-unit-test:
+        type: boolean
+        required: true
+        description: Skip unit-test
+
+jobs:
+  build_push_update:
+   
+    runs-on: ubuntu-latest
+    
+    environment: dev-cd
+    
+    permissions:
+      id-token: write
+      packages: write
+      contents: write
+    
+    steps:
+     
+      #
+      # Checkout the source code.
+      #
+      - name: Checkout the source code
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab
+        with:
+          token: ${{ secrets.GIT_PAT }}
+          fetch-depth: 0
+  
+      #
+      # RELEASE CANDIDATE - Build Docker image.
+      #
+      - name: RELEASE CANDIDATE - Build Docker image
+        run: |
+          docker build \
+          --no-cache --progress=plain \
+          --secret id=gh_user,src=${{ secrets.GIT_USER }} \
+          --secret id=gh_token,src=${{ secrets.GIT_PAT }} \
+          -f src/main/docker/Dockerfile.multistage \
+          -t ghcr.io/${{ github.repository }}:${{ github.head_ref || github.ref_name }}  \
+          .
+
+      #
+      # RELEASE CANDIDATE - Push Docker image.
+      #
+      - name: RELEASE CANDIDATE - Push Docker image
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push -a ghcr.io/${{ github.repository }}
+  #
