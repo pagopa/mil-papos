@@ -38,8 +38,8 @@ jobs:
         run: |
           docker build \
           --no-cache --progress=plain \
-          --secret id=gh_user,src=${{ secrets.GIT_USER }} \
-          --secret id=gh_token,src=${{ secrets.GIT_PAT }} \
+          --secret id=gh_user,env=${{ secrets.GIT_USER }} \
+          --secret id=gh_token,env=${{ secrets.GIT_PAT }} \
           -f src/main/docker/Dockerfile.multistage \
           -t ghcr.io/${{ github.repository }}:${{ github.head_ref || github.ref_name }}  \
           .
