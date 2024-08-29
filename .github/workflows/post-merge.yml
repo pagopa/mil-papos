@@ -47,74 +47,6 @@ jobs:
           dry_run: false
 
       #
-      # Cache JDK.
-      #
-      - name: Cache JDK
-        if: steps.semantic.outputs.new_release_published == 'true'
-        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8
-        id: cache-jdk
-        with:
-          key: OpenJDK21U-jdk_x64_linux_hotspot_21.0.2_13.tar.gz
-          path: |
-            ${{ runner.temp }}/jdk_setup.tar.gz
-            ${{ runner.temp }}/jdk_setup.sha256
-      
-      #
-      # Download JDK and verify its hash.
-      #
-      - name: Download JDK and verify its hash
-        if: steps.semantic.outputs.new_release_published == 'true' && steps.cache-jdk.outputs.cache-hit != 'true'
-        run: |
-          echo "454bebb2c9fe48d981341461ffb6bf1017c7b7c6e15c6b0c29b959194ba3aaa5  ${{ runner.temp }}/jdk_setup.tar.gz" >> ${{ runner.temp }}/jdk_setup.sha256
-          curl -L "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_x64_linux_hotspot_21.0.2_13.tar.gz" -o "${{ runner.temp }}/jdk_setup.tar.gz"
-          sha256sum --check --status "${{ runner.temp }}/jdk_setup.sha256"
-
-      #
-      # Setup JDK.
-      #
-      - name: Setup JDK
-        if: steps.semantic.outputs.new_release_published == 'true'
-        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2
-        with:
-          distribution: "jdkfile"
-          jdkFile: "${{ runner.temp }}/jdk_setup.tar.gz"
-          java-version: "21"
-          cache: maven
-
-      #
-      # Cache Maven.
-      #
-      - name: Cache Maven
-        if: steps.semantic.outputs.new_release_published == 'true'
-        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8
-        id: cache-maven
-        with:
-          key: apache-maven-3.9.6-bin.tar.gz
-          path: |
-            ${{ runner.temp }}/maven_setup.tar.gz
-            ${{ runner.temp }}/maven_setup.sha256
-
-      #
-      # Download Maven and verify its hash.
-      #
-      - name: Download Maven and verify its hash
-        if: steps.semantic.outputs.new_release_published == 'true' && steps.cache-maven.outputs.cache-hit != 'true'
-        run: |
-          echo "6eedd2cae3626d6ad3a5c9ee324bd265853d64297f07f033430755bd0e0c3a4b  ${{ runner.temp }}/maven_setup.tar.gz" >> ${{ runner.temp }}/maven_setup.sha256
-          curl -L "https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz" -o "${{ runner.temp }}/maven_setup.tar.gz"
-          sha256sum --check --status "${{ runner.temp }}/maven_setup.sha256"
-
-      #
-      # Setup Maven.
-      #
-      - name: Setup Maven
-        if: steps.semantic.outputs.new_release_published == 'true'
-        run: |
-          mkdir ${{ runner.temp }}/maven
-          tar -xvf ${{ runner.temp }}/maven_setup.tar.gz -C ${{ runner.temp }}/maven --strip-components=1
-          echo "<settings><servers><server><id>github</id><username>${{ secrets.GIT_USER }}</username><password>${{ secrets.GIT_PAT }}</password></server></servers></settings>" >> ${{ runner.temp }}/settings.xml
-
-      #
       # STABLE - Update of pom.xml with the new version.
       #
       - name: STABLE - Update of pom.xml with the new version
@@ -126,88 +58,29 @@ jobs:
           git add pom.xml
           git commit -m "pom.xml updated with new version ${{ steps.semantic.outputs.new_release_version }}"
           git push origin main
-      
 
-      #
-      # RELEASE CANDIDATE - Execute unit-test + Calculate test coverage + SCA with Sonar.
-      #
-      - name: RELEASE CANDIDATE - Execute unit-test + Calculate test coverage + SCA with Sonar
-        if: steps.semantic.outputs.new_release_published == 'true'
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ${{ runner.temp }}/maven/bin/mvn verify -Pvalidate -s ${{ runner.temp }}/settings.xml --no-transfer-progress
-
-
-
-      #
-      # STABLE - Build native executable.
-      #
-      - name: STABLE - Build native executable
-        if: steps.semantic.outputs.new_release_published == 'true'
-        run: |
-          ${{ runner.temp }}/maven/bin/mvn clean package \
-            -Pnative \
-            -Dmaven.test.skip=true \
-            -Dquarkus.native.container-build=true \
-            -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image@sha256:ce70e1a8016471ff0fc9c8f048cd9e37afddacd3de37ed0bca74201d102e45f5 \
-            -s ${{ runner.temp }}/settings.xml \
-            --no-transfer-progress
-
-      #
-      # STABLE - Build Docker image.
-      #
-      - name: STABLE - Build Docker image
-        if: steps.semantic.outputs.new_release_published == 'true'
-        run: |
-          docker build \
-            -f src/main/docker/Dockerfile.native-micro \
-            -t ghcr.io/${{ github.repository }}:latest \
-            -t ghcr.io/${{ github.repository }}:${{ steps.semantic.outputs.new_release_version }} \
-            .
-
-      #
-      # STABLE - Push Docker image.
-      #
-      - name: STABLE - Push Docker image
-        if: steps.semantic.outputs.new_release_published == 'true'
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push -a ghcr.io/${{ github.repository }}
-
-      #
-      # STABLE - Get Docker image with sha256.
-      #
-      - name: STABLE - Get Docker image with sha256
-        if: steps.semantic.outputs.new_release_published == 'true'
-        run: echo "image_sha256=$(docker image inspect -f '{{index .RepoDigests 0}}' ghcr.io/${{ github.repository }}:${{ steps.semantic.outputs.new_release_version }})" >> "$GITHUB_ENV"
-
-  #
-      # Login to Azure.
-      #
-      - name: Login to Azure
-        uses: azure/login@8c334a195cbb38e46038007b304988d888bf676a #v2.0.0
+        
+      - name: Log in to the Container registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
-          client-id: ${{ secrets.AZURE_CD_IDENTITY_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_CD_IDENTITY_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
- 
-      #
-      # RELEASE CANDIDATE - Update Container App + OpenAPI descriptor on APIM
-      #
-      - name: RELEASE CANDIDATE - Update Container App + OpenAPI descriptor on APIM
-        if: steps.semantic.outputs.new_release_published == 'true'
-        uses: azure/CLI@fa0f960f00db49b95fdb54328a767aee31e80105
+          registry: https://ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+    
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf # v3.2.0
+  
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
+
+      - name: Build the app image
+        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # v6.7.0
         with:
-          inlineScript: |
-            API_DATA=$(az apim api show --resource-group ${{ secrets.AZURE_APIM_RESOURCE_GROUP }} --service-name ${{ secrets.AZURE_APIM_NAME }} --api-id ${{ secrets.AZURE_APIM_API_ID }} --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} --query "{path:path, serviceUrl:serviceUrl}")
-            API_PATH=$(echo $API_DATA | jq -r '.path')
-            API_SERVICE_URL=$(echo $API_DATA | jq -r '.serviceUrl')
-            az apim api import \
-              --resource-group ${{ secrets.AZURE_APIM_RESOURCE_GROUP }} \
-              --service-name ${{ secrets.AZURE_APIM_NAME }} \
-              --api-id ${{ secrets.AZURE_APIM_API_ID }} \
-              --specification-format OpenApi \
-              --specification-path src/main/resources/META-INF/openapi.yaml \
-              --path $API_PATH \
-              --service-url $API_SERVICE_URL \
-              --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          push: true
+          context: .
+          file: src/main/docker/Dockerfile.multistage
+          platforms: linux/amd64
+          tags: ghcr.io/${{ github.repository }}:latest, ghcr.io/${{ github.repository }}:${{ steps.semantic.outputs.new_release_version }}
+          secrets: |
+            "gh_user=${{ secrets.GIT_USER }}"
+            "gh_token=${{ secrets.GIT_PAT }}"

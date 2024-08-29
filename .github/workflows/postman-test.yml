@@ -2,11 +2,6 @@ name: Postman test
 
 on:
     workflow_dispatch:
-      inputs:
-        skip-unit-test:
-          type: boolean
-          required: true
-          description: Skip unit-test
 
 jobs:
   postman-test:
