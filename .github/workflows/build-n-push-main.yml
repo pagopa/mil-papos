@@ -7,7 +7,7 @@ jobs:
   build_deploy_branch:
     runs-on: ubuntu-latest
     
-    if: contains(github.event.head_commit.message, '[deploy]]')
+    if: contains(github.event.head_commit.message, '[deploy]')
     
     environment: dev-cd
     
