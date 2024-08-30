@@ -50,7 +50,7 @@ jobs:
         id: scan
         uses: aquasecurity/trivy-action@595be6a0f6560a0a8fc419ddf630567fc623531d # v0.22.0
         with:
-          image-ref: "lghcr.io/${{ github.repository }}:${{ github.head_ref || github.ref_name }}"
+          image-ref: "ghcr.io/${{ github.repository }}:${{ github.head_ref || github.ref_name }}"
           format: 'sarif'
           output: 'results.sarif'
 
