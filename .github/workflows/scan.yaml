@@ -21,7 +21,7 @@ permissions:
   contents: read
 
 env:
-  DOCKERFILE: Dockerfile.native
+  DOCKERFILE: Dockerfile.multistage
 
 jobs:
   BuildAndScan:
@@ -47,9 +47,9 @@ jobs:
       - name: Build the app image
         uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # v6.7.0
         with:
-          push: true
+          push: false
           context: .
-          file: src/main/docker/Dockerfile.multistage
+          file: src/main/docker/${{ env.DOCKERFILE }}
           platforms: linux/amd64
           tags: localbuild/testimage:latest
           build-args:
