@@ -13,9 +13,7 @@ USER quarkus
 WORKDIR /code
 
 RUN \
- --mount=type=secret,id=gh_user,uid=1001 \
  --mount=type=secret,id=gh_token,uid=1001 \
- export GH_USER=$(cat /run/secrets/gh_user) && \
  export GH_TOKEN=$(cat /run/secrets/gh_token) && \
  echo "<settings><servers><server><id>github</id><username>$GH_USER</username><password>$GH_TOKEN</password></server><server><id>github-mil-azure-services</id><username>$GH_USER</username><password>$GH_TOKEN</password></server></servers></settings>" >> settings.xml
 

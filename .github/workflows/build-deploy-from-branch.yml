@@ -42,8 +42,9 @@ jobs:
           file: src/main/docker/Dockerfile.multistage
           platforms: linux/amd64
           tags: ghcr.io/${{ github.repository }}:${{ github.head_ref || github.ref_name }}
+          build-args:
+            GH_USER=${{ secrets.GIT_USER }}
           secrets: |
-            "gh_user=${{ secrets.GIT_USER }}"
             "gh_token=${{ secrets.GIT_PAT }}"
 
       - name: Run the Trivy scan action itself with GitHub Advanced Security code scanning integration enabled
