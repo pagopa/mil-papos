@@ -99,7 +99,6 @@ jobs:
         uses: aquasecurity/trivy-action@595be6a0f6560a0a8fc419ddf630567fc623531d # v0.22.0
         with:
           scan-type: 'fs'
-          ignore-unfixed: true
           format: 'sarif'
           output: 'results.sarif'
       - name: Upload Anchore Scan Report
