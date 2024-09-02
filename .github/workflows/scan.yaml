@@ -10,7 +10,7 @@ name: Container Scan
 
 on:
   push:
-    branches: [ "develop", "uat", "main" ]
+    branches: [ "main" ]
   schedule:
     - cron: '00 07 * * *'
 
