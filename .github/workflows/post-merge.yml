@@ -81,8 +81,6 @@ jobs:
           file: src/main/docker/Dockerfile.multistage
           platforms: linux/amd64
           tags: ghcr.io/${{ github.repository }}:latest, ghcr.io/${{ github.repository }}:${{ steps.semantic.outputs.new_release_version }}
-          build-args:
-            GH_USER=${{ secrets.GIT_USER }}
           secrets: |
             "gh_token=${{ secrets.GIT_PAT }}"
 
