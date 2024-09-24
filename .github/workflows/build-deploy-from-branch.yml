@@ -1,0 +1,46 @@
+name: Build and deploy from branch.
+
+on:
+  pull_request:
+
+jobs:
+  build_deploy_branch:
+    runs-on: ubuntu-latest
+    
+    environment: dev-cd
+    
+    permissions:
+      id-token: write
+      packages: write
+      contents: write
+    
+    steps:
+      - name: Checkout the source code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          token: ${{ secrets.GIT_PAT }}
+          fetch-depth: 0
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: https://ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+    
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf # v3.2.0
+  
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
+
+      - name: Build the app image
+        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # v6.7.0
+        with:
+          push: true
+          context: .
+          file: src/main/docker/Dockerfile.multistage
+          platforms: linux/amd64
+          tags: ghcr.io/${{ github.repository }}:${{ github.head_ref || github.ref_name }}
+          secrets: |
+            "gh_token=${{ secrets.GIT_PAT }}"

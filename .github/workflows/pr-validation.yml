@@ -12,7 +12,10 @@ on:
 jobs:
   pr-validation:
     runs-on: ubuntu-latest
-
+    outputs:
+      CVE_CRITICAL: ${{env.CVE_CRITICAL}}
+      CVE_HIGH: ${{env.CVE_HIGH}}
+      CVE_MEDIUM: ${{env.CVE_MEDIUM}}
     steps:
       - name: PR title validation
         uses: amannn/action-semantic-pull-request@c3cd5d1ea3580753008872425915e343e351ab54
@@ -84,9 +87,33 @@ jobs:
         run: |
           mkdir ${{ runner.temp }}/maven
           tar -xvf ${{ runner.temp }}/maven_setup.tar.gz -C ${{ runner.temp }}/maven --strip-components=1
-          echo "<settings><servers><server><id>github</id><username>${{ secrets.GIT_USER }}</username><password>${{ secrets.GIT_PAT }}</password></server></servers></settings>" >> ${{ runner.temp }}/settings.xml
+          echo "<settings><servers><server><id>github</id><username></username><password>${{ secrets.GIT_PAT }}</password></server></servers></settings>" >> ${{ runner.temp }}/settings.xml
 
       - name: Execute unit-test + Calculate test coverage + SCA with Sonar
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ${{ runner.temp }}/maven/bin/mvn verify -Pvalidate -s ${{ runner.temp }}/settings.xml --no-transfer-progress
+      
+      - name: Run the Trivy scan action itself with GitHub Advanced Security code scanning integration enabled
+        id: scan
+        uses: aquasecurity/trivy-action@595be6a0f6560a0a8fc419ddf630567fc623531d # v0.22.0
+        with:
+          scan-type: 'fs'
+          format: 'sarif'
+          output: 'results.sarif'
+      - name: Upload Anchore Scan Report
+        uses: github/codeql-action/upload-sarif@9550da953dd3b29aedf76cd635101e48eae5eebd # CodeQL Bundle v2.17.4
+        with:
+          sarif_file: 'results.sarif'
+      - name: CVE Description escaped extraction and print
+        run: |
+          SCAN_RESULTS=$(jq -r 'try .runs[0].tool.driver.rules | map(.help.text) | join("\\n")' results.sarif)
+          echo "CVE_CRITICAL=$(echo $SCAN_RESULTS | grep -o CRITICAL | wc -l)" >> $GITHUB_ENV
+          echo "CVE_HIGH=$(echo $SCAN_RESULTS | grep -o HIGH | wc -l)" >> $GITHUB_ENV
+          echo "CVE_MEDIUM=$(echo $SCAN_RESULTS | grep -o MEDIUM | wc -l)" >> $GITHUB_ENV
+          
+          echo $SCAN_RESULTS
+      - name: Fails if CVE HIGH or CRITICAL are detected
+        id: cve-threshold
+        if: env.CVE_HIGH > 0 || env.CVE_CRITICAL > 0
+        run: exit 1

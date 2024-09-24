@@ -1,0 +1,85 @@
+name: Sonarcloud coverage
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  post_merge:
+    if: github.event.pull_request.merged == true
+    
+    runs-on: ubuntu-latest
+    
+    environment: dev-cd
+    
+    permissions:
+      id-token: write
+      packages: write
+      contents: write
+    
+    steps:
+      #
+      # Checkout the source code.
+      #
+      - name: Checkout the source code
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab
+        with:
+          token: ${{ secrets.GIT_PAT }}
+          fetch-depth: 0
+
+      #
+      # Cache JDK.
+      #
+      - name: Cache JDK
+        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8
+        id: cache-jdk
+        with:
+          key: OpenJDK21U-jdk_x64_linux_hotspot_21.0.2_13.tar.gz
+          path: |
+            ${{ runner.temp }}/jdk_setup.tar.gz
+            ${{ runner.temp }}/jdk_setup.sha256
+
+      #
+      # Setup JDK.
+      #
+      - name: Setup JDK
+        uses: actions/setup-java@5ffc13f4174014e2d4d4572b3d74c3fa61aeb2c2
+        with:
+          distribution: "jdkfile"
+          jdkFile: "${{ runner.temp }}/jdk_setup.tar.gz"
+          java-version: "21"
+          cache: maven
+
+      #
+      # Cache Maven.
+      #
+      - name: Cache Maven
+        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8
+        id: cache-maven
+        with:
+          key: apache-maven-3.9.6-bin.tar.gz
+          path: |
+            ${{ runner.temp }}/maven_setup.tar.gz
+            ${{ runner.temp }}/maven_setup.sha256
+
+      #
+      # Setup Maven.
+      #
+      - name: Setup Maven
+        run: |
+          mkdir ${{ runner.temp }}/maven
+          tar -xvf ${{ runner.temp }}/maven_setup.tar.gz -C ${{ runner.temp }}/maven --strip-components=1
+          echo "<settings><servers><server><id>github</id><username></username><password>${{ secrets.GIT_PAT }}</password></server></servers></settings>" >> ${{ runner.temp }}/settings.xml
+      
+      #
+      # RELEASE CANDIDATE - Execute unit-test + Calculate test coverage + SCA with Sonar.
+      #
+      - name: RELEASE CANDIDATE - Execute unit-test + Calculate test coverage + SCA with Sonar
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ${{ runner.temp }}/maven/bin/mvn verify -Pvalidate -s ${{ runner.temp }}/settings.xml --no-transfer-progress
+
+

@@ -20,6 +20,13 @@
 			"groupId": "com.aayushatharva.brotli4j",
 			"version": "1.16.0",
 			"sha256": "tpM8OJhX4af0AEVQls7AHudr5z1RqfsRZNJwDT0xBU0="
-		}
+		},
+		{
+            "id": "com.aayushatharva.brotli4j:native-linux-aarch64:jar:1.16.0",
+            "artifactId": "native-linux-aarch64",
+            "groupId": "com.aayushatharva.brotli4j",
+            "version": "1.16.0",
+            "sha256": "D0zy6j37Nh2qM5P03DRfq_sameMdiwu27ZHaxWo4wRo="
+        }
 	]
 }

@@ -1,0 +1,38 @@
+## Stage 1 : build with maven builder image with native capabilities
+FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-21@sha256:bc15f4776952d7abdfb95ae26cf6376df17c7a2ec25f2066c617b8fd40f080b6 AS build
+
+COPY --chown=quarkus:quarkus mvnw /code/mvnw
+COPY --chown=quarkus:quarkus .mvn /code/.mvn
+COPY --chown=quarkus:quarkus pom.xml /code/
+COPY --chown=quarkus:quarkus dep-sha256.json /code/
+COPY --chown=quarkus:quarkus dep-sha256-man.json /code/
+COPY --chown=quarkus:quarkus lombok.config /code/
+
+USER quarkus
+
+WORKDIR /code
+
+RUN \
+ --mount=type=secret,id=gh_token,uid=1001 \
+ export GH_TOKEN=$(cat /run/secrets/gh_token) && \
+ echo "<settings><servers><server><id>github</id><username>$GH_USER</username><password>$GH_TOKEN</password></server><server><id>github-mil-azure-services</id><username>$GH_USER</username><password>$GH_TOKEN</password></server></servers></settings>" >> settings.xml
+
+COPY src /code/src
+
+RUN ./mvnw package -Dnative -Dmaven.test.skip=true -s settings.xml
+
+## Stage 2 : create the docker final image
+FROM quay.io/quarkus/quarkus-micro-image:2.0@sha256:ad4ebd25d024c6377d9497fb094a9acb22080f2b11396994e129f24e7d1b3b35
+WORKDIR /work/
+COPY --from=build /code/target/*-runner /work/application
+
+# set up permissions for user `1001`
+RUN chmod 775 /work /work/application \
+  && chown -R 1001 /work \
+  && chmod -R "g+rwX" /work \
+  && chown -R 1001:root /work
+
+EXPOSE 8080
+USER 1001
+
+CMD ["./application", "-Dquarkus.http.host=0.0.0.0"]
